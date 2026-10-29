@@ -96,6 +96,10 @@
   .frm label{font-size:13px;font-weight:600;margin:0}.frm input,.frm select{margin-top:4px}
   select{min-height:42px;padding:0 8px;border:1px solid #C5CED8;border-radius:8px;font:inherit;font-size:14px;background:#fff;max-width:180px}
   .frm select{width:100%;max-width:none;min-height:48px;font-size:16px}
+  td b{display:block;min-width:120px}
+  .fbar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px}
+  .fbar input{flex:1 1 220px;min-height:44px;padding:0 12px;border:1px solid #C5CED8;border-radius:8px;font:inherit;font-size:16px;background:#fff}
+  .fbar select{flex:0 1 auto;min-height:44px;max-width:240px;font-size:15px}
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
@@ -113,19 +117,23 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyXqPr50rBusW9Z-t0P4hk9
 
 const app = document.getElementById('app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// โทเคนหมดอายุ (มักเกิดเมื่อเปิดในเบราว์เซอร์คอมพิวเตอร์แล้วทิ้งไว้เกิน 1 ชม.) → ล็อกอินใหม่อัตโนมัติ 1 ครั้ง
-function relogin() {
-  try { if (sessionStorage.getItem('vo_relogin')) return false; sessionStorage.setItem('vo_relogin', '1'); } catch (e) {}
-  liff.logout(); liff.login({ redirectUri: location.origin + location.pathname }); return true;
+// โทเคนหมดอายุ (มักเกิดในเบราว์เซอร์คอมพิวเตอร์) → ออกจากระบบ แล้วให้ผู้ใช้กดเข้าสู่ระบบเอง
+function signedOut() {
+  try { liff.logout(); } catch (e) {}
+  document.getElementById('who').innerHTML = '';
+  app.innerHTML = `<div class="card single"><h1>ออกจากระบบแล้ว</h1>
+    <p>การเข้าสู่ระบบหมดอายุ ระบบจึงออกจากระบบให้อัตโนมัติเพื่อความปลอดภัย</p>
+    <button class="btn primary" id="relogin">เข้าสู่ระบบด้วย LINE อีกครั้ง</button></div>`;
+  document.getElementById('relogin').onclick = () => liff.login({ redirectUri: location.origin + location.pathname });
+  return new Promise(() => {});
 }
 async function api(action, extra = {}) {
   const tok = liff.getDecodedIDToken && liff.getDecodedIDToken();
-  if (tok && tok.exp * 1000 < Date.now() + 60000 && relogin()) return new Promise(() => {});
+  if (tok && tok.exp * 1000 < Date.now() + 60000) return signedOut();
   const r = await fetch(API_URL, { method:'POST', body: JSON.stringify(Object.assign({ action, idToken: liff.getIDToken() }, extra)) });
   const j = await r.json();
-  if (!j.ok && j.error === 'INVALID_TOKEN' && relogin()) return new Promise(() => {});
+  if (!j.ok && j.error === 'INVALID_TOKEN') return signedOut();
   if (!j.ok) throw new Error(j.error);
-  try { sessionStorage.removeItem('vo_relogin'); } catch (e) {}
   return j;
 }
 const MSG = {
@@ -262,7 +270,7 @@ function viewSales() {
   app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.t; viewSales(); });
   const box = document.getElementById('tab');
   box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
-  box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { SALES_TEAM = tr.dataset.team; SALES_TAB = 'people'; viewSales(); });
+  box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { SALES_TEAM = tr.dataset.team; if (SALES_TAB === 'overview') SALES_TAB = 'people'; viewSales(); });
   bindSearch();
   const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
 }
@@ -294,58 +302,92 @@ function teamTable(list, title) {
     <thead><tr><th>#</th><th>ทีม</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">พนักงาน / ร้าน</th><th>เทียบเป้า</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 
-function tabPeople(s) {
-  const staff = s.staff.filter(x => (!SALES_TEAM || x.team === SALES_TEAM) && qMatch(x.name, x.team));
-  const rows = staff.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
-    <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${nf(x.ios)} / ${nf(x.android)}</td><td class="n">${pct(x.apps, 30)}%</td></tr>`).join('');
-  const t = SALES_TEAM && s.teams.find(x => x.code === SALES_TEAM);
-  const tl = s.teams.filter(t => qMatch(t.code, t.name));
-  return `${searchBox('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน')}${!SALES_TEAM && tl.length ? teamTable(tl, `ทุกทีม (${tl.length})`) : ''}
-  <section class="card"><div class="hd"><h2>${SALES_TEAM ? 'พนักงานทีม ' + esc(SALES_TEAM) : s.scope === 'SELF' ? 'ยอดของฉัน' : 'อันดับพนักงาน'}</h2>
-    ${SALES_TEAM ? '<button class="btn no" id="clr">ดูทุกทีม</button>' : ''}</div>
-    ${t ? `<p class="empty">${esc(t.name)} · ทีมสะสม ${nf(t.apps)} เคส (พนักงาน ${nf(t.emp)} · ร้านทำเอง ${nf(t.dlr)})</p>` : ''}
-    <div class="tw"><table><thead><tr><th>#</th><th>พนักงาน</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">iOS / Android</th><th class="n">เทียบเป้า</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="6" class="empty">ไม่พบยอดในเดือนนี้</td></tr>'}</tbody></table></div>
+function staffTable(list, title, extra) {
+  const rows = list.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
+    <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${nf(x.ios)}</td><td class="n">${nf(x.android)}</td>
+    <td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td><td class="n">${pct(x.apps, 30)}%</td></tr>`).join('');
+  return `<section class="card"><div class="hd"><h2>${title} (${list.length})</h2>${extra || ''}</div>
+    <div class="tw"><table><thead><tr><th>#</th><th>พนักงาน</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">iOS</th><th class="n">Android</th><th>% iOS</th><th class="n">เทียบเป้า</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" class="empty">ไม่พบรายการตามตัวกรอง</td></tr>'}</tbody></table></div>
     <p class="empty">นับเฉพาะเคสที่บันทึกในชื่อพนักงาน · เป้า 30 เคส/คน/เดือน</p></section>`;
 }
 
+function tabPeople(s) {
+  const staff = sortBy(s.staff.filter(x => inFilter(x.team) && qMatch(x.name, x.team)));
+  const tl = sortBy(s.teams.filter(t => inFilter(t.code) && qMatch(t.code, t.name)));
+  const t = SALES_TEAM && teamOf(SALES_TEAM);
+  return `${filterBar('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน')}
+  ${!SALES_TEAM && tl.length ? teamTable(tl, `ทีม (${tl.length})`) : ''}
+  ${t && t.code ? `<p class="msg">${esc(t.code)} ${esc(t.name)} · ทีมสะสม ${nf(t.apps)} เคส (พนักงาน ${nf(t.emp)} · ร้านทำเอง ${nf(t.dlr)}) · iOS ${pctTxt(t.ios, t.apps)}</p>` : ''}
+  ${staffTable(staff, s.scope === 'SELF' ? 'ยอดของฉัน' : SALES_TEAM ? 'พนักงานทีม ' + esc(SALES_TEAM) : 'พนักงาน')}`;
+}
+
 function tabOS(s) {
-  const m = s.mtd, tot = m.ios + m.android + m.other;
-  const rows = (s.teams.length ? s.teams : []).slice().sort((a, b) => b.ios / (b.apps || 1) - a.ios / (a.apps || 1)).map(t => `<tr data-team="${esc(t.code)}" class="click">
+  const tl = sortBy(s.teams.filter(t => inFilter(t.code) && qMatch(t.code, t.name)));
+  const staff = sortBy(s.staff.filter(x => inFilter(x.team) && qMatch(x.name, x.team)));
+  const filtered = SALES_Q || SALES_AM || SALES_HUB || SALES_TEAM;
+  const m = filtered ? tl.reduce((a, t) => ({ ios: a.ios + t.ios, android: a.android + t.android, other: a.other + t.other }), { ios: 0, android: 0, other: 0 }) : s.mtd;
+  const tot = m.ios + m.android + m.other;
+  const rows = tl.map(t => `<tr data-team="${esc(t.code)}" class="click">
     <td><b>${esc(t.code)}</b><small>${esc(t.name)}</small></td><td class="n">${nf(t.ios)}</td><td class="n">${nf(t.android)}</td>
     <td class="osc">${osBar(t.ios, t.android, t.other)}<span>${pctTxt(t.ios, t.apps)}</span></td></tr>`).join('');
-  return `
+  return `${filterBar('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน')}
   <section class="kpis">
-    <div class="kpi"><span>iOS (Apple)</span><b style="color:var(--navy)">${nf(m.ios)}</b><small class="sub">${pctTxt(m.ios, tot)} ของเคสทั้งหมด</small></div>
-    <div class="kpi"><span>Android</span><b style="color:var(--green)">${nf(m.android)}</b><small class="sub">${pctTxt(m.android, tot)} ของเคสทั้งหมด</small></div>
+    <div class="kpi"><span>iOS (Apple)${filtered ? ' · ตามตัวกรอง' : ''}</span><b style="color:var(--navy)">${nf(m.ios)}</b><small class="sub">${pctTxt(m.ios, tot)} ของเคส</small></div>
+    <div class="kpi"><span>Android${filtered ? ' · ตามตัวกรอง' : ''}</span><b style="color:var(--green)">${nf(m.android)}</b><small class="sub">${pctTxt(m.android, tot)} ของเคส</small></div>
     ${m.other ? `<div class="kpi"><span>อื่น ๆ (ไม่ใช่มือถือ)</span><b style="color:var(--ink)">${nf(m.other)}</b><small class="sub">${pctTxt(m.other, tot)}</small></div>` : ''}
   </section>
-  <section class="card"><div class="hd"><h2>สัดส่วนรวม</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
+  <section class="card"><div class="hd"><h2>สัดส่วน</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
     <div style="padding:16px 20px">${osBar(m.ios, m.android, m.other)}</div></section>
-  ${rows ? `<section class="card"><div class="hd"><h2>รายทีม (เรียงตามสัดส่วน iOS)</h2></div><div class="tw"><table>
-    <thead><tr><th>ทีม</th><th class="n">iOS</th><th class="n">Android</th><th>สัดส่วน iOS</th></tr></thead><tbody>${rows}</tbody></table></div></section>` : ''}`;
+  ${rows && !SALES_TEAM ? `<section class="card"><div class="hd"><h2>รายทีม (${tl.length})</h2></div><div class="tw"><table>
+    <thead><tr><th>ทีม</th><th class="n">iOS</th><th class="n">Android</th><th>% iOS</th></tr></thead><tbody>${rows}</tbody></table></div></section>` : ''}
+  ${staffTable(staff, 'รายพนักงาน iOS เทียบ Android')}`;
 }
 
 function tabShops(s) {
-  const rows = s.shops.filter(x => qMatch(x.shop, x.team)).map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
+  const rows = sortBy(s.shops.filter(x => inFilter(x.team) && qMatch(x.shop, x.team))).map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
     <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${mb(x.amt)}</td><td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td></tr>`).join('');
-  return `${searchBox('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
+  return `${filterBar('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
     <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
 }
 
 /* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
-let SALES_Q = '';
+let SALES_Q = '', SALES_AM = '', SALES_HUB = '', SALES_SORT = 'apps';
 const topScope = () => ME.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
 const canManage = () => RANK[topScope()] >= RANK.HUB;
 const qMatch = (...xs) => !SALES_Q || xs.some(x => String(x || '').toLowerCase().includes(SALES_Q.toLowerCase()));
-function searchBox(ph) {
-  if (!canManage()) return '';
-  return `<div class="search"><input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา"></div>`;
+const teamOf = code => (SALES.teams || []).find(t => t.code === code) || {};
+// ผ่านตัวกรอง AM / HUB / ทีม หรือไม่
+const inFilter = code => { const t = teamOf(code);
+  return (!SALES_TEAM || code === SALES_TEAM) && (!SALES_AM || t.am === SALES_AM) && (!SALES_HUB || t.hub === SALES_HUB); };
+const SORTS = { apps: ['สะสมมากสุด', x => x.apps], today: ['วันล่าสุดมากสุด', x => x.today], ios: ['iOS มากสุด', x => x.ios],
+  android: ['Android มากสุด', x => x.android], iosPct: ['% iOS สูงสุด', x => x.apps ? x.ios / x.apps : 0], andPct: ['% Android สูงสุด', x => x.apps ? x.android / x.apps : 0] };
+const sortBy = list => list.slice().sort((a, b) => SORTS[SALES_SORT][1](b) - SORTS[SALES_SORT][1](a));
+function filterBar(ph) {
+  const s = SALES; if (s.scope === 'SELF') return '';
+  const uniq = k => [...new Set(s.teams.map(t => t[k]).filter(Boolean))].sort();
+  const opt = (v, cur, label) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label || v)}</option>`;
+  const teams = s.teams.filter(t => (!SALES_AM || t.am === SALES_AM) && (!SALES_HUB || t.hub === SALES_HUB)).sort((a, b) => a.code.localeCompare(b.code));
+  const ams = uniq('am'), hubs = uniq('hub');
+  return `<div class="fbar">
+    ${canManage() ? `<input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา">` : ''}
+    ${ams.length > 1 ? `<select id="fam" aria-label="AM">${opt('', SALES_AM, 'ทุก AM')}${ams.map(a => opt(a, SALES_AM)).join('')}</select>` : ''}
+    ${hubs.length > 1 ? `<select id="fhub" aria-label="HUB">${opt('', SALES_HUB, 'ทุก HUB')}${hubs.map(h => opt(h, SALES_HUB)).join('')}</select>` : ''}
+    ${teams.length > 1 ? `<select id="fteam" aria-label="ทีม">${opt('', SALES_TEAM, 'ทุกทีม')}${teams.map(t => opt(t.code, SALES_TEAM, t.code + ' · ' + t.name)).join('')}</select>` : ''}
+    <select id="fsort" aria-label="เรียงตาม">${Object.entries(SORTS).map(([k, v]) => opt(k, SALES_SORT, 'เรียง: ' + v[0])).join('')}</select>
+    ${SALES_Q || SALES_AM || SALES_HUB || SALES_TEAM ? '<button class="btn no" id="freset">ล้างตัวกรอง</button>' : ''}
+  </div>`;
 }
 function bindSearch() {
-  const q = document.getElementById('q'); if (!q) return;
-  q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; viewSales(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
+  const q = document.getElementById('q');
+  if (q) q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; viewSales(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
+  const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); viewSales(); }; };
+  on('fam', v => { SALES_AM = v; SALES_HUB = ''; SALES_TEAM = ''; });
+  on('fhub', v => { SALES_HUB = v; SALES_TEAM = ''; });
+  on('fteam', v => { SALES_TEAM = v; });
+  on('fsort', v => { SALES_SORT = v; });
+  const r = document.getElementById('freset'); if (r) r.onclick = () => { SALES_Q = SALES_AM = SALES_HUB = SALES_TEAM = ''; viewSales(); };
 }
 
 let STAFF;
