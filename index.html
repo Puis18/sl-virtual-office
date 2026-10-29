@@ -103,12 +103,35 @@
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
+
+  /* ---- แถบเมนูซ้าย (คอม) + แถบล่าง (มือถือ) ---- */
+  .shell{min-height:100vh}.col{min-width:0;display:flex;flex-direction:column;min-height:100vh}.col #app{flex:1}
+  aside{background:var(--navy);color:#fff;padding:16px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sb-logo{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:6px}.sb-logo img{display:block;width:100%;height:auto}
+  .sb-sub{font-size:12px;color:#AEBBD6;text-align:center;margin:0 0 10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .sb-grp{font-size:11px;letter-spacing:.06em;color:#8E9CBC;margin:12px 10px 4px}
+  .nv{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:none;border-radius:10px;background:transparent;color:#DCE3F2;font-size:14px;text-align:left;min-height:42px}
+  .nv i{width:28px;height:28px;flex-shrink:0;border-radius:8px;background:rgba(255,255,255,.1);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}
+  .nv:hover{background:rgba(255,255,255,.08)}.nv.on{background:#fff;color:var(--navy);font-weight:600}.nv.on i{background:var(--navy);color:#fff}
+  .nv .tg{margin-left:auto;font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.12);color:#C7D0E3;white-space:nowrap}
+  .nv.lk{opacity:.5}
+  .sb-me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 6px 2px;border-top:1px solid rgba(255,255,255,.12)}
+  .sb-me .av{background:var(--red)}.sb-me b{display:block;font-size:14px}.sb-me small{display:block;font-size:11.5px;color:#AEBBD6}
+  #mnav{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 0 calc(8px + env(safe-area-inset-bottom))}
+  #mnav button{flex:1;background:none;border:none;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px}
+  #mnav button b{font-size:17px;line-height:1.2}#mnav button.on{color:var(--navy);font-weight:700}
+  #mnav[hidden],aside[hidden]{display:none}
+  .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.2);max-width:90vw}
+  @media (min-width:900px){.shell.nav{display:grid;grid-template-columns:250px 1fr}.shell.nav header{display:none}#mnav{display:none}.shell.nav .back{display:none}}
+  @media (max-width:899px){aside{display:none}body.has-nav{padding-bottom:70px}}
 </style>
 </head>
 <body>
+<div class="shell"><aside id="side" hidden></aside><div class="col">
 <header><div class="wrap"><img src="logo.png" alt="S Leasing"><div class="who" id="who"></div></div></header>
 <div id="app"><main class="wrap"><div class="skel"></div><div class="skel"></div></main></div>
 <footer><div class="wrap"><span>S Leasing Virtual Office · เครื่องมือภายในทีม AM1 / AM2</span><span>ข้อมูลลูกค้าเป็นความลับ ห้ามเผยแพร่ภายนอก (PDPA)</span></div></footer>
+</div></div><nav id="mnav" hidden></nav>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
@@ -219,8 +242,40 @@ function viewLobby(me, profile) {
   });
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
   const sm = document.getElementById('sum'); if (sm) sm.onclick = () => viewSales();
+  renderNav('home');
   if (top === 'ALL') loadPending();
   loadSales(top);
+}
+
+
+/* ---------- เมนูนำทาง: แถบซ้าย (คอม) + แถบล่าง (มือถือ) ---------- */
+let NAV_ON = '';
+const DEPT_KEY = ['sales', 'od', 'dealer', 'product', 'hr', 'admin', 'mis', 'dir'];
+function deptState(i) { const d = DEPTS[i], ok = RANK[topScope()] >= RANK[d.min]; return !ok ? 'lock' : d.phase === 1 ? 'open' : 'soon'; }
+function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove()); const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2800); }
+function go(key) {
+  if (key === 'home') return viewLobby(ME, PROFILE);
+  if (key === 'staff') return viewStaff();
+  if (key === 'sales') return SALES ? viewSales() : (toast('กำลังโหลดยอดขาย…'), loadSales(topScope()).then(() => viewSales()));
+  const i = DEPT_KEY.indexOf(key), st = deptState(i), d = DEPTS[i];
+  toast(st === 'lock' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ' : st === 'soon' ? d.name + ' จะเปิดใช้ในเฟส 2' : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้');
+}
+function renderNav(active) {
+  NAV_ON = active;
+  const side = document.getElementById('side'), mn = document.getElementById('mnav');
+  const tag = st => st === 'soon' ? '<span class="tg">เฟส 2</span>' : st === 'lock' ? '<span class="tg">🔒</span>' : '';
+  const name = ME.nick ? 'คุณ' + ME.nick : ME.name;
+  side.innerHTML = `<div class="sb-logo"><img src="logo.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
+    <button class="nv" data-k="home"><i>⌂</i>หน้าแรก</button>
+    <div class="sb-grp">แผนก</div>
+    ${DEPTS.map((d, i) => { const st = deptState(i); return `<button class="nv ${st === 'lock' ? 'lk' : ''}" data-k="${DEPT_KEY[i]}"><i>${d.mk}</i>${esc(d.name)}${tag(st)}</button>`; }).join('')}
+    ${canManage() ? `<div class="sb-grp">จัดการ</div><button class="nv" data-k="staff"><i>👥</i>รายชื่อพนักงาน</button>` : ''}
+    <div class="sb-me"><div class="av">${PROFILE && PROFILE.pictureUrl ? `<img src="${esc(PROFILE.pictureUrl)}" alt="">` : esc(String(ME.nick || ME.name).charAt(0))}</div>
+      <div><b>${esc(name)}</b><small>${esc(ME.roles.map(roleLabel).join(' / '))}</small></div></div>`;
+  const items = [['home', '⌂', 'หน้าแรก'], ['sales', 'ข', 'ฝ่ายขาย'], ['od', 'ห', 'ติดตามหนี้']].concat(canManage() ? [['staff', '👥', 'พนักงาน']] : []);
+  mn.innerHTML = items.map(([k, ic, l]) => `<button data-k="${k}"><b>${ic}</b>${l}</button>`).join('');
+  [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
+  document.querySelector('.shell').classList.add('nav'); document.body.classList.add('has-nav');
 }
 
 /* ================= ฝ่ายขาย ================= */
@@ -253,7 +308,7 @@ const pctTxt = (a, t) => t ? Math.round(a / t * 100) + '%' : '—';
 function viewSales() {
   const s = SALES;
   if (!s) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); renderNav('sales');
   const p = pct(s.mtd.apps, s.target);
   const tabs = [['overview', 'ภาพรวม'], ['people', s.scope === 'SELF' ? 'ยอดของฉัน' : 'ทีม / พนักงาน'], ['os', 'iOS vs Android'], ['shops', 'ร้านค้า']];
   app.innerHTML = `
@@ -434,7 +489,7 @@ function bindSearch() {
 
 let STAFF;
 async function viewStaff(msg) {
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); renderNav('staff');
   app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
     <h1>จัดการรายชื่อพนักงาน</h1><small>เพิ่มคนใหม่ · ย้ายทีม/เปลี่ยนตำแหน่ง · ปิดการใช้งาน — ทุกการแก้ไขถูกบันทึกในชีต AuditLog</small></div></div></section>
     <main class="wrap" id="sm"><div class="skel"></div></main>`;
