@@ -89,6 +89,8 @@
   .lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
   .kpi .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
   tr.click{cursor:pointer} tr.click:hover td{background:#F6F8FB}
+  .ext{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:10px 16px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:0;text-decoration:none;color:var(--ink)}
+  .ext b{display:block;font-size:15px;color:var(--navy)} .ext small{display:block;font-size:12px;color:var(--muted)} .ext span:last-child{font-size:20px;color:var(--navy)}
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
@@ -234,6 +236,8 @@ function viewSales() {
       <div class="bar"><div style="height:8px;border-radius:4px;background:var(--green);width:${Math.min(p, 100)}%"></div></div>
       <p>เป้า ${s.scope === 'SELF' ? '30 เคส/คน' : '500 เคส/ทีม'} ต่อเดือน</p></div>
   </div></section>
+  <div class="wrap" style="padding-top:14px"><a class="ext" href="https://puis18.github.io/sleasing-dashboard/" target="_blank" rel="noopener">
+    <span><b>เปิด Dashboard Daily</b><small>ดูรายละเอียดเชิงลึกทุกมุมมอง (แสดงทุกทีม ไม่ได้คัดตามสิทธิ์)</small></span><span aria-hidden="true">↗</span></a></div>
   <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
   <main class="wrap" id="tab"></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
