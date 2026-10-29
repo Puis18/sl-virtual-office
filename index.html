@@ -261,6 +261,7 @@ function viewLobby(me, profile) {
       <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
   </div></section>
   <main class="wrap">
+    <div id="hfilter"></div>
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
       <div class="kpi"><span>เทียบเป้าตามจำนวนวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
@@ -288,7 +289,7 @@ function viewLobby(me, profile) {
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
   const sm = document.getElementById('sum'); if (sm) sm.onclick = () => go('sales');
   const qd = document.getElementById('qDash'); if (qd) qd.onclick = () => openDash(qd);
-  renderNav('home');
+  renderNav('home'); RERENDER = () => viewLobby(ME, PROFILE);
   if (top === 'ALL') loadPending();
   loadSales(top);
 }
@@ -338,7 +339,9 @@ const set = (id, v) => { const el = document.getElementById(id); if (el) el.text
 async function loadSales(top) {
   try {
     SALES = SALES || await api('sales');
-    const s = SALES, p = pct(s.mtd.apps, s.target);
+    const s = scoped(SALES), p = pct(s.mtd.apps, s.target);
+    const hf = document.getElementById('hfilter');
+    if (hf && SALES.scope !== 'SELF') { hf.innerHTML = filterBar('', true); bindSearch(); }
     set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
     const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
     set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
@@ -370,10 +373,10 @@ async function loadSales(top) {
     if (dayTot[dt] >= avgAll * 0.5) { const zero = ea.filter(t => t.apps >= day && !t.today);
       if (zero.length) items.push(['amber', `${zero.length} ทีมไม่มีเคสเลยในวันที่ ${thDay(dt)}`, groupTxt(zero), 'people']); }
     // 4) ร้านที่เคยส่งเคส แต่หยุดส่ง 7 วันขึ้นไป
-    const st = s.stalled || [];
+    const st = (s.stalled || []).filter(x => inFilter(x.team));
     if (st.length) items.push(['amber', `${st.length} ร้านหยุดส่งเคส 7 วันขึ้นไป`, st.slice(0, 3).map(x => `${dShort(x.shop)} (${x.team} · ล่าสุด ${thDay(x.last)})`).join(' · '), 'shops']);
     // 5) พนักงานขายที่ยังไม่มีเคสเดือนนี้
-    const idle = s.idle || [];
+    const idle = (s.idle || []).filter(x => inFilter(x.team));
     if (idle.length) items.push(['amber', `พนักงาน ${idle.length} คนยังไม่มีเคสเดือนนี้`, idle.slice(0, 4).map(x => `${x.name} (${x.team})`).join(' · ') + (idle.length > 4 ? ' …' : ''), 'people']);
     // 6) ข่าวดี: ทีมที่ทะลุเป้าทั้งเดือนแล้ว และภาพรวมเป็นไปตามเป้า
     const done = ea.filter(t => t.apps >= t.target);
@@ -411,6 +414,7 @@ function scoped(S) {
 function viewSales() {
   if (!SALES) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
   const s = scoped(SALES);
+  RERENDER = viewSales;
   window.scrollTo(0, 0); renderNav('sales');
   const p = pct(s.mtd.apps, s.target);
   const tabs = [['overview', 'ภาพรวม'], ['people', s.scope === 'SELF' ? 'ยอดของฉัน' : 'ทีม / พนักงาน'], ['os', 'iOS vs Android'], ['shops', 'ร้านค้า']];
@@ -615,7 +619,7 @@ const inFilter = code => { const t = teamOf(code);
 const SORTS = { apps: ['สะสมมากสุด', x => x.apps], today: ['วันล่าสุดมากสุด', x => x.today], ios: ['iOS มากสุด', x => x.ios],
   android: ['Android มากสุด', x => x.android], iosPct: ['% iOS สูงสุด', x => x.apps ? x.ios / x.apps : 0], andPct: ['% Android สูงสุด', x => x.apps ? x.android / x.apps : 0] };
 const sortBy = list => list.slice().sort((a, b) => SORTS[SALES_SORT][1](b) - SORTS[SALES_SORT][1](a));
-function filterBar(ph) {
+function filterBar(ph, compact) {
   const s = SALES; if (s.scope === 'SELF') return '';
   const uniq = k => [...new Set(s.teams.map(t => t[k]).filter(Boolean))].sort();
   const opt = (v, cur, label) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label || v)}</option>`;
@@ -623,23 +627,24 @@ function filterBar(ph) {
   const ams = uniq('am');
   const hubs = [...new Set(s.teams.filter(t => !SALES_AM || t.am === SALES_AM).map(t => t.hub).filter(Boolean))].sort();   // HUB เฉพาะใน AM ที่เลือก
   return `<div class="fbar">
-    ${canManage() ? `<input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา">` : ''}
+    ${!compact && canManage() ? `<input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา">` : ''}
     ${ams.length > 1 ? `<select id="fam" aria-label="AM">${opt('', SALES_AM, 'ทุก AM')}${ams.map(a => opt(a, SALES_AM)).join('')}</select>` : ''}
     ${hubs.length > 1 ? `<select id="fhub" aria-label="HUB">${opt('', SALES_HUB, 'ทุก HUB')}${hubs.map(h => opt(h, SALES_HUB)).join('')}</select>` : ''}
     ${teams.length > 1 ? `<select id="fteam" aria-label="ทีม">${opt('', SALES_TEAM, 'ทุกทีม')}${teams.map(t => opt(t.code, SALES_TEAM, t.code + ' · ' + t.name)).join('')}</select>` : ''}
-    <select id="fsort" aria-label="เรียงตาม">${Object.entries(SORTS).map(([k, v]) => opt(k, SALES_SORT, 'เรียง: ' + v[0])).join('')}</select>
+    ${compact ? '' : `<select id="fsort" aria-label="เรียงตาม">${Object.entries(SORTS).map(([k, v]) => opt(k, SALES_SORT, 'เรียง: ' + v[0])).join('')}</select>`}
     ${SALES_Q || SALES_AM || SALES_HUB || SALES_TEAM || SALES_DEALER || SALES_SHOWROOM ? '<button class="btn no" id="freset">ล้างตัวกรอง</button>' : ''}
   </div>`;
 }
+let RERENDER = () => viewSales();
 function bindSearch() {
   const q = document.getElementById('q');
-  if (q) q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; viewSales(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
-  const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); viewSales(); }; };
+  if (q) q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; RERENDER(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
+  const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); RERENDER(); }; };
   on('fam', v => { SALES_AM = v; SALES_HUB = ''; SALES_TEAM = ''; });
   on('fhub', v => { SALES_HUB = v; SALES_TEAM = ''; });
   on('fteam', v => { SALES_TEAM = v; });
   on('fsort', v => { SALES_SORT = v; });
-  const r = document.getElementById('freset'); if (r) r.onclick = () => { SALES_Q = SALES_AM = SALES_HUB = SALES_TEAM = SALES_DEALER = SALES_SHOWROOM = ''; viewSales(); };
+  const r = document.getElementById('freset'); if (r) r.onclick = () => { SALES_Q = SALES_AM = SALES_HUB = SALES_TEAM = SALES_DEALER = SALES_SHOWROOM = ''; RERENDER(); };
 }
 
 let STAFF;
