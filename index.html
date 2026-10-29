@@ -266,7 +266,7 @@ function viewLobby(me, profile) {
       <div class="kpi"><span>เทียบเป้าตามจำนวนวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
       <div class="kpi"><span>สัดส่วน iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
     </section>
-    <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
+    <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
       ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small id="dashmsg">ตามสิทธิ์ของคุณ</small></span></button>` : ''}
       <button class="qk" id="sum"><i style="background:var(--green)">${ico('sales', 20)}</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
@@ -346,17 +346,39 @@ async function loadSales(top) {
     const paceT = Math.round(s.target * day / dim), pace = pct(s.mtd.apps, paceT);
     const days = s.daily.map(d => d[1] + d[2] + d[3]), avg = days.length > 1 ? days.slice(0, -1).reduce((x, y) => x + y, 0) / (days.length - 1) : 0;
     const diff = avg ? Math.round((s.today.apps - avg) / avg * 100) : 0;
-    set('kl0', 'เคสวันล่าสุด (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
+    set('kl0', 'ผลงานวันที่ ' + thDay(s.latest) + ' (เมื่อวาน)'); set('k0', nf(s.today.apps));
     set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
     set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
     set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
-    const items = [];
-    const low = (s.teams || []).map(t => ({ ...t, p: pct(t.apps, Math.round(t.target * day / dim)) })).filter(t => t.p < 80).sort((x, y) => x.p - y.p);
-    if (low.length) items.push(['red', `${low.length} ทีมต่ำกว่า 80% ของเป้าตามวัน`, low.slice(0, 5).map(t => `${t.code} (${t.p}%)`).join(' · '), 'people']);
-    if (avg && diff <= -20) items.push(['red', `เคสวันล่าสุดลดลง ${Math.abs(diff)}% จากค่าเฉลี่ย`, `${nf(s.today.apps)} เคส เทียบเฉลี่ย ${nf(Math.round(avg))} เคส/วัน`, 'overview']);
-    if (pace >= 100) items.push(['green', `ยอดสะสมเป็นไปตามเป้า (${pace}%)`, 'รักษาระดับนี้ต่อไป', 'overview']);
-    const idle = (s.staff || []).filter(x => !x.apps).length;
-    if (idle && s.scope !== 'SELF') items.push(['amber', `พนักงาน ${idle} คนยังไม่มีเคสเดือนนี้`, 'กดเพื่อดูรายชื่อ', 'people']);
+    // ข้อมูลเป็น T-1 เสมอ: "วันล่าสุด" = ผลงานเมื่อวานที่ดึงตอนเช้า
+    const items = [], isAll = topScope() === 'ALL', dt = s.latest;
+    const ea = (s.teams || []).filter(t => t.target);
+    const shift = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+    const dayTot = Object.fromEntries(s.daily.map(d => [d[0], d[1] + d[2] + d[3]]));
+    const groupTxt = list => { if (!isAll || list.length <= 6) return list.slice(0, 6).map(t => t.code + (t.p != null ? ` (${t.p}%)` : '')).join(' · ') + (list.length > 6 ? ` และอีก ${list.length - 6} ทีม` : '');
+      const g = {}; list.forEach(t => { g[t.am] = (g[t.am] || 0) + 1; }); return Object.entries(g).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${k} ${n} ทีม`).join(' · '); };
+    // 1) ทีม EA ที่ยอดสะสมต่ำกว่า 80% ของเป้าตามวัน
+    const low = ea.map(t => ({ ...t, p: pct(t.apps, Math.round(t.target * day / dim)) })).filter(t => t.p < 80).sort((x, y) => x.p - y.p);
+    if (low.length) items.push(['red', `${low.length} ทีม (EA) ต่ำกว่า 80% ของเป้าตามวัน`, groupTxt(low), 'people']);
+    // 2) เมื่อวานเทียบวันเดียวกันของสัปดาห์ก่อน (ตัดผลของวันหยุดสุดสัปดาห์)
+    const wk = dayTot[shift(dt, -7)];
+    if (wk && dayTot[dt] != null) { const d = Math.round((dayTot[dt] - wk) / wk * 100);
+      if (d <= -20) items.push(['red', `ยอดวันที่ ${thDay(dt)} ลดลง ${Math.abs(d)}% จากวันเดียวกันสัปดาห์ก่อน`, `${nf(dayTot[dt])} เคส เทียบ ${nf(wk)} เคส (${thDay(shift(dt, -7))})`, 'overview']);
+      else if (d >= 20) items.push(['green', `ยอดวันที่ ${thDay(dt)} เพิ่มขึ้น ${d}% จากวันเดียวกันสัปดาห์ก่อน`, `${nf(dayTot[dt])} เคส เทียบ ${nf(wk)} เคส`, 'overview']); }
+    // 3) ทีมที่ปกติมีเคส แต่เมื่อวานไม่มีเลย (ข้ามถ้าเมื่อวานยอดรวมต่ำผิดปกติ เช่นวันหยุด)
+    const avgAll = days.length ? days.reduce((x, y) => x + y, 0) / days.length : 0;
+    if (dayTot[dt] >= avgAll * 0.5) { const zero = ea.filter(t => t.apps >= day && !t.today);
+      if (zero.length) items.push(['amber', `${zero.length} ทีมไม่มีเคสเลยในวันที่ ${thDay(dt)}`, groupTxt(zero), 'people']); }
+    // 4) ร้านที่เคยส่งเคส แต่หยุดส่ง 7 วันขึ้นไป
+    const st = s.stalled || [];
+    if (st.length) items.push(['amber', `${st.length} ร้านหยุดส่งเคส 7 วันขึ้นไป`, st.slice(0, 3).map(x => `${x.shop} (${x.team} · ล่าสุด ${thDay(x.last)})`).join(' · '), 'shops']);
+    // 5) พนักงานขายที่ยังไม่มีเคสเดือนนี้
+    const idle = s.idle || [];
+    if (idle.length) items.push(['amber', `พนักงาน ${idle.length} คนยังไม่มีเคสเดือนนี้`, idle.slice(0, 4).map(x => `${x.name} (${x.team})`).join(' · ') + (idle.length > 4 ? ' …' : ''), 'people']);
+    // 6) ข่าวดี: ทีมที่ทะลุเป้าทั้งเดือนแล้ว และภาพรวมเป็นไปตามเป้า
+    const done = ea.filter(t => t.apps >= t.target);
+    if (done.length) items.push(['green', `${done.length} ทีมทำยอดถึงเป้าทั้งเดือนแล้ว`, groupTxt(done), 'people']);
+    if (pace >= 100) items.push(['green', `ยอดสะสมเป็นไปตามเป้า (${pace}% ของเป้าตามวัน)`, 'รักษาระดับนี้ต่อไป', 'overview']);
     const f = document.getElementById('focus');
     if (f) { f.innerHTML = items.length ? items.map(([c, t, d, tab]) => `<button class="fi" data-tab="${tab}"><i class="dot ${c}"></i><span><b>${esc(t)}</b><small>${esc(d)}</small></span><span aria-hidden="true">→</span></button>`).join('')
         : '<p class="empty">ไม่มีเรื่องเร่งด่วน ทุกอย่างเป็นไปตามเป้า 👍</p>';
