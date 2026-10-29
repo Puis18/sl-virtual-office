@@ -393,9 +393,24 @@ const osBar = (ios, and, oth) => {
 };
 const pctTxt = (a, t) => t ? Math.round(a / t * 100) + '%' : '—';
 
+
+// คำนวณตัวเลขด้านบนใหม่ตามตัวกรอง AM / Hub / ทีม (ใช้ยอดรายทีม + รายวันรายทีมจากหลังบ้าน)
+function scoped(S) {
+  if (!S || S.scope === 'SELF' || (!SALES_AM && !SALES_HUB && !SALES_TEAM)) return S;
+  const teams = S.teams.filter(t => inFilter(t.code)), sum = k => teams.reduce((a, t) => a + (t[k] || 0), 0);
+  const byDay = {};
+  (S.td || []).forEach(([d, c, i, a, o]) => { if (!inFilter(c)) return; const x = byDay[d] = byDay[d] || [d, 0, 0, 0]; x[1] += i; x[2] += a; x[3] += o; });
+  return Object.assign({}, S, {
+    teams, target: teams.filter(t => t.target).length * 500,
+    mtd: { apps: sum('apps'), amt: sum('amt'), ios: sum('ios'), android: sum('android'), other: sum('other'), emp: sum('emp'), dlr: sum('dlr') },
+    today: { apps: sum('today'), amt: sum('tamt') },
+    daily: S.td ? Object.keys(byDay).sort().map(d => byDay[d]) : S.daily,
+    scope: [SALES_AM, SALES_HUB, SALES_TEAM].filter(Boolean).join(' · ') + ` (${teams.length} ทีม)`
+  });
+}
 function viewSales() {
-  const s = SALES;
-  if (!s) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
+  if (!SALES) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
+  const s = scoped(SALES);
   window.scrollTo(0, 0); renderNav('sales');
   const p = pct(s.mtd.apps, s.target);
   const tabs = [['overview', 'ภาพรวม'], ['people', s.scope === 'SELF' ? 'ยอดของฉัน' : 'ทีม / พนักงาน'], ['os', 'iOS vs Android'], ['shops', 'ร้านค้า']];
@@ -423,10 +438,11 @@ function viewSales() {
 }
 
 function tabOverview(s) {
+  const fb = s.scope === 'SELF' ? '' : filterBar('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน');
   const max = Math.max(1, ...s.daily.map(d => d[1] + d[2] + d[3]));
   const bars = s.daily.map(([d, i, a, o]) => `<div class="db" title="${esc(thDay(d))}: ${nf(i + a + o)} เคส (iOS ${nf(i)} · Android ${nf(a)})">
     <div class="stk" style="height:${Math.max(2, (i + a + o) / max * 100)}%"><i class="oth" style="flex:${o}"></i><i class="and" style="flex:${a}"></i><i class="ios" style="flex:${i}"></i></div><span>${+d.slice(8)}</span></div>`).join('');
-  return `
+  return `${fb}
   <section class="kpis">
     <div class="kpi"><span>เคสวันล่าสุด (${esc(thDay(s.latest))})</span><b style="color:var(--ink)">${nf(s.today.apps)}</b></div>
     <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
