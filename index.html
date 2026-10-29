@@ -103,10 +103,6 @@
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
-.vt{display:flex;gap:6px;margin:0 0 10px}.vbtn{font:inherit;font-size:13px;padding:6px 14px;border-radius:999px;border:1px solid #C9CFDA;background:#fff;color:#1E3365;cursor:pointer}.vbtn.on{background:#1E3365;color:#fff;border-color:#1E3365}
-.iso{overflow-x:auto;background:linear-gradient(#F6F8FB,#EDF1F6);border:1px solid #E1E5EC;border-radius:16px;padding:8px}.iso svg{display:block;min-width:680px;width:100%;height:auto;font-family:inherit}
-.room{cursor:pointer;transition:transform .18s ease,filter .18s ease;outline:none}.room:hover,.room:focus-visible{transform:translateY(-6px);filter:drop-shadow(0 8px 10px rgba(30,51,101,.25))}.room.locked{cursor:not-allowed;opacity:.85}
-.room.open .sign rect{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{stroke-width:3}}@media (prefers-reduced-motion:reduce){.room,.room.open .sign rect{transition:none;animation:none}}
 </style>
 </head>
 <body>
@@ -175,50 +171,6 @@ const KPI = {
   ALL:['ยอดอนุมัติ AM1 + AM2 วันนี้','อัตรา OD AM1 / AM2','ผู้ใช้รออนุมัติสิทธิ์']
 };
 
-
-/* ---------- แผนผังออฟฟิศ 3 มิติเอียง (isometric) ---------- */
-let VIEW = 'map'; try { VIEW = localStorage.getItem('voView') || 'map'; } catch (e) {}
-function isoMap(rooms) {
-  const S = 14, W = 10, D = 8, H = 3.2, GAP = 2.4;
-  const P = (x, y, z = 0) => [((x - y) * 0.866 * S).toFixed(1), ((x + y) * 0.5 * S - z * S).toFixed(1)].join(',');
-  const poly = (pts, fill, extra = '') => `<polygon points="${pts.map(a => P(...a)).join(' ')}" fill="${fill}" ${extra}/>`;
-  const box = (x, y, z, w, d, h, top, l, r) =>
-    poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]], top) +
-    poly([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]], l) +
-    poly([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]], r);
-  const person = (x, y, c) => { const [px, py] = P(x, y).split(',').map(Number);
-    return `<ellipse cx="${px}" cy="${py}" rx="5" ry="2.5" fill="rgba(0,0,0,.15)"/><rect x="${px-4.5}" y="${py-17}" width="9" height="15" rx="4.5" fill="${c}"/><circle cx="${px}" cy="${py-22}" r="4.6" fill="#F2C9A0"/>`; };
-  const pal = { 'เปิดใช้งาน': { floor:'#E7F1EA', wl:'#1E3365', wr:'#2C4A8A', acc:'#126C3D' },
-                'เฟส 2':     { floor:'#EEF0F4', wl:'#8C96AA', wr:'#A3ACBE', acc:'#7A8499' },
-                'ไม่มีสิทธิ์':  { floor:'#E3E5EA', wl:'#5D6475', wr:'#6E7586', acc:'#5D6475' } };
-  const shirts = ['#9F1C33', '#126C3D', '#1E3365', '#C98A1B'];
-  const order = rooms.map((r, k) => ({ ...r, cx: (k % 4) * (W + GAP), cy: Math.floor(k / 4) * (D + GAP) }))
-    .sort((a, b) => (a.cx + a.cy) - (b.cx + b.cy));
-  const body = order.map(({ d, i, st, cx: x, cy: y }) => {
-    const c = pal[st], meet = i === 7, n = st === 'เปิดใช้งาน' ? 3 : st === 'เฟส 2' ? 1 : 0;
-    let g = poly([[x,y],[x+W,y],[x+W,y+D],[x,y+D]], c.floor, 'stroke="#C9CFDA" stroke-width="1"');
-    g += poly([[x,y,0],[x+W,y,0],[x+W,y,H],[x,y,H]], c.wr);                    // ผนังหลังขวา
-    g += poly([[x,y,0],[x,y+D,0],[x,y+D,H],[x,y,H]], c.wl);                    // ผนังหลังซ้าย
-    g += poly([[x+2,y,1.1],[x+5,y,1.1],[x+5,y,2.4],[x+2,y,2.4]], 'rgba(255,255,255,.35)'); // หน้าต่าง
-    g += poly([[x,y+D,0],[x+W,y+D,0],[x+W,y+D,.25],[x,y+D,.25]], '#B8BFCC');   // ขอบพื้น
-    if (meet) g += box(x+2.5, y+2.5, 0, 5, 3, .9, '#8A5A3B', '#6E4529', '#7B4E31');
-    else { g += box(x+1.5, y+2, 0, 3, 1.6, .9, '#F4F1EA', '#C9C2B4', '#DAD3C5') + box(x+5.5, y+2, 0, 3, 1.6, .9, '#F4F1EA', '#C9C2B4', '#DAD3C5');
-           g += box(x+2.3, y+2.3, .9, 1.2, .2, .8, '#222', '#333', '#2A2A2A') + box(x+6.3, y+2.3, .9, 1.2, .2, .8, '#222', '#333', '#2A2A2A'); }
-    g += box(x+W-1.6, y+D-1.6, 0, .9, .9, .6, '#7A5230', '#5E3E22', '#6B4728') +       // กระถางต้นไม้
-         `<circle cx="${P(x+W-1.15, y+D-1.15, 1.3).split(',')[0]}" cy="${P(x+W-1.15, y+D-1.15, 1.3).split(',')[1]}" r="8" fill="#2F8F57"/>`;
-    const spots = meet ? [[x+3,y+6.4],[x+5.2,y+6.6],[x+7.6,y+4.2]] : [[x+3,y+4.6],[x+7,y+4.6],[x+4.8,y+6.6]];
-    for (let k = 0; k < n; k++) g += person(...spots[k], shirts[(i + k) % 4]);
-    const [lx, ly] = P(x + W / 2, y + D / 2, H + 2.4).split(',').map(Number);
-    const tw = Math.max(70, d.name.length * 9.5 + 34);
-    g += `<g class="sign"><rect x="${lx - tw/2}" y="${ly - 14}" width="${tw}" height="28" rx="14" fill="#fff" stroke="${c.acc}" stroke-width="1.5"/>
-      <circle cx="${lx - tw/2 + 14}" cy="${ly}" r="9" fill="${c.acc}"/><text x="${lx - tw/2 + 14}" y="${ly + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${st === 'ไม่มีสิทธิ์' ? '🔒' : d.mk}</text>
-      <text x="${lx - tw/2 + 28}" y="${ly + 4.5}" font-size="12.5" font-weight="600" fill="#1E3365">${d.name}</text></g>`;
-    if (st !== 'เปิดใช้งาน') g = g.replace('</g>', `<text x="${lx}" y="${ly + 26}" text-anchor="middle" font-size="10.5" font-weight="600" fill="#5D6475" paint-order="stroke" stroke="#fff" stroke-width="3">${st === 'เฟส 2' ? 'กำลังตกแต่ง · เฟส 2' : 'ไม่มีสิทธิ์เข้า'}</text></g>`);
-    return `<g class="room ${st === 'เปิดใช้งาน' ? 'open' : st === 'เฟส 2' ? 'soon' : 'locked'}" data-i="${i}" data-st="${st}" tabindex="0" role="button" aria-label="${d.name} · ${st}"><title>${d.name} — ${d.desc}</title>${g}</g>`;
-  }).join('');
-  return `<svg viewBox="-240 -100 830 575" role="img" aria-label="แผนผังออฟฟิศ">${body}</svg>`;
-}
-
 function thaiDate() {
   return new Date().toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 }
@@ -251,18 +203,13 @@ function viewLobby(me, profile) {
     <section class="kpis" aria-label="ตัวเลขสำคัญ">${KPI[top].map((k,i) => `<div class="kpi"><span>${k}</span><b id="k${i}">—</b></div>`).join('')}</section>
     <section><div class="sec-h"><h2>แผนกในออฟฟิศ</h2>
       <div class="legend"><span><i style="background:var(--green)"></i>เปิดใช้งาน</span><span><i style="background:#9AA4B6"></i>เฟส 2</span><span><i style="border:1.5px solid #9AA4B6"></i>ไม่มีสิทธิ์</span></div></div>
-      <div class="vt"><button class="vbtn" id="vmap">แผนผัง</button><button class="vbtn" id="vlist">รายการ</button></div>
-      <div id="isoWrap" class="iso"${VIEW==='list'?' hidden':''}>${isoMap(DEPTS.map((d,i)=>{const allowed=RANK[top]>=RANK[d.min];return {d,i,st:!allowed?'ไม่มีสิทธิ์':d.phase===1?'เปิดใช้งาน':'เฟส 2'};}))}</div>
-      <div class="grid" id="listWrap"${VIEW==='list'?'':' hidden'}>${cards}</div><div id="dmsg"></div></section>
+      <div class="grid">${cards}</div><div id="dmsg"></div></section>
     ${top !== 'SELF' ? `<section><button class="ext" id="sum" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>ฝ่ายขาย · สรุปแบบย่อ</b><small>ตัวเลขสรุป ตัวกรอง iOS vs Android รายพนักงาน และร้านค้า</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     ${RANK[top] >= RANK.HUB ? `<section><button class="ext" id="mgr" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>จัดการรายชื่อพนักงาน</b><small>เพิ่มคนใหม่ · ย้ายทีม · ปิดการใช้งาน ในทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     <section id="admin"></section>
   </main>`;
 
-  const setV = v => { VIEW = v; try { localStorage.setItem('voView', v); } catch (e) {} document.getElementById('isoWrap').hidden = v === 'list'; document.getElementById('listWrap').hidden = v !== 'list'; document.getElementById('vmap').classList.toggle('on', v !== 'list'); document.getElementById('vlist').classList.toggle('on', v === 'list'); };
-  document.getElementById('vmap').onclick = () => setV('map'); document.getElementById('vlist').onclick = () => setV('list'); setV(VIEW);
-  app.querySelectorAll('.room').forEach(g => g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); g.dispatchEvent(new Event('click')); } });
-  app.querySelectorAll('.dept,.room').forEach(b => b.onclick = () => {
+  app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
     if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { top === 'SELF' ? viewSales() : openDash(b); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
