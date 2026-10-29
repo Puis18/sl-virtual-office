@@ -113,13 +113,24 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyXqPr50rBusW9Z-t0P4hk9
 
 const app = document.getElementById('app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// โทเคนหมดอายุ (มักเกิดเมื่อเปิดในเบราว์เซอร์คอมพิวเตอร์แล้วทิ้งไว้เกิน 1 ชม.) → ล็อกอินใหม่อัตโนมัติ 1 ครั้ง
+function relogin() {
+  try { if (sessionStorage.getItem('vo_relogin')) return false; sessionStorage.setItem('vo_relogin', '1'); } catch (e) {}
+  liff.logout(); liff.login({ redirectUri: location.origin + location.pathname }); return true;
+}
 async function api(action, extra = {}) {
+  const tok = liff.getDecodedIDToken && liff.getDecodedIDToken();
+  if (tok && tok.exp * 1000 < Date.now() + 60000 && relogin()) return new Promise(() => {});
   const r = await fetch(API_URL, { method:'POST', body: JSON.stringify(Object.assign({ action, idToken: liff.getIDToken() }, extra)) });
-  const j = await r.json(); if (!j.ok) throw new Error(j.error); return j;
+  const j = await r.json();
+  if (!j.ok && j.error === 'INVALID_TOKEN' && relogin()) return new Promise(() => {});
+  if (!j.ok) throw new Error(j.error);
+  try { sessionStorage.removeItem('vo_relogin'); } catch (e) {}
+  return j;
 }
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
-  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดแล้วเปิดใหม่', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้'
+  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
 
