@@ -359,7 +359,7 @@ async function loadSales(top) {
       const g = {}; list.forEach(t => { g[t.am] = (g[t.am] || 0) + 1; }); return Object.entries(g).sort((x, y) => y[1] - x[1]).map(([k, n]) => `${k} ${n} ทีม`).join(' · '); };
     // 1) ทีม EA ที่ยอดสะสมต่ำกว่า 80% ของเป้าตามวัน
     const low = ea.map(t => ({ ...t, p: pct(t.apps, Math.round(t.target * day / dim)) })).filter(t => t.p < 80).sort((x, y) => x.p - y.p);
-    if (low.length) items.push(['red', `${low.length} ทีม (EA) ต่ำกว่า 80% ของเป้าตามวัน`, groupTxt(low), 'people']);
+    if (low.length) items.push(['red', `${low.length} ทีมต่ำกว่า 80% ของเป้าตามวัน`, groupTxt(low), 'people']);
     // 2) เมื่อวานเทียบวันเดียวกันของสัปดาห์ก่อน (ตัดผลของวันหยุดสุดสัปดาห์)
     const wk = dayTot[shift(dt, -7)];
     if (wk && dayTot[dt] != null) { const d = Math.round((dayTot[dt] - wk) / wk * 100);
@@ -371,7 +371,7 @@ async function loadSales(top) {
       if (zero.length) items.push(['amber', `${zero.length} ทีมไม่มีเคสเลยในวันที่ ${thDay(dt)}`, groupTxt(zero), 'people']); }
     // 4) ร้านที่เคยส่งเคส แต่หยุดส่ง 7 วันขึ้นไป
     const st = s.stalled || [];
-    if (st.length) items.push(['amber', `${st.length} ร้านหยุดส่งเคส 7 วันขึ้นไป`, st.slice(0, 3).map(x => `${x.shop} (${x.team} · ล่าสุด ${thDay(x.last)})`).join(' · '), 'shops']);
+    if (st.length) items.push(['amber', `${st.length} ร้านหยุดส่งเคส 7 วันขึ้นไป`, st.slice(0, 3).map(x => `${dShort(x.shop)} (${x.team} · ล่าสุด ${thDay(x.last)})`).join(' · '), 'shops']);
     // 5) พนักงานขายที่ยังไม่มีเคสเดือนนี้
     const idle = s.idle || [];
     if (idle.length) items.push(['amber', `พนักงาน ${idle.length} คนยังไม่มีเคสเดือนนี้`, idle.slice(0, 4).map(x => `${x.name} (${x.team})`).join(' · ') + (idle.length > 4 ? ' …' : ''), 'people']);
@@ -401,8 +401,8 @@ function scoped(S) {
   const byDay = {};
   (S.td || []).forEach(([d, c, i, a, o]) => { if (!inFilter(c)) return; const x = byDay[d] = byDay[d] || [d, 0, 0, 0]; x[1] += i; x[2] += a; x[3] += o; });
   return Object.assign({}, S, {
-    teams, target: teams.filter(t => t.target).length * 500,
-    mtd: { apps: sum('apps'), amt: sum('amt'), ios: sum('ios'), android: sum('android'), other: sum('other'), emp: sum('emp'), dlr: sum('dlr') },
+    teams, target: teams.filter(t => t.apps > 0).length * 500,
+    mtd: { apps: sum('apps'), amt: sum('amt'), ios: sum('ios'), android: sum('android'), other: sum('other'), emp: sum('emp'), dlr: sum('dlr'), mo: sum('mo'), ins: sum('ins'), staffN: sum('staffN') },
     today: { apps: sum('today'), amt: sum('tamt') },
     daily: S.td ? Object.keys(byDay).sort().map(d => byDay[d]) : S.daily,
     scope: [SALES_AM, SALES_HUB, SALES_TEAM].filter(Boolean).join(' · ') + ` (${teams.length} ทีม)`
@@ -436,6 +436,9 @@ function viewSales() {
   box.querySelectorAll('tr[data-am]').forEach(tr => tr.onclick = () => { SALES_AM = tr.dataset.am; SALES_HUB = SALES_TEAM = ''; viewSales(); });
   box.querySelectorAll('tr[data-hub]').forEach(tr => tr.onclick = () => { SALES_HUB = tr.dataset.hub; SALES_TEAM = ''; viewSales(); });
   bindSearch();
+  box.querySelectorAll('tr[data-dealer]').forEach(tr => tr.onclick = () => { SALES_DEALER = tr.dataset.dealer; SALES_SHOWROOM = ''; viewSales(); });
+  const db2 = document.getElementById('dback'); if (db2) db2.onclick = () => { SALES_DEALER = SALES_SHOWROOM = ''; viewSales(); };
+  const fsr = document.getElementById('fsr'); if (fsr) fsr.onchange = () => { SALES_SHOWROOM = fsr.value; viewSales(); };
   const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
 }
 
@@ -450,6 +453,8 @@ function tabOverview(s) {
     <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
     <div class="kpi"><span>ยอดจัดสะสมเดือนนี้</span><b style="color:var(--ink)">${mb(s.mtd.amt)}</b></div>
     <div class="kpi"><span>สัดส่วน iOS</span><b style="color:var(--ink)">${pctTxt(s.mtd.ios, s.mtd.apps)}</b></div>
+    <div class="kpi"><span>% Mobile Care</span><b style="color:var(--ink)">${mcTxt(s.mtd.ins, s.mtd.mo)}</b><small class="sub">มีประกัน ${nf(s.mtd.ins)} จากเคสมือถือ ${nf(s.mtd.mo)}</small></div>
+    ${s.mtd.staffN ? `<div class="kpi"><span>ผลงานต่อพนักงาน</span><b style="color:var(--ink)">${(s.mtd.apps / s.mtd.staffN).toFixed(1)}</b><small class="sub">${nf(s.mtd.apps)} เคส ÷ พนักงาน ${nf(s.mtd.staffN)} คน (ไม่นับหัวหน้าทีม · ร้านทำเคส)</small></div>` : ''}
   </section>
   <section class="card"><div class="hd"><h2>จำนวนเคสรายวัน</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
     <div class="days">${bars || '<p class="empty">ยังไม่มีข้อมูล</p>'}</div></section>
@@ -531,13 +536,34 @@ function tabOS(s) {
   ${staffTable(staff, 'รายพนักงาน iOS เทียบ Android')}`;
 }
 
+let SALES_DEALER = '', SALES_SHOWROOM = '';
+const dShort = d => String(d || '').replace(/\s*\((No )?VAT\)$/, '');
+const vatTag = d => /\(No VAT\)$/.test(d) ? 'No VAT' : /\(VAT\)$/.test(d) ? 'VAT' : '';
+const mcTxt = (ins, mo) => mo ? (ins / mo * 100).toFixed(1) + '%' : '—';
+// ร้าน = ดีลเลอร์ (ชื่อเต็มรวม VAT/No VAT) รวมทุกโชว์รูม · เลือกดีลเลอร์แล้วแตกเป็นรายโชว์รูม — แบบ Dashboard Daily
 function tabShops(s) {
-  const sl = sortBy(s.shops.filter(x => inFilter(x.team) && qMatch(x.shop, x.team)));
-  const rows = sl.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
-    <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${mb(x.amt)}</td><td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td></tr>`).join('');
-  return `${filterBar('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านค้าทั้งหมด ${nf(sl.length)} ร้าน</h2></div><div class="tw"><table>
-    <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
+  const base = s.shops.filter(x => inFilter(x.team) && qMatch(x.dealer, x.showroom, x.team));
+  const srOpts = [...new Set(base.filter(x => !SALES_DEALER || x.dealer === SALES_DEALER).map(x => x.showroom).filter(Boolean))].sort();
+  if (SALES_SHOWROOM && !srOpts.includes(SALES_SHOWROOM)) SALES_SHOWROOM = '';
+  const rows0 = base.filter(x => (!SALES_DEALER || x.dealer === SALES_DEALER) && (!SALES_SHOWROOM || x.showroom === SALES_SHOWROOM));
+  const bySr = !!SALES_DEALER, g = {};
+  rows0.forEach(x => { const k = bySr ? x.showroom : x.dealer;
+    const o = g[k] = g[k] || { k, dealer: x.dealer, apps: 0, today: 0, amt: 0, ios: 0, android: 0, other: 0, mo: 0, ins: 0, teams: new Set(), srs: new Set() };
+    ['apps', 'today', 'amt', 'ios', 'android', 'other', 'mo', 'ins'].forEach(f => { o[f] += x[f] || 0; }); o.teams.add(x.team); o.srs.add(x.showroom); });
+  const list = sortBy(Object.values(g));
+  const tot = list.reduce((a, o) => a + o.apps, 0);
+  const rows = list.map((o, i) => `<tr${bySr ? '' : ` class="click" data-dealer="${esc(o.k)}"`}><td>${i + 1}</td>
+    <td><b>${esc(bySr ? (o.k || '—') : dShort(o.k))}${!bySr && vatTag(o.k) ? ` <span class="badge">${vatTag(o.k)}</span>` : ''}</b><small>${bySr ? '' : nf(o.srs.size) + ' โชว์รูม · '}ทีม ${esc([...o.teams].sort().join(', '))}</small></td>
+    <td class="n">${nf(o.today)}</td><td class="n">${nf(o.apps)}</td><td class="n">${mb(o.amt)}</td><td class="n">${mcTxt(o.ins, o.mo)}</td>
+    <td class="osc">${osBar(o.ios, o.android, o.other)}<span>${pctTxt(o.ios, o.apps)}</span></td></tr>`).join('');
+  const opt = (v, cur, l) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(l || v)}</option>`;
+  return `${filterBar('ค้นหาดีลเลอร์ โชว์รูม หรือรหัสทีม')}
+  <div class="fbar">${SALES_DEALER ? `<button class="btn no" id="dback">← ทุกดีลเลอร์</button>` : ''}
+    <select id="fsr" aria-label="Showroom">${opt('', SALES_SHOWROOM, 'ทุก Showroom (' + nf(srOpts.length) + ')')}${srOpts.map(v => opt(v, SALES_SHOWROOM)).join('')}</select></div>
+  <section class="card"><div class="hd"><h2>${SALES_DEALER ? 'โชว์รูมของ ' + esc(dShort(SALES_DEALER)) + (vatTag(SALES_DEALER) ? ' (' + vatTag(SALES_DEALER) + ')' : '') : 'ดีลเลอร์ทั้งหมด ' + nf(list.length) + ' ร้าน'} · ${nf(tot)} เคส</h2>${SALES_DEALER ? '' : '<small style="color:var(--muted)">กดชื่อดีลเลอร์เพื่อดูรายโชว์รูม</small>'}</div><div class="tw"><table>
+    <thead><tr><th>#</th><th>${bySr ? 'โชว์รูม' : 'ดีลเลอร์'}</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th class="n">% Mobile Care</th><th>iOS</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="7" class="empty">ไม่พบร้านตามตัวกรอง</td></tr>'}</tbody></table></div>
+    <p class="empty">ร้าน = ดีลเลอร์ รวมทุกโชว์รูม · ร้าน VAT และ No VAT นับแยกกัน · % Mobile Care = เคสมีประกัน ÷ เคสมือถือ</p></section>`;
 }
 
 /* ================= Dashboard Daily ตามสิทธิ์ (TM ขึ้นไป) ================= */
@@ -602,7 +628,7 @@ function filterBar(ph) {
     ${hubs.length > 1 ? `<select id="fhub" aria-label="HUB">${opt('', SALES_HUB, 'ทุก HUB')}${hubs.map(h => opt(h, SALES_HUB)).join('')}</select>` : ''}
     ${teams.length > 1 ? `<select id="fteam" aria-label="ทีม">${opt('', SALES_TEAM, 'ทุกทีม')}${teams.map(t => opt(t.code, SALES_TEAM, t.code + ' · ' + t.name)).join('')}</select>` : ''}
     <select id="fsort" aria-label="เรียงตาม">${Object.entries(SORTS).map(([k, v]) => opt(k, SALES_SORT, 'เรียง: ' + v[0])).join('')}</select>
-    ${SALES_Q || SALES_AM || SALES_HUB || SALES_TEAM ? '<button class="btn no" id="freset">ล้างตัวกรอง</button>' : ''}
+    ${SALES_Q || SALES_AM || SALES_HUB || SALES_TEAM || SALES_DEALER || SALES_SHOWROOM ? '<button class="btn no" id="freset">ล้างตัวกรอง</button>' : ''}
   </div>`;
 }
 function bindSearch() {
@@ -613,7 +639,7 @@ function bindSearch() {
   on('fhub', v => { SALES_HUB = v; SALES_TEAM = ''; });
   on('fteam', v => { SALES_TEAM = v; });
   on('fsort', v => { SALES_SORT = v; });
-  const r = document.getElementById('freset'); if (r) r.onclick = () => { SALES_Q = SALES_AM = SALES_HUB = SALES_TEAM = ''; viewSales(); };
+  const r = document.getElementById('freset'); if (r) r.onclick = () => { SALES_Q = SALES_AM = SALES_HUB = SALES_TEAM = SALES_DEALER = SALES_SHOWROOM = ''; viewSales(); };
 }
 
 let STAFF;
