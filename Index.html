@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SL Virtual Office</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#1E3365; --red:#9F1C33; --green:#126C3D; --ink:#121B2E; --muted:#5A6478; --line:#DCE1EA; --bg:#F3F5F9; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Noto Sans Thai',system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:#fff; border-bottom:4px solid var(--red); padding:14px 16px; font-weight:700; color:var(--navy); }
+  main { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  h1 { font-size:22px; margin:0 0 8px; } p { margin:0 0 12px; line-height:1.6; color:var(--muted); }
+  label { display:block; font-weight:600; margin-bottom:6px; }
+  input { width:100%; min-height:46px; padding:0 12px; border:1px solid #C5CED8; border-radius:8px; font:inherit; font-size:16px; }
+  button { min-height:46px; padding:0 18px; border:none; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
+  .primary { background:var(--red); color:#fff; width:100%; margin-top:12px; }
+  .ok { background:var(--green); color:#fff; } .no { background:#E8ECF2; color:var(--ink); }
+  .err { color:var(--red); font-size:14px; margin-top:8px; min-height:20px; }
+  .tag { display:inline-block; font-size:13px; padding:3px 10px; border-radius:999px; background:#E6ECF6; color:var(--navy); margin:2px 4px 2px 0; }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 0; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .row small { color:var(--muted); display:block; }
+</style>
+</head>
+<body>
+<header>S Leasing · Virtual Office</header>
+<main id="app"><div class="card"><p>กำลังเชื่อมต่อ LINE…</p></div></main>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+const LIFF_ID = '2012282702-qtqjFxgj';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyXqPr50rBusW9Z-t0P4hk9ZshyvW_sA4vAn4IfmdqPiHizOpofBO3-7dSOwkKMQbpa/exec';
+
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function api(action, extra = {}) {
+  const res = await fetch(API_URL, {           // ไม่ใส่ header → ไม่ติด CORS preflight
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action, idToken: liff.getIDToken() }, extra))
+  });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error);
+  return j;
+}
+
+const MSG = {
+  EMP_NOT_FOUND: 'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง',
+  EMP_ALREADY_LINKED: 'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
+  ALREADY_LINKED: 'LINE นี้ลงทะเบียนไว้แล้ว',
+  INVALID_TOKEN: 'การยืนยันตัวตนหมดอายุ กรุณาปิดแล้วเปิดใหม่',
+  FORBIDDEN: 'คุณไม่มีสิทธิ์ทำรายการนี้'
+};
+const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
+
+function viewRegister(lineName) {
+  app.innerHTML = `
+    <div class="card">
+      <h1>ลงทะเบียนครั้งแรก</h1>
+      <p>สวัสดีคุณ ${esc(lineName)} กรุณากรอกรหัสพนักงาน ระบบจะส่งให้ผู้ดูแลอนุมัติก่อนเข้าใช้งาน</p>
+      <label for="emp">รหัสพนักงาน</label>
+      <input id="emp" inputmode="numeric" autocomplete="off" placeholder="เช่น 36208">
+      <button class="primary" id="go">ส่งคำขอเข้าใช้งาน</button>
+      <div class="err" id="err" role="alert"></div>
+    </div>`;
+  document.getElementById('go').onclick = async () => {
+    const emp = document.getElementById('emp').value.trim();
+    const err = document.getElementById('err');
+    if (!emp) { err.textContent = 'กรุณากรอกรหัสพนักงาน'; return; }
+    err.textContent = 'กำลังส่ง…';
+    try { await api('register', { empCode: emp }); viewPending(); }
+    catch (e) { err.textContent = say(e); }
+  };
+}
+
+function viewPending() {
+  app.innerHTML = `<div class="card"><h1>รอการอนุมัติ</h1>
+    <p>ส่งคำขอแล้ว เมื่อผู้ดูแลอนุมัติ เปิดลิงก์นี้อีกครั้งเพื่อเข้าใช้งาน</p></div>`;
+}
+
+async function viewHome(me) {
+  const roles = me.roles.map(r => `<span class="tag">${esc(r.role)} · ${esc(r.team || r.hub || r.am || 'ทั้งหมด')} · ${esc(r.scope)}</span>`).join('');
+  app.innerHTML = `<div class="card"><h1>สวัสดีครับ คุณ${esc(me.nick || me.name)}</h1>
+    <p>ล็อกอินสำเร็จ บทบาทและขอบเขตข้อมูลของคุณ:</p>${roles}</div><div id="admin"></div>`;
+  if (me.roles.some(r => r.scope === 'ALL')) loadPending();
+}
+
+async function loadPending() {
+  const box = document.getElementById('admin');
+  try {
+    const { list } = await api('pending');
+    box.innerHTML = `<div class="card"><h1>คำขอรออนุมัติ (${list.length})</h1>
+      <p>ตรวจว่าชื่อ LINE ตรงกับเจ้าของรหัสพนักงานก่อนกดอนุมัติ</p>
+      ${list.map(x => `<div class="row"><div><b>${esc(x.name)}</b> (${esc(x.nick)})
+        <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · LINE: ${esc(x.lineName)}</small></div>
+        <div><button class="ok" data-emp="${esc(x.emp)}" data-d="APPROVE">อนุมัติ</button>
+        <button class="no" data-emp="${esc(x.emp)}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p>ไม่มีคำขอค้าง</p>'}</div>`;
+    box.querySelectorAll('button[data-emp]').forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d }); loadPending(); }
+      catch (e) { alert(say(e)); b.disabled = false; }
+    });
+  } catch (e) { box.innerHTML = `<div class="card"><p class="err">${esc(say(e))}</p></div>`; }
+}
+
+(async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const me = await api('me');
+    if (me.state === 'UNREGISTERED') viewRegister(me.lineName);
+    else if (me.state === 'PENDING') viewPending();
+    else if (me.state === 'APPROVED') viewHome(me);
+    else app.innerHTML = `<div class="card"><h1>บัญชีถูกระงับ</h1><p>กรุณาติดต่อผู้ดูแลระบบ</p></div>`;
+  } catch (e) {
+    app.innerHTML = `<div class="card"><p class="err">${esc(say(e))}</p></div>`;
+  }
+})();
+</script>
+</body>
+</html>
