@@ -124,6 +124,21 @@
   .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.2);max-width:90vw}
   @media (min-width:900px){.shell.nav{display:grid;grid-template-columns:250px 1fr}.shell.nav header{display:none}#mnav{display:none}.shell.nav .back{display:none}}
   @media (max-width:899px){aside{display:none}body.has-nav{padding-bottom:70px}}
+
+  .quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .qk{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:left;font:inherit;color:var(--ink)}
+  .qk:hover{border-color:var(--navy)}.qk i{width:40px;height:40px;flex-shrink:0;border-radius:10px;display:grid;place-items:center;font-style:normal;color:#fff;font-weight:700}
+  .qk b{display:block;font-size:15px;color:var(--navy)}.qk small{display:block;font-size:12px;color:var(--muted)}
+  .fi{display:flex;align-items:center;gap:12px;width:100%;padding:14px 20px;border:none;border-bottom:1px solid #EEF1F5;background:#fff;text-align:left;font:inherit;color:var(--ink)}
+  .fi:hover{background:#F6F8FB}.fi span:nth-child(2){flex:1}.fi b{display:block;font-size:15px}.fi small{display:block;font-size:13px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.dot.red{background:var(--red)}.dot.green{background:var(--green)}.dot.amber{background:#C98A1B}
+  @media (min-width:900px){.shell.nav .mobile-only{display:none}}
+  /* ย่อแถบเมนู */
+  .sb-tog{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 6px;background:rgba(255,255,255,.08);border:none;color:#C7D0E3;border-radius:8px;min-height:34px;font-size:12px}
+  .sb-logo .sb-ic{display:none}.mini .sb-logo .sb-ic{display:block}.mini .sb-logo .sb-full{display:none}.dot{min-width:10px}.goal .v{font-size:34px}
+  .shell.nav.mini{grid-template-columns:72px 1fr}
+  .mini aside{padding:16px 10px}.mini .sb-logo{padding:6px}.mini .sb-full,.mini .sb-sub,.mini .sb-grp,.mini .nv .tx,.mini .nv .tg,.mini .sb-me div:last-child,.mini .sb-tog .tx{display:none}.mini .sb-ic{display:block}
+  .mini .nv{justify-content:center;padding:8px 0}.mini .sb-me{justify-content:center;padding-left:0;padding-right:0}.mini .nv.lk i::after{content:'';}
 </style>
 </head>
 <body>
@@ -223,12 +238,19 @@ function viewLobby(me, profile) {
       <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
   </div></section>
   <main class="wrap">
-    <section class="kpis" aria-label="ตัวเลขสำคัญ">${KPI[top].map((k,i) => `<div class="kpi"><span>${k}</span><b id="k${i}">—</b></div>`).join('')}</section>
-    <section><div class="sec-h"><h2>แผนกในออฟฟิศ</h2>
-      <div class="legend"><span><i style="background:var(--green)"></i>เปิดใช้งาน</span><span><i style="background:#9AA4B6"></i>เฟส 2</span><span><i style="border:1.5px solid #9AA4B6"></i>ไม่มีสิทธิ์</span></div></div>
+    <section class="kpis" aria-label="ตัวเลขสำคัญ">
+      <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
+      <div class="kpi"><span>เทียบเป้าตามจำนวนวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
+      <div class="kpi"><span>สัดส่วน iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
+    </section>
+    <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
+    <section><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
+      ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">D</i><span><b>Dashboard Daily</b><small id="dashmsg">ตามสิทธิ์ของคุณ</small></span></button>` : ''}
+      <button class="qk" id="sum"><i style="background:var(--green)">ส</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
+      ${RANK[top] >= RANK.HUB ? `<button class="qk" id="mgr"><i style="background:var(--red)">👥</i><span><b>รายชื่อพนักงาน</b><small>เพิ่ม · ย้ายทีม · ปิดการใช้งาน</small></span></button>` : ''}
+    </div></section>
+    <section class="mobile-only"><div class="sec-h"><h2>แผนกทั้งหมด</h2></div>
       <div class="grid">${cards}</div><div id="dmsg"></div></section>
-    ${top !== 'SELF' ? `<section><button class="ext" id="sum" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>ฝ่ายขาย · สรุปแบบย่อ</b><small>ตัวเลขสรุป ตัวกรอง iOS vs Android รายพนักงาน และร้านค้า</small></span><span aria-hidden="true">→</span></button></section>` : ''}
-    ${RANK[top] >= RANK.HUB ? `<section><button class="ext" id="mgr" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>จัดการรายชื่อพนักงาน</b><small>เพิ่มคนใหม่ · ย้ายทีม · ปิดการใช้งาน ในทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     <section id="admin"></section>
   </main>`;
 
@@ -241,7 +263,8 @@ function viewLobby(me, profile) {
     document.getElementById('dmsg').innerHTML = `<p class="msg" role="status">${esc(t)}</p>`;
   });
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
-  const sm = document.getElementById('sum'); if (sm) sm.onclick = () => viewSales();
+  const sm = document.getElementById('sum'); if (sm) sm.onclick = () => go('sales');
+  const qd = document.getElementById('qDash'); if (qd) qd.onclick = () => openDash(qd);
   renderNav('home');
   if (top === 'ALL') loadPending();
   loadSales(top);
@@ -265,17 +288,21 @@ function renderNav(active) {
   const side = document.getElementById('side'), mn = document.getElementById('mnav');
   const tag = st => st === 'soon' ? '<span class="tg">เฟส 2</span>' : st === 'lock' ? '<span class="tg">🔒</span>' : '';
   const name = ME.nick ? 'คุณ' + ME.nick : ME.name;
-  side.innerHTML = `<div class="sb-logo"><img src="logo.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
-    <button class="nv" data-k="home"><i>⌂</i>หน้าแรก</button>
+  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-s.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
+    <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
+    <button class="nv" data-k="home" title="หน้าแรก"><i>⌂</i><span class="tx">หน้าแรก</span></button>
     <div class="sb-grp">แผนก</div>
-    ${DEPTS.map((d, i) => { const st = deptState(i); return `<button class="nv ${st === 'lock' ? 'lk' : ''}" data-k="${DEPT_KEY[i]}"><i>${d.mk}</i>${esc(d.name)}${tag(st)}</button>`; }).join('')}
-    ${canManage() ? `<div class="sb-grp">จัดการ</div><button class="nv" data-k="staff"><i>👥</i>รายชื่อพนักงาน</button>` : ''}
+    ${DEPTS.map((d, i) => { const st = deptState(i); return `<button class="nv ${st === 'lock' ? 'lk' : ''}" data-k="${DEPT_KEY[i]}" title="${esc(d.name)}"><i>${st === 'lock' ? '🔒' : d.mk}</i><span class="tx">${esc(d.name)}</span>${tag(st)}</button>`; }).join('')}
+    ${canManage() ? `<div class="sb-grp">จัดการ</div><button class="nv" data-k="staff" title="รายชื่อพนักงาน"><i>👥</i><span class="tx">รายชื่อพนักงาน</span></button>` : ''}
     <div class="sb-me"><div class="av">${PROFILE && PROFILE.pictureUrl ? `<img src="${esc(PROFILE.pictureUrl)}" alt="">` : esc(String(ME.nick || ME.name).charAt(0))}</div>
       <div><b>${esc(name)}</b><small>${esc(ME.roles.map(roleLabel).join(' / '))}</small></div></div>`;
   const items = [['home', '⌂', 'หน้าแรก'], ['sales', 'ข', 'ฝ่ายขาย'], ['od', 'ห', 'ติดตามหนี้']].concat(canManage() ? [['staff', '👥', 'พนักงาน']] : []);
   mn.innerHTML = items.map(([k, ic, l]) => `<button data-k="${k}"><b>${ic}</b>${l}</button>`).join('');
   [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
-  document.querySelector('.shell').classList.add('nav'); document.body.classList.add('has-nav');
+  const sh = document.querySelector('.shell'); sh.classList.add('nav'); document.body.classList.add('has-nav');
+  let mini = false; try { mini = localStorage.getItem('voMini') === '1'; } catch (e) {}
+  const apply = () => { sh.classList.toggle('mini', mini); document.getElementById('sbArr').textContent = mini ? '»' : '«'; };
+  apply(); document.getElementById('sbTog').onclick = () => { mini = !mini; try { localStorage.setItem('voMini', mini ? '1' : '0'); } catch (e) {} apply(); };
 }
 
 /* ================= ฝ่ายขาย ================= */
@@ -293,8 +320,25 @@ async function loadSales(top) {
     set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
     const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
     set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
-    set('k0', nf(s.today.apps) + ' เคส');
-    if (top === 'HUB' || top === 'AM') set('k2', s.teams.filter(t => t.apps < t.target).length + ' ทีม');
+    const day = +String(s.latest || '').slice(8) || 1, dim = new Date(+s.month.slice(0, 4), +s.month.slice(5, 7), 0).getDate();
+    const paceT = Math.round(s.target * day / dim), pace = pct(s.mtd.apps, paceT);
+    const days = s.daily.map(d => d[1] + d[2] + d[3]), avg = days.length > 1 ? days.slice(0, -1).reduce((x, y) => x + y, 0) / (days.length - 1) : 0;
+    const diff = avg ? Math.round((s.today.apps - avg) / avg * 100) : 0;
+    set('kl0', 'เคสวันล่าสุด (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
+    set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
+    set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
+    set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
+    const items = [];
+    const low = (s.teams || []).map(t => ({ ...t, p: pct(t.apps, Math.round(t.target * day / dim)) })).filter(t => t.p < 80).sort((x, y) => x.p - y.p);
+    if (low.length) items.push(['red', `${low.length} ทีมต่ำกว่า 80% ของเป้าตามวัน`, low.slice(0, 5).map(t => `${t.code} (${t.p}%)`).join(' · '), 'people']);
+    if (avg && diff <= -20) items.push(['red', `เคสวันล่าสุดลดลง ${Math.abs(diff)}% จากค่าเฉลี่ย`, `${nf(s.today.apps)} เคส เทียบเฉลี่ย ${nf(Math.round(avg))} เคส/วัน`, 'overview']);
+    if (pace >= 100) items.push(['green', `ยอดสะสมเป็นไปตามเป้า (${pace}%)`, 'รักษาระดับนี้ต่อไป', 'overview']);
+    const idle = (s.staff || []).filter(x => !x.apps).length;
+    if (idle && s.scope !== 'SELF') items.push(['amber', `พนักงาน ${idle} คนยังไม่มีเคสเดือนนี้`, 'กดเพื่อดูรายชื่อ', 'people']);
+    const f = document.getElementById('focus');
+    if (f) { f.innerHTML = items.length ? items.map(([c, t, d, tab]) => `<button class="fi" data-tab="${tab}"><i class="dot ${c}"></i><span><b>${esc(t)}</b><small>${esc(d)}</small></span><span aria-hidden="true">→</span></button>`).join('')
+        : '<p class="empty">ไม่มีเรื่องเร่งด่วน ทุกอย่างเป็นไปตามเป้า 👍</p>';
+      f.querySelectorAll('.fi').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.tab; viewSales(); }); }
   } catch (e) { set('gv', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
 }
 
