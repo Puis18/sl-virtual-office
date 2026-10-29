@@ -91,6 +91,11 @@
   tr.click{cursor:pointer} tr.click:hover td{background:#F6F8FB}
   .ext{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:10px 16px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:0;text-decoration:none;color:var(--ink)}
   .ext b{display:block;font-size:15px;color:var(--navy)} .ext small{display:block;font-size:12px;color:var(--muted)} .ext span:last-child{font-size:20px;color:var(--navy)}
+  .search input{width:100%;min-height:46px;padding:0 14px;border:1px solid #C5CED8;border-radius:10px;font:inherit;font-size:16px;background:#fff}
+  .frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px 20px;align-items:end}
+  .frm label{font-size:13px;font-weight:600;margin:0}.frm input,.frm select{margin-top:4px}
+  select{min-height:42px;padding:0 8px;border:1px solid #C5CED8;border-radius:8px;font:inherit;font-size:14px;background:#fff;max-width:180px}
+  .frm select{width:100%;max-width:none;min-height:48px;font-size:16px}
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
@@ -179,6 +184,7 @@ function viewLobby(me, profile) {
     <section><div class="sec-h"><h2>แผนกในออฟฟิศ</h2>
       <div class="legend"><span><i style="background:var(--green)"></i>เปิดใช้งาน</span><span><i style="background:#9AA4B6"></i>เฟส 2</span><span><i style="border:1.5px solid #9AA4B6"></i>ไม่มีสิทธิ์</span></div></div>
       <div class="grid">${cards}</div><div id="dmsg"></div></section>
+    ${RANK[top] >= RANK.HUB ? `<section><button class="ext" id="mgr" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>จัดการรายชื่อพนักงาน</b><small>เพิ่มคนใหม่ · ย้ายทีม · ปิดการใช้งาน ในทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     <section id="admin"></section>
   </main>`;
 
@@ -190,6 +196,7 @@ function viewLobby(me, profile) {
             : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้';
     document.getElementById('dmsg').innerHTML = `<p class="msg" role="status">${esc(t)}</p>`;
   });
+  const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
   if (top === 'ALL') loadPending();
   loadSales(top);
 }
@@ -245,6 +252,7 @@ function viewSales() {
   const box = document.getElementById('tab');
   box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
   box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { SALES_TEAM = tr.dataset.team; SALES_TAB = 'people'; viewSales(); });
+  bindSearch();
   const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
 }
 
@@ -276,11 +284,12 @@ function teamTable(list, title) {
 }
 
 function tabPeople(s) {
-  const staff = s.staff.filter(x => !SALES_TEAM || x.team === SALES_TEAM);
+  const staff = s.staff.filter(x => (!SALES_TEAM || x.team === SALES_TEAM) && qMatch(x.name, x.team));
   const rows = staff.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
     <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${nf(x.ios)} / ${nf(x.android)}</td><td class="n">${pct(x.apps, 30)}%</td></tr>`).join('');
   const t = SALES_TEAM && s.teams.find(x => x.code === SALES_TEAM);
-  return `${!SALES_TEAM && s.teams.length ? teamTable(s.teams, `ทุกทีม (${s.teams.length})`) : ''}
+  const tl = s.teams.filter(t => qMatch(t.code, t.name));
+  return `${searchBox('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน')}${!SALES_TEAM && tl.length ? teamTable(tl, `ทุกทีม (${tl.length})`) : ''}
   <section class="card"><div class="hd"><h2>${SALES_TEAM ? 'พนักงานทีม ' + esc(SALES_TEAM) : s.scope === 'SELF' ? 'ยอดของฉัน' : 'อันดับพนักงาน'}</h2>
     ${SALES_TEAM ? '<button class="btn no" id="clr">ดูทุกทีม</button>' : ''}</div>
     ${t ? `<p class="empty">${esc(t.name)} · ทีมสะสม ${nf(t.apps)} เคส (พนักงาน ${nf(t.emp)} · ร้านทำเอง ${nf(t.dlr)})</p>` : ''}
@@ -307,11 +316,86 @@ function tabOS(s) {
 }
 
 function tabShops(s) {
-  const rows = s.shops.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
+  const rows = s.shops.filter(x => qMatch(x.shop, x.team)).map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
     <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${mb(x.amt)}</td><td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td></tr>`).join('');
-  return `<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
+  return `${searchBox('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
     <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
+}
+
+/* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
+let SALES_Q = '';
+const topScope = () => ME.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
+const canManage = () => RANK[topScope()] >= RANK.HUB;
+const qMatch = (...xs) => !SALES_Q || xs.some(x => String(x || '').toLowerCase().includes(SALES_Q.toLowerCase()));
+function searchBox(ph) {
+  if (!canManage()) return '';
+  return `<div class="search"><input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา"></div>`;
+}
+function bindSearch() {
+  const q = document.getElementById('q'); if (!q) return;
+  q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; viewSales(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
+}
+
+let STAFF;
+async function viewStaff(msg) {
+  window.scrollTo(0, 0);
+  app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
+    <h1>จัดการรายชื่อพนักงาน</h1><small>เพิ่มคนใหม่ · ย้ายทีม/เปลี่ยนตำแหน่ง · ปิดการใช้งาน — ทุกการแก้ไขถูกบันทึกในชีต AuditLog</small></div></div></section>
+    <main class="wrap" id="sm"><div class="skel"></div></main>`;
+  document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
+  try { STAFF = await api('staffList'); } catch (e) { document.getElementById('sm').innerHTML = `<p class="msg">${esc(say(e))}</p>`; return; }
+  renderStaff(msg);
+}
+function renderStaff(msg) {
+  const d = STAFF, q = (document.getElementById('sq') || {}).value || '';
+  const teamOpt = sel => d.teams.map(t => `<option value="${esc(t.code)}"${t.code === sel ? ' selected' : ''}>${esc(t.code)} · ${esc(t.name)}</option>`).join('');
+  const roleOpt = sel => d.roles.map(r => `<option${r === sel ? ' selected' : ''}>${r}</option>`).join('');
+  const list = d.staff.filter(s => !q || [s.emp, s.name, s.nick, s.team].some(x => String(x).toLowerCase().includes(q.toLowerCase())));
+  document.getElementById('sm').innerHTML = `
+    ${msg ? `<p class="msg" role="status">${esc(msg)}</p>` : ''}
+    <section class="card"><div class="hd"><h2>เพิ่มพนักงานใหม่</h2></div>
+      <form class="frm" id="add">
+        <label>รหัสพนักงาน<input name="emp" inputmode="numeric" required></label>
+        <label>ชื่อ-นามสกุล<input name="name" required></label>
+        <label>ชื่อเล่น<input name="nick"></label>
+        <label>ตำแหน่ง<select name="role">${roleOpt('CK')}</select></label>
+        <label>ทีม<select name="team">${teamOpt('')}</select></label>
+        <button class="btn ok" type="submit">เพิ่ม</button><div class="err" id="adderr" role="alert"></div>
+      </form></section>
+    <section class="card"><div class="hd"><h2>พนักงานในทีมที่คุณดูแล (${list.length})</h2></div>
+      <div class="search" style="padding:12px 20px 0"><input id="sq" type="search" placeholder="ค้นหารหัส ชื่อ ชื่อเล่น หรือทีม" value="${esc(q)}"></div>
+      <div class="tw"><table><thead><tr><th>พนักงาน</th><th>ตำแหน่ง</th><th>ทีม</th><th></th></tr></thead><tbody>
+      ${list.map(s => `<tr data-emp="${esc(s.emp)}"><td><b>${esc(s.name)}</b><small>${esc(s.emp)}${s.nick ? ' · ' + esc(s.nick) : ''} · ${s.access === 'APPROVED' ? 'เข้าระบบแล้ว' : s.linked ? 'รออนุมัติ' : 'ยังไม่ลงทะเบียน'}</small></td>
+        <td><select class="r">${roleOpt(s.role)}</select></td><td><select class="t">${teamOpt(s.team)}</select></td>
+        <td style="white-space:nowrap"><button class="btn ok sv">บันทึก</button> <button class="btn no rm">ปิด</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">ไม่พบรายชื่อ</td></tr>'}
+      </tbody></table></div></section>`;
+  const sq = document.getElementById('sq');
+  sq.oninput = () => { const p = sq.selectionStart; renderStaff(); const n = document.getElementById('sq'); n.focus(); n.setSelectionRange(p, p); };
+  document.getElementById('add').onsubmit = async ev => {
+    ev.preventDefault(); const f = new FormData(ev.target), err = document.getElementById('adderr');
+    if (!f.get('emp').trim() || !f.get('name').trim()) { err.textContent = 'กรุณากรอกรหัสและชื่อ'; return; }
+    err.textContent = 'กำลังบันทึก…';
+    try { await api('staffSave', { op: 'ADD', emp: f.get('emp').trim(), name: f.get('name'), nick: f.get('nick'), role: f.get('role'), team: f.get('team') });
+      viewStaff('เพิ่ม ' + f.get('name') + ' แล้ว — ส่งลิงก์ LINE ให้ลงทะเบียน แล้วอนุมัติได้เลย'); }
+    catch (e) { err.textContent = say(e); }
+  };
+  document.querySelectorAll('tr[data-emp]').forEach(tr => {
+    const emp = tr.dataset.emp, s = d.staff.find(x => x.emp === emp);
+    tr.querySelector('.sv').onclick = async b => {
+      const role = tr.querySelector('.r').value, team = tr.querySelector('.t').value;
+      if (role === s.role && team === s.team) return;
+      b.target.disabled = true;
+      try { await api('staffSave', { op: 'MOVE', emp, role, team }); viewStaff(`${s.name}: ${s.role} ${s.team} → ${role} ${team}`); }
+      catch (e) { alert(say(e)); b.target.disabled = false; }
+    };
+    tr.querySelector('.rm').onclick = async b => {
+      if (!confirm(`ปิดการใช้งาน ${s.name}? (คนนี้จะเข้าระบบไม่ได้ และหายจากรายชื่อทีม)`)) return;
+      b.target.disabled = true;
+      try { await api('staffSave', { op: 'REMOVE', emp }); viewStaff('ปิดการใช้งาน ' + s.name + ' แล้ว'); }
+      catch (e) { alert(say(e)); b.target.disabled = false; }
+    };
+  });
 }
 
 async function loadPending() {
