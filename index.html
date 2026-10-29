@@ -369,7 +369,8 @@ function filterBar(ph) {
   const uniq = k => [...new Set(s.teams.map(t => t[k]).filter(Boolean))].sort();
   const opt = (v, cur, label) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label || v)}</option>`;
   const teams = s.teams.filter(t => (!SALES_AM || t.am === SALES_AM) && (!SALES_HUB || t.hub === SALES_HUB)).sort((a, b) => a.code.localeCompare(b.code));
-  const ams = uniq('am'), hubs = uniq('hub');
+  const ams = uniq('am');
+  const hubs = [...new Set(s.teams.filter(t => !SALES_AM || t.am === SALES_AM).map(t => t.hub).filter(Boolean))].sort();   // HUB เฉพาะใน AM ที่เลือก
   return `<div class="fbar">
     ${canManage() ? `<input id="q" type="search" placeholder="${ph}" value="${esc(SALES_Q)}" aria-label="ค้นหา">` : ''}
     ${ams.length > 1 ? `<select id="fam" aria-label="AM">${opt('', SALES_AM, 'ทุก AM')}${ams.map(a => opt(a, SALES_AM)).join('')}</select>` : ''}
