@@ -154,7 +154,7 @@ function roleLabel(r) {
 
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
-  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dealer Monthly · อันดับทีม', phase:1, min:'SELF' },
+  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily (ตามสิทธิ์) · Dealer · Brands · Hub Master', phase:1, min:'SELF' },
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'OD Dashboard · Collection Follow-up', phase:1, min:'SELF' },
   { mk:'D', name:'ฝ่ายพัฒนา Dealer', desc:'TM Field Visit · Hub RM Calendar · Showroom', phase:2, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'นโยบาย Dealer · เงื่อนไข MO / EA · โบรชัวร์', phase:2, min:'SELF' },
@@ -204,19 +204,21 @@ function viewLobby(me, profile) {
     <section><div class="sec-h"><h2>แผนกในออฟฟิศ</h2>
       <div class="legend"><span><i style="background:var(--green)"></i>เปิดใช้งาน</span><span><i style="background:#9AA4B6"></i>เฟส 2</span><span><i style="border:1.5px solid #9AA4B6"></i>ไม่มีสิทธิ์</span></div></div>
       <div class="grid">${cards}</div><div id="dmsg"></div></section>
+    ${top !== 'SELF' ? `<section><button class="ext" id="sum" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>ฝ่ายขาย · สรุปแบบย่อ</b><small>ตัวเลขสรุป ตัวกรอง iOS vs Android รายพนักงาน และร้านค้า</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     ${RANK[top] >= RANK.HUB ? `<section><button class="ext" id="mgr" style="width:100%;font:inherit;cursor:pointer;text-align:left"><span><b>จัดการรายชื่อพนักงาน</b><small>เพิ่มคนใหม่ · ย้ายทีม · ปิดการใช้งาน ในทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></section>` : ''}
     <section id="admin"></section>
   </main>`;
 
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
-    if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { viewSales(); return; }
+    if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { top === 'SELF' ? viewSales() : openDash(b); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
             : st === 'เฟส 2' ? d.name + ' จะเปิดใช้ในเฟส 2'
             : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้';
     document.getElementById('dmsg').innerHTML = `<p class="msg" role="status">${esc(t)}</p>`;
   });
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
+  const sm = document.getElementById('sum'); if (sm) sm.onclick = () => viewSales();
   if (top === 'ALL') loadPending();
   loadSales(top);
 }
@@ -357,7 +359,8 @@ function tabShops(s) {
 /* ================= Dashboard Daily ตามสิทธิ์ (TM ขึ้นไป) ================= */
 const DASH_BASE = 'https://puis18.github.io/sleasing-dashboard/vo/';
 async function openDash(btn) {
-  const msg = t => { const m = document.getElementById('dashmsg'); if (m) m.textContent = t; };
+  const msg = t => { const m = document.getElementById('dashmsg'); if (m) m.textContent = t;
+    const d = document.getElementById('dmsg'); if (d && !m) d.innerHTML = `<p class="msg" role="status">${esc(t)}</p>`; };
   if (btn) btn.disabled = true;
   try {
     msg('กำลังตรวจสิทธิ์…');
