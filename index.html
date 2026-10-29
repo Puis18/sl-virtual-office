@@ -432,7 +432,9 @@ function viewSales() {
   app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.t; viewSales(); });
   const box = document.getElementById('tab');
   box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
-  box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { SALES_TEAM = tr.dataset.team; if (SALES_TAB === 'overview') SALES_TAB = 'people'; viewSales(); });
+  box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { const t = teamOf(tr.dataset.team); SALES_TEAM = tr.dataset.team; SALES_AM = t.am || SALES_AM; SALES_HUB = t.hub || SALES_HUB; viewSales(); });
+  box.querySelectorAll('tr[data-am]').forEach(tr => tr.onclick = () => { SALES_AM = tr.dataset.am; SALES_HUB = SALES_TEAM = ''; viewSales(); });
+  box.querySelectorAll('tr[data-hub]').forEach(tr => tr.onclick = () => { SALES_HUB = tr.dataset.hub; SALES_TEAM = ''; viewSales(); });
   bindSearch();
   const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
 }
@@ -451,9 +453,31 @@ function tabOverview(s) {
   </section>
   <section class="card"><div class="hd"><h2>จำนวนเคสรายวัน</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
     <div class="days">${bars || '<p class="empty">ยังไม่มีข้อมูล</p>'}</div></section>
-  ${s.teams.length ? teamTable(s.teams.slice(0, 10), 'ทีมสูงสุด 10 อันดับ (กดที่ทีมเพื่อดูพนักงาน)') : ''}`;
+  ${drill(s)}`;
 }
 
+
+// เจาะลงทีละชั้นแบบ Dashboard Daily: ทั้งหมด → AM → Hub → ทีม → พนักงาน
+function drill(s) {
+  if (s.scope === 'SELF') return '';
+  if (SALES_TEAM) {
+    const st = sortBy(s.staff.filter(x => x.team === SALES_TEAM));
+    return staffTable(st, 'พนักงานทีม ' + esc(SALES_TEAM));
+  }
+  const group = (key, label) => {
+    const g = {};
+    s.teams.forEach(t => { const k = t[key] || '—'; const o = g[k] = g[k] || { k, n: 0, apps: 0, today: 0, ios: 0, target: 0 };
+      o.n++; o.apps += t.apps; o.today += t.today || 0; o.ios += t.ios || 0; o.target += t.target || 0; });
+    const rows = Object.values(g).sort((a, b) => b.apps - a.apps).map(o => `<tr class="click" data-${key}="${esc(o.k)}"><td><b>${esc(o.k)}</b><small>${o.n} ทีม</small></td>
+      <td class="n">${nf(o.today)}</td><td class="n">${nf(o.apps)}</td><td class="n">${pctTxt(o.ios, o.apps)}</td>
+      <td>${o.target ? `<div class="pc"><div class="mini"><i style="width:${Math.min(100, pct(o.apps, o.target))}%;background:${o.apps >= o.target ? 'var(--green)' : 'var(--navy)'}"></i></div><span>${pct(o.apps, o.target)}%</span></div>` : '<small>ไม่มีเป้า (MC)</small>'}</td></tr>`).join('');
+    return `<section class="card"><div class="hd"><h2>${label} (กดเพื่อเจาะดู)</h2></div><div class="tw"><table><thead><tr><th>${key === 'am' ? 'AM' : 'Hub'}</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">iOS</th><th>เทียบเป้า</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+  };
+  if (SALES_HUB) return teamTable(sortBy(s.teams), `ทีมใน ${esc(SALES_HUB)} (กดที่ทีมเพื่อดูพนักงาน)`);
+  if (SALES_AM) return group('hub', 'Hub ใน ' + esc(SALES_AM)) + teamTable(sortBy(s.teams), `ทีมใน ${esc(SALES_AM)}`);
+  const ams = new Set(s.teams.map(t => t.am));
+  return (ams.size > 1 ? group('am', 'สรุปราย AM') : '') + (s.teams.length ? teamTable(s.teams.slice(0, 10), 'ทีมสูงสุด 10 อันดับ (กดที่ทีมเพื่อดูพนักงาน)') : '');
+}
 function teamTable(list, title) {
   const rows = list.map((t, i) => {
     const tp = pct(t.apps, t.target);
