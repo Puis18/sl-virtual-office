@@ -138,7 +138,8 @@ async function api(action, extra = {}) {
 }
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
-  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้'
+  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
+  DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
 
@@ -262,11 +263,12 @@ function viewSales() {
       <div class="bar"><div style="height:8px;border-radius:4px;background:var(--green);width:${Math.min(p, 100)}%"></div></div>
       <p>เป้า ${s.scope === 'SELF' ? '30 เคส/คน' : '500 เคส/ทีม'} ต่อเดือน</p></div>
   </div></section>
-  <div class="wrap" style="padding-top:14px"><a class="ext" href="https://puis18.github.io/sleasing-dashboard/" target="_blank" rel="noopener">
-    <span><b>เปิด Dashboard Daily</b><small>ดูรายละเอียดเชิงลึกทุกมุมมอง (แสดงทุกทีม ไม่ได้คัดตามสิทธิ์)</small></span><span aria-hidden="true">↗</span></a></div>
+  ${s.scope !== 'SELF' ? `<div class="wrap" style="padding-top:14px"><button class="ext" id="dash" style="width:100%;font:inherit;cursor:pointer;text-align:left">
+    <span><b>เปิด Dashboard Daily (ตามสิทธิ์ของคุณ)</b><small id="dashmsg">ทุกหน้าเหมือนเดิม เห็นเฉพาะทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></div>` : ''}
   <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
   <main class="wrap" id="tab"></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
+  const db = document.getElementById('dash'); if (db) db.onclick = () => openDash(db);
   app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.t; viewSales(); });
   const box = document.getElementById('tab');
   box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
@@ -350,6 +352,42 @@ function tabShops(s) {
   return `${filterBar('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
     <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
+}
+
+/* ================= Dashboard Daily ตามสิทธิ์ (TM ขึ้นไป) ================= */
+const DASH_BASE = 'https://puis18.github.io/sleasing-dashboard/vo/';
+async function openDash(btn) {
+  const msg = t => { const m = document.getElementById('dashmsg'); if (m) m.textContent = t; };
+  if (btn) btn.disabled = true;
+  try {
+    msg('กำลังตรวจสิทธิ์…');
+    const k = await api('dashKeys');
+    const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    const open1 = async (file, key) => {
+      const r = await fetch(DASH_BASE + file + '?v=' + k.build); if (!r.ok) throw new Error('โหลดไฟล์ไม่สำเร็จ (' + r.status + ')');
+      const buf = new Uint8Array(await r.arrayBuffer());
+      const ck = await crypto.subtle.importKey('raw', b64(key), 'AES-GCM', false, ['decrypt']);
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, ck, buf.slice(12));
+      return JSON.parse(await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+    };
+    const codes = Object.keys(k.teams);
+    let done = 0;
+    msg(`กำลังโหลดข้อมูล ${codes.length} ทีม…`);
+    const [common, ...parts] = await Promise.all([open1('common.bin', k.common),
+      ...codes.map(c => open1('t_' + c + '.bin', k.teams[c]).then(x => { msg(`กำลังโหลดข้อมูล ${++done}/${codes.length} ทีม…`); return x; }))]);
+    const records = [].concat(...parts);
+    const keep = (list, f) => { const set = new Set(records.map(r => r[f])); return (list || []).filter(x => set.has(x)); };
+    // รายการตัวเลือกให้เหลือเฉพาะที่อยู่ในสิทธิ์
+    common.teams = keep(common.teams, 'team_name_en');
+    common.marketings = keep(common.marketings, 'marketing_fullname');
+    common.dealers = keep(common.dealers, 'dealer_name_en');
+    common.showrooms = keep(common.showrooms, 'showroom_name_en');
+    common.records = records;
+    msg('กำลังเปิด Dashboard…');
+    const shell = await (await fetch(DASH_BASE + 'shell.html?v=' + k.build)).text();
+    window.__VO_PAYLOAD__ = common;
+    document.open(); document.write(shell); document.close();
+  } catch (e) { msg(say(e)); if (btn) btn.disabled = false; }
 }
 
 /* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
