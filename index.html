@@ -68,7 +68,7 @@
   .back{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;min-height:40px;padding:0 14px;margin-bottom:10px;font-size:14px}
   .days{display:flex;align-items:flex-end;gap:4px;height:160px;padding:16px 20px 8px;overflow-x:auto}
   .db{flex:1 0 14px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
-  .db i{display:block;width:100%;background:var(--navy);border-radius:3px 3px 0 0}
+  
   .db span{font-size:10px;color:var(--muted)}
   .tw{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:14px}
@@ -79,6 +79,16 @@
   .pc{display:flex;align-items:center;gap:8px;min-width:120px}
   .mini{flex:1;height:6px;border-radius:3px;background:#E3E8F0;overflow:hidden}.mini i{display:block;height:6px}
   .pc span{font-family:Inter,sans-serif;font-size:13px;width:40px;text-align:right}
+  .tabs{display:flex;gap:4px;overflow-x:auto;padding-top:14px;padding-bottom:0;border-bottom:1px solid var(--line)}
+  .tabs button{background:transparent;border:none;padding:10px 14px;min-height:44px;font-size:15px;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent}
+  .tabs button[aria-selected=true]{color:var(--navy);font-weight:700;border-bottom-color:var(--red)}
+  .stk{width:100%;display:flex;flex-direction:column;border-radius:3px 3px 0 0;overflow:hidden}.stk i{display:block;width:100%}
+  .ios{background:var(--navy)}.and{background:#3E9A6A}.oth{background:#B4BCC9}
+  .osbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#E3E8F0;flex:1}.osbar i{display:block;height:10px}
+  .osc{display:flex;align-items:center;gap:8px;min-width:130px}.osc span{font-family:Inter,sans-serif;font-size:13px;width:40px;text-align:right}
+  .lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+  .kpi .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  tr.click{cursor:pointer} tr.click:hover td{background:#F6F8FB}
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
@@ -202,26 +212,19 @@ async function loadSales(top) {
   } catch (e) { set('gv', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
 }
 
+let SALES_TAB = 'overview', SALES_TEAM = '';
+const osBar = (ios, and, oth) => {
+  const t = ios + and + oth || 1;
+  return `<div class="osbar"><i class="ios" style="width:${ios / t * 100}%"></i><i class="and" style="width:${and / t * 100}%"></i><i class="oth" style="width:${oth / t * 100}%"></i></div>`;
+};
+const pctTxt = (a, t) => t ? Math.round(a / t * 100) + '%' : '—';
+
 function viewSales() {
   const s = SALES;
   if (!s) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
   window.scrollTo(0, 0);
   const p = pct(s.mtd.apps, s.target);
-  const maxDay = Math.max(1, ...s.daily.map(d => d[1]));
-  const bars = s.daily.map(([d, n]) => `<div class="db" title="${esc(thDay(d))}: ${nf(n)} เคส">
-      <i style="height:${Math.max(2, Math.round(n / maxDay * 100))}%"></i><span>${+d.slice(8)}</span></div>`).join('');
-  const teamRows = s.teams.map((t, i) => {
-    const tp = pct(t.apps, t.target);
-    return `<tr><td>${i + 1}</td><td><b>${esc(t.code)}</b><small>${esc(t.name)}</small></td>
-      <td class="n">${nf(t.today)}</td><td class="n">${nf(t.apps)}</td>
-      <td class="pc"><div class="mini"><i style="width:${Math.min(tp, 100)}%;background:${tp >= 100 ? 'var(--green)' : tp >= 70 ? 'var(--navy)' : 'var(--red)'}"></i></div><span>${tp}%</span></td></tr>`;
-  }).join('');
-  const staffRows = s.staff.map((x, i) => {
-    const sp = pct(x.apps, 30);
-    return `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
-      <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${sp}%</td></tr>`;
-  }).join('');
-
+  const tabs = [['overview', 'ภาพรวม'], ['people', s.scope === 'SELF' ? 'ยอดของฉัน' : 'ทีม / พนักงาน'], ['os', 'iOS vs Android'], ['shops', 'ร้านค้า']];
   app.innerHTML = `
   <section class="hero"><div class="wrap">
     <div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
@@ -231,21 +234,80 @@ function viewSales() {
       <div class="bar"><div style="height:8px;border-radius:4px;background:var(--green);width:${Math.min(p, 100)}%"></div></div>
       <p>เป้า ${s.scope === 'SELF' ? '30 เคส/คน' : '500 เคส/ทีม'} ต่อเดือน</p></div>
   </div></section>
-  <main class="wrap">
-    <section class="kpis">
-      <div class="kpi"><span>เคสวันล่าสุด (${esc(thDay(s.latest))})</span><b style="color:var(--ink)">${nf(s.today.apps)}</b></div>
-      <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
-      <div class="kpi"><span>ยอดจัดสะสมเดือนนี้</span><b style="color:var(--ink)">${mb(s.mtd.amt)}</b></div>
-    </section>
-    <section class="card"><div class="hd"><h2>จำนวนเคสรายวัน</h2></div><div class="days">${bars || '<p class="empty">ยังไม่มีข้อมูล</p>'}</div></section>
-    ${s.teams.length ? `<section class="card"><div class="hd"><h2>อันดับทีม (${s.teams.length})</h2></div><div class="tw"><table>
-      <thead><tr><th>#</th><th>ทีม</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th>เทียบเป้า</th></tr></thead><tbody>${teamRows}</tbody></table></div></section>` : ''}
-    <section class="card"><div class="hd"><h2>${s.scope === 'SELF' ? 'ยอดของคุณ' : 'อันดับพนักงาน'}</h2></div><div class="tw"><table>
-      <thead><tr><th>#</th><th>พนักงาน</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">เทียบเป้า</th></tr></thead>
-      <tbody>${staffRows || '<tr><td colspan="5" class="empty">ไม่พบยอดของคุณในเดือนนี้</td></tr>'}</tbody></table></div>
-      <p class="empty">นับเฉพาะเคสที่บันทึกในชื่อพนักงาน (ไม่รวมเคสที่ร้านค้าทำเอง) · ยอดทีมรวมทุกเคส</p></section>
-  </main>`;
+  <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
+  <main class="wrap" id="tab"></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.t; viewSales(); });
+  const box = document.getElementById('tab');
+  box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
+  box.querySelectorAll('tr[data-team]').forEach(tr => tr.onclick = () => { SALES_TEAM = tr.dataset.team; SALES_TAB = 'people'; viewSales(); });
+  const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
+}
+
+function tabOverview(s) {
+  const max = Math.max(1, ...s.daily.map(d => d[1] + d[2] + d[3]));
+  const bars = s.daily.map(([d, i, a, o]) => `<div class="db" title="${esc(thDay(d))}: ${nf(i + a + o)} เคส (iOS ${nf(i)} · Android ${nf(a)})">
+    <div class="stk" style="height:${Math.max(2, (i + a + o) / max * 100)}%"><i class="oth" style="flex:${o}"></i><i class="and" style="flex:${a}"></i><i class="ios" style="flex:${i}"></i></div><span>${+d.slice(8)}</span></div>`).join('');
+  return `
+  <section class="kpis">
+    <div class="kpi"><span>เคสวันล่าสุด (${esc(thDay(s.latest))})</span><b style="color:var(--ink)">${nf(s.today.apps)}</b></div>
+    <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
+    <div class="kpi"><span>ยอดจัดสะสมเดือนนี้</span><b style="color:var(--ink)">${mb(s.mtd.amt)}</b></div>
+    <div class="kpi"><span>สัดส่วน iOS</span><b style="color:var(--ink)">${pctTxt(s.mtd.ios, s.mtd.apps)}</b></div>
+  </section>
+  <section class="card"><div class="hd"><h2>จำนวนเคสรายวัน</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
+    <div class="days">${bars || '<p class="empty">ยังไม่มีข้อมูล</p>'}</div></section>
+  ${s.teams.length ? teamTable(s.teams.slice(0, 10), 'ทีมสูงสุด 10 อันดับ (กดที่ทีมเพื่อดูพนักงาน)') : ''}`;
+}
+
+function teamTable(list, title) {
+  const rows = list.map((t, i) => {
+    const tp = pct(t.apps, t.target);
+    return `<tr data-team="${esc(t.code)}" class="click"><td>${i + 1}</td><td><b>${esc(t.code)}</b><small>${esc(t.name)}</small></td>
+      <td class="n">${nf(t.today)}</td><td class="n">${nf(t.apps)}</td><td class="n">${nf(t.emp)} / ${nf(t.dlr)}</td>
+      <td class="pc"><div class="mini"><i style="width:${Math.min(tp, 100)}%;background:${tp >= 100 ? 'var(--green)' : tp >= 70 ? 'var(--navy)' : 'var(--red)'}"></i></div><span>${tp}%</span></td></tr>`;
+  }).join('');
+  return `<section class="card"><div class="hd"><h2>${title}</h2></div><div class="tw"><table>
+    <thead><tr><th>#</th><th>ทีม</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">พนักงาน / ร้าน</th><th>เทียบเป้า</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
+function tabPeople(s) {
+  const staff = s.staff.filter(x => !SALES_TEAM || x.team === SALES_TEAM);
+  const rows = staff.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
+    <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${nf(x.ios)} / ${nf(x.android)}</td><td class="n">${pct(x.apps, 30)}%</td></tr>`).join('');
+  const t = SALES_TEAM && s.teams.find(x => x.code === SALES_TEAM);
+  return `${!SALES_TEAM && s.teams.length ? teamTable(s.teams, `ทุกทีม (${s.teams.length})`) : ''}
+  <section class="card"><div class="hd"><h2>${SALES_TEAM ? 'พนักงานทีม ' + esc(SALES_TEAM) : s.scope === 'SELF' ? 'ยอดของฉัน' : 'อันดับพนักงาน'}</h2>
+    ${SALES_TEAM ? '<button class="btn no" id="clr">ดูทุกทีม</button>' : ''}</div>
+    ${t ? `<p class="empty">${esc(t.name)} · ทีมสะสม ${nf(t.apps)} เคส (พนักงาน ${nf(t.emp)} · ร้านทำเอง ${nf(t.dlr)})</p>` : ''}
+    <div class="tw"><table><thead><tr><th>#</th><th>พนักงาน</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">iOS / Android</th><th class="n">เทียบเป้า</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="empty">ไม่พบยอดในเดือนนี้</td></tr>'}</tbody></table></div>
+    <p class="empty">นับเฉพาะเคสที่บันทึกในชื่อพนักงาน · เป้า 30 เคส/คน/เดือน</p></section>`;
+}
+
+function tabOS(s) {
+  const m = s.mtd, tot = m.ios + m.android + m.other;
+  const rows = (s.teams.length ? s.teams : []).slice().sort((a, b) => b.ios / (b.apps || 1) - a.ios / (a.apps || 1)).map(t => `<tr data-team="${esc(t.code)}" class="click">
+    <td><b>${esc(t.code)}</b><small>${esc(t.name)}</small></td><td class="n">${nf(t.ios)}</td><td class="n">${nf(t.android)}</td>
+    <td class="osc">${osBar(t.ios, t.android, t.other)}<span>${pctTxt(t.ios, t.apps)}</span></td></tr>`).join('');
+  return `
+  <section class="kpis">
+    <div class="kpi"><span>iOS (Apple)</span><b style="color:var(--navy)">${nf(m.ios)}</b><small class="sub">${pctTxt(m.ios, tot)} ของเคสทั้งหมด</small></div>
+    <div class="kpi"><span>Android</span><b style="color:var(--green)">${nf(m.android)}</b><small class="sub">${pctTxt(m.android, tot)} ของเคสทั้งหมด</small></div>
+    ${m.other ? `<div class="kpi"><span>อื่น ๆ (ไม่ใช่มือถือ)</span><b style="color:var(--ink)">${nf(m.other)}</b><small class="sub">${pctTxt(m.other, tot)}</small></div>` : ''}
+  </section>
+  <section class="card"><div class="hd"><h2>สัดส่วนรวม</h2><div class="legend"><span><i class="lg ios"></i>iOS</span><span><i class="lg and"></i>Android</span></div></div>
+    <div style="padding:16px 20px">${osBar(m.ios, m.android, m.other)}</div></section>
+  ${rows ? `<section class="card"><div class="hd"><h2>รายทีม (เรียงตามสัดส่วน iOS)</h2></div><div class="tw"><table>
+    <thead><tr><th>ทีม</th><th class="n">iOS</th><th class="n">Android</th><th>สัดส่วน iOS</th></tr></thead><tbody>${rows}</tbody></table></div></section>` : ''}`;
+}
+
+function tabShops(s) {
+  const rows = s.shops.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
+    <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${mb(x.amt)}</td><td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td></tr>`).join('');
+  return `<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
+    <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
 }
 
 async function loadPending() {
