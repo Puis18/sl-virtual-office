@@ -532,9 +532,10 @@ function tabOS(s) {
 }
 
 function tabShops(s) {
-  const rows = sortBy(s.shops.filter(x => inFilter(x.team) && qMatch(x.shop, x.team))).map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
+  const sl = sortBy(s.shops.filter(x => inFilter(x.team) && qMatch(x.shop, x.team)));
+  const rows = sl.map((x, i) => `<tr><td>${i + 1}</td><td><b>${esc(x.shop)}</b><small>${esc(x.team)}</small></td>
     <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${mb(x.amt)}</td><td class="osc">${osBar(x.ios, x.android, x.other)}<span>${pctTxt(x.ios, x.apps)}</span></td></tr>`).join('');
-  return `${filterBar('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านที่มียอดสูงสุด ${s.shops.length} อันดับ</h2></div><div class="tw"><table>
+  return `${filterBar('ค้นหาชื่อร้าน สาขา หรือรหัสทีม')}<section class="card"><div class="hd"><h2>ร้านค้า ${nf(sl.length)} ร้าน <small style="font-weight:400;color:var(--muted);font-size:13px">· แสดงร้านที่ทำยอดสูงสุดไม่เกิน 40 ร้านต่อทีม</small></h2></div><div class="tw"><table>
     <thead><tr><th>#</th><th>ร้าน · สาขา</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">ยอดจัด</th><th>iOS</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>'}</tbody></table></div></section>`;
 }
