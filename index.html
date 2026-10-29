@@ -65,6 +65,20 @@
   .err{color:var(--red);font-size:14px;margin-top:8px;min-height:20px}
   .skel{height:120px;border-radius:12px;background:linear-gradient(90deg,#E8ECF2,#F3F5F9,#E8ECF2);background-size:200% 100%;animation:sk 1.2s infinite}
   @keyframes sk{to{background-position:-200% 0}}
+  .back{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;min-height:40px;padding:0 14px;margin-bottom:10px;font-size:14px}
+  .days{display:flex;align-items:flex-end;gap:4px;height:160px;padding:16px 20px 8px;overflow-x:auto}
+  .db{flex:1 0 14px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+  .db i{display:block;width:100%;background:var(--navy);border-radius:3px 3px 0 0}
+  .db span{font-size:10px;color:var(--muted)}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:10px 12px;border-bottom:1px solid #EEF1F5;vertical-align:middle}
+  td small{display:block;color:var(--muted);font-size:12px;max-width:min(260px,38vw);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .n{text-align:right;font-family:Inter,sans-serif;white-space:nowrap}
+  .pc{display:flex;align-items:center;gap:8px;min-width:120px}
+  .mini{flex:1;height:6px;border-radius:3px;background:#E3E8F0;overflow:hidden}.mini i{display:block;height:6px}
+  .pc span{font-family:Inter,sans-serif;font-size:13px;width:40px;text-align:right}
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
@@ -124,7 +138,9 @@ function thaiDate() {
   return new Date().toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 }
 
+let ME, PROFILE, SALES;
 function viewLobby(me, profile) {
+  ME = me; PROFILE = profile; window.scrollTo(0, 0);
   const top = me.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
   const name = me.nick || me.name;
   document.getElementById('who').innerHTML = `<div class="t"><b>${esc(me.name)}</b><small>${esc(me.roles.map(r=>ROLE_TH[r.role]||r.role).join(' / '))}</small></div>
@@ -141,13 +157,13 @@ function viewLobby(me, profile) {
   app.innerHTML = `
   <section class="hero"><div class="wrap">
     <div class="l"><small>${esc(thaiDate())}</small>
-      <h1>สวัสดีครับ คุณ${esc(name)}</h1>
+      <h1>สวัสดี คุณ${esc(name)}</h1>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
-      <div class="v">—</div><div class="bar"></div><p>ตัวเลขจะเริ่มแสดงเมื่อเชื่อมข้อมูลยอดขาย (เฟสถัดไป)</p></div>
+      <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
   </div></section>
   <main class="wrap">
-    <section class="kpis" aria-label="ตัวเลขสำคัญ">${KPI[top].map(k => `<div class="kpi"><span>${k}</span><b>—</b></div>`).join('')}</section>
+    <section class="kpis" aria-label="ตัวเลขสำคัญ">${KPI[top].map((k,i) => `<div class="kpi"><span>${k}</span><b id="k${i}">—</b></div>`).join('')}</section>
     <section><div class="sec-h"><h2>แผนกในออฟฟิศ</h2>
       <div class="legend"><span><i style="background:var(--green)"></i>เปิดใช้งาน</span><span><i style="background:#9AA4B6"></i>เฟส 2</span><span><i style="border:1.5px solid #9AA4B6"></i>ไม่มีสิทธิ์</span></div></div>
       <div class="grid">${cards}</div><div id="dmsg"></div></section>
@@ -156,12 +172,80 @@ function viewLobby(me, profile) {
 
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
+    if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { viewSales(); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
             : st === 'เฟส 2' ? d.name + ' จะเปิดใช้ในเฟส 2'
             : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้';
     document.getElementById('dmsg').innerHTML = `<p class="msg" role="status">${esc(t)}</p>`;
   });
   if (top === 'ALL') loadPending();
+  loadSales(top);
+}
+
+/* ================= ฝ่ายขาย ================= */
+const nf = n => Number(n || 0).toLocaleString('th-TH');
+const mb = n => (Number(n || 0) / 1e6).toLocaleString('th-TH', { maximumFractionDigits: 2 }) + ' ลบ.';
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const thDay = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '—';
+const thMonth = m => m ? new Date(m + '-01T00:00:00').toLocaleDateString('th-TH', { month: 'long', year: 'numeric' }) : '';
+const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+async function loadSales(top) {
+  try {
+    SALES = SALES || await api('sales');
+    const s = SALES, p = pct(s.mtd.apps, s.target);
+    set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
+    const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
+    set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
+    set('k0', nf(s.today.apps) + ' เคส');
+    if (top === 'HUB' || top === 'AM') set('k2', s.teams.filter(t => t.apps < t.target).length + ' ทีม');
+  } catch (e) { set('gv', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
+}
+
+function viewSales() {
+  const s = SALES;
+  if (!s) { document.getElementById('dmsg').innerHTML = '<p class="msg">กำลังโหลดยอดขาย ลองกดอีกครั้ง</p>'; return; }
+  window.scrollTo(0, 0);
+  const p = pct(s.mtd.apps, s.target);
+  const maxDay = Math.max(1, ...s.daily.map(d => d[1]));
+  const bars = s.daily.map(([d, n]) => `<div class="db" title="${esc(thDay(d))}: ${nf(n)} เคส">
+      <i style="height:${Math.max(2, Math.round(n / maxDay * 100))}%"></i><span>${+d.slice(8)}</span></div>`).join('');
+  const teamRows = s.teams.map((t, i) => {
+    const tp = pct(t.apps, t.target);
+    return `<tr><td>${i + 1}</td><td><b>${esc(t.code)}</b><small>${esc(t.name)}</small></td>
+      <td class="n">${nf(t.today)}</td><td class="n">${nf(t.apps)}</td>
+      <td class="pc"><div class="mini"><i style="width:${Math.min(tp, 100)}%;background:${tp >= 100 ? 'var(--green)' : tp >= 70 ? 'var(--navy)' : 'var(--red)'}"></i></div><span>${tp}%</span></td></tr>`;
+  }).join('');
+  const staffRows = s.staff.map((x, i) => {
+    const sp = pct(x.apps, 30);
+    return `<tr><td>${i + 1}</td><td><b>${esc(x.name)}</b><small>${esc(x.team)}</small></td>
+      <td class="n">${nf(x.today)}</td><td class="n">${nf(x.apps)}</td><td class="n">${sp}%</td></tr>`;
+  }).join('');
+
+  app.innerHTML = `
+  <section class="hero"><div class="wrap">
+    <div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
+      <h1>ฝ่ายขาย</h1><small>ยอด ${esc(thMonth(s.month))} · ข้อมูลถึง ${esc(thDay(s.latest))} · ขอบเขต: ${esc(s.scope === 'SELF' ? 'ยอดของคุณ' : s.scope)}</small></div>
+    <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>${p}%</span></div>
+      <div class="v">${nf(s.mtd.apps)} <span style="font-size:18px;color:var(--muted)">/ ${nf(s.target)} เคส</span></div>
+      <div class="bar"><div style="height:8px;border-radius:4px;background:var(--green);width:${Math.min(p, 100)}%"></div></div>
+      <p>เป้า ${s.scope === 'SELF' ? '30 เคส/คน' : '500 เคส/ทีม'} ต่อเดือน</p></div>
+  </div></section>
+  <main class="wrap">
+    <section class="kpis">
+      <div class="kpi"><span>เคสวันล่าสุด (${esc(thDay(s.latest))})</span><b style="color:var(--ink)">${nf(s.today.apps)}</b></div>
+      <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
+      <div class="kpi"><span>ยอดจัดสะสมเดือนนี้</span><b style="color:var(--ink)">${mb(s.mtd.amt)}</b></div>
+    </section>
+    <section class="card"><div class="hd"><h2>จำนวนเคสรายวัน</h2></div><div class="days">${bars || '<p class="empty">ยังไม่มีข้อมูล</p>'}</div></section>
+    ${s.teams.length ? `<section class="card"><div class="hd"><h2>อันดับทีม (${s.teams.length})</h2></div><div class="tw"><table>
+      <thead><tr><th>#</th><th>ทีม</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th>เทียบเป้า</th></tr></thead><tbody>${teamRows}</tbody></table></div></section>` : ''}
+    <section class="card"><div class="hd"><h2>${s.scope === 'SELF' ? 'ยอดของคุณ' : 'อันดับพนักงาน'}</h2></div><div class="tw"><table>
+      <thead><tr><th>#</th><th>พนักงาน</th><th class="n">วันล่าสุด</th><th class="n">สะสม</th><th class="n">เทียบเป้า</th></tr></thead>
+      <tbody>${staffRows || '<tr><td colspan="5" class="empty">ไม่พบยอดของคุณในเดือนนี้</td></tr>'}</tbody></table></div>
+      <p class="empty">นับเฉพาะเคสที่บันทึกในชื่อพนักงาน (ไม่รวมเคสที่ร้านค้าทำเอง) · ยอดทีมรวมทุกเคส</p></section>
+  </main>`;
+  document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
 }
 
 async function loadPending() {
