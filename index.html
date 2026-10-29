@@ -373,11 +373,11 @@ async function openDash(btn) {
       const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, ck, buf.slice(12));
       return JSON.parse(await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
     };
-    const codes = Object.keys(k.teams);
+    const codes = Object.keys(k.teams);   // __others = ทุกทีมนอก AM1/AM2 (เฉพาะผู้อำนวยการ)
     let done = 0;
     msg(`กำลังโหลดข้อมูล ${codes.length} ทีม…`);
     const [common, ...parts] = await Promise.all([open1('common.bin', k.common),
-      ...codes.map(c => open1('t_' + c + '.bin', k.teams[c]).then(x => { msg(`กำลังโหลดข้อมูล ${++done}/${codes.length} ทีม…`); return x; }))]);
+      ...codes.map(c => open1(c === '__others' ? 'others.bin' : 't_' + c + '.bin', k.teams[c]).then(x => { msg(`กำลังโหลดข้อมูล ${++done}/${codes.length} ทีม…`); return x; }))]);
     const records = [].concat(...parts);
     const keep = (list, f) => { const set = new Set(records.map(r => r[f])); return (list || []).filter(x => set.has(x)); };
     // รายการตัวเลือกให้เหลือเฉพาะที่อยู่ในสิทธิ์
