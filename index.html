@@ -216,9 +216,9 @@ const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติด�
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily (ตามสิทธิ์) · Dealer · Brands · Hub Master', phase:1, min:'SELF' },
-  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'OD Dashboard · Collection Follow-up', phase:1, min:'SELF' },
+  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
   { mk:'D', name:'ฝ่ายพัฒนา Dealer', desc:'TM Field Visit · Hub RM Calendar · Showroom', phase:2, min:'SELF' },
-  { mk:'P', name:'ฝ่ายโปรดักต์', desc:'นโยบาย Dealer · เงื่อนไข MO / EA · โบรชัวร์', phase:2, min:'SELF' },
+  { mk:'P', name:'ฝ่ายโปรดักต์', desc:'โบรชัวร์สินค้า · นโยบาย Dealer · เงื่อนไข MO / EA', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
   { mk:'M', name:'ฝ่าย MIS', desc:'ผู้ใช้และสิทธิ์ · สถานะข้อมูล · แจ้งปัญหา', phase:2, min:'ALL' },
@@ -281,6 +281,7 @@ function viewLobby(me, profile) {
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
     if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { top === 'SELF' ? viewSales() : openDash(b); return; }
+    if (st === 'เปิดใช้งาน' && ROOMS[DEPT_KEY[b.dataset.i]]) { viewRoom(DEPT_KEY[b.dataset.i]); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
             : st === 'เฟส 2' ? d.name + ' จะเปิดใช้ในเฟส 2'
             : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้';
@@ -299,9 +300,34 @@ function viewLobby(me, profile) {
 let NAV_ON = '';
 function deptState(i) { const d = DEPTS[i], ok = RANK[topScope()] >= RANK[d.min]; return !ok ? 'lock' : d.phase === 1 ? 'open' : 'soon'; }
 function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove()); const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2800); }
+
+/* ---------- ห้องแผนก: ปุ่มเปิดเครื่องมือเดิม (เฟสแรก) ---------- */
+const OD_URL = 'https://script.google.com/macros/s/AKfycbzo5FBSzCbaix26haBGUq4Wfdri3Uw18Do2gkq7ejjELYJzCkDN8KoaTbgthsrqUW2FVA/exec';
+const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
+const ROOMS = {
+  od: { title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · AM1 + AM2', tools: () => [
+    RANK[topScope()] >= RANK.HUB
+      ? { ic: 'dash', color: 'var(--navy)', name: 'Dashboard ติดตามหนี้ & นัดชำระ', desc: 'ภาพรวม OD ทุกทีม · Bucket OD1–OD3/NPL · นัดที่พลาด', url: OD_URL }
+      : null,
+    { ic: 'od', color: 'var(--red)', name: 'รายการลูกค้าที่ต้องติดตาม', desc: 'หน้าสำหรับพนักงาน · โทรติดตามและบันทึกนัดชำระ', url: OD_URL + '?page=staff' }
+  ].filter(Boolean) },
+  product: { title: 'ฝ่ายโปรดักต์', sub: 'ข้อมูลสินค้าและเงื่อนไข สำหรับใช้งานและส่งให้ร้าน', tools: () => [
+    { ic: 'product', color: 'var(--green)', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
+  ] }
+};
+function viewRoom(key) {
+  const r = ROOMS[key]; window.scrollTo(0, 0); renderNav(key);
+  app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
+    <h1>${esc(r.title)}</h1><small>${esc(r.sub)}</small></div></div></section>
+  <main class="wrap"><section><div class="sec-h"><h2>เครื่องมือในห้องนี้</h2></div><div class="quick">
+    ${r.tools().map(t => `<a class="qk" href="${esc(t.url)}" target="_blank" rel="noopener" style="text-decoration:none"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></a>`).join('')}
+  </div><p class="empty" style="padding:12px 0 0">เครื่องมือจะเปิดในหน้าต่างใหม่ · เฟสถัดไปจะย้ายเข้ามาใช้ล็อกอินและสิทธิ์เดียวกับออฟฟิศ</p></section></main>`;
+  document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
+}
 function go(key) {
   if (key === 'home') return viewLobby(ME, PROFILE);
   if (key === 'staff') return viewStaff();
+  if (ROOMS[key] && deptState(DEPT_KEY.indexOf(key)) === 'open') return viewRoom(key);
   if (key === 'sales') return SALES ? viewSales() : (toast('กำลังโหลดยอดขาย…'), loadSales(topScope()).then(() => viewSales()));
   const i = DEPT_KEY.indexOf(key), st = deptState(i), d = DEPTS[i];
   toast(st === 'lock' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ' : st === 'soon' ? d.name + ' จะเปิดใช้ในเฟส 2' : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้');
