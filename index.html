@@ -137,7 +137,7 @@
   .sb-tog{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 6px;background:rgba(255,255,255,.08);border:none;color:#C7D0E3;border-radius:8px;min-height:34px;font-size:12px}
   .sb-logo .sb-ic{display:none}.sbmini .sb-logo .sb-ic{display:block}.sbmini .sb-logo .sb-full{display:none}.dot{min-width:10px}.goal .v{font-size:34px}
   .shell.nav.sbmini{grid-template-columns:72px 1fr}
-  .sbmini aside{padding:16px 10px}.sbmini .sb-logo{padding:6px}.sbmini .sb-full,.sbmini .sb-sub,.sbmini .sb-grp,.sbmini .nv .tx,.sbmini .nv .tg,.sbmini .sb-me div:last-child,.sbmini .sb-tog .tx{display:none}.sbmini .sb-ic{display:block}
+  .sbmini aside{padding:16px 10px}.sbmini .sb-logo{padding:0;background:transparent}.sbmini .sb-full,.sbmini .sb-sub,.sbmini .sb-grp,.sbmini .nv .tx,.sbmini .nv .tg,.sbmini .sb-me div:last-child,.sbmini .sb-tog .tx{display:none}.sbmini .sb-ic{display:block}
   .sbmini .nv{justify-content:center;padding:8px 0}.sbmini .sb-me{justify-content:center;padding-left:0;padding-right:0}.sbmini .nv.lk i::after{content:'';}
 
   .nv em{display:none;font-style:normal}.sbmini .nv{flex-direction:column;gap:3px;min-height:56px}.sbmini .nv em{display:block;font-size:10.5px;line-height:1.2;text-align:center}
@@ -313,7 +313,7 @@ function renderNav(active) {
   const side = document.getElementById('side'), mn = document.getElementById('mnav');
   const tag = st => st === 'soon' ? '<span class="tg">เฟส 2</span>' : st === 'lock' ? `<span class="tg">${ico('lock', 12)}</span>` : '';
   const name = ME.nick ? 'คุณ' + ME.nick : ME.name;
-  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-s.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
+  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-round.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
     <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
     <button class="nv" data-k="home" title="หน้าแรก"><i>${ico('home')}</i><span class="tx">หน้าแรก</span><em>หน้าแรก</em></button>
     <div class="sb-grp">แผนก</div>
