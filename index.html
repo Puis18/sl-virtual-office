@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SL Virtual Office</title>
+<title>S Leasing ออฟฟิศ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{--navy:#1E3365;--navy2:#14244A;--red:#9F1C33;--green:#126C3D;--ink:#121B2E;--sub:#3D4760;--muted:#5A6478;--line:#DCE1EA;--bg:#F3F5F9}
@@ -149,7 +149,7 @@
 <div class="shell"><aside id="side" hidden></aside><div class="col">
 <header><div class="wrap"><img src="logo.png" alt="S Leasing"><div class="who" id="who"></div></div></header>
 <div id="app"><main class="wrap"><div class="skel"></div><div class="skel"></div></main></div>
-<footer><div class="wrap"><span>S Leasing Virtual Office · เครื่องมือภายในทีม AM1 / AM2</span><span>ข้อมูลลูกค้าเป็นความลับ ห้ามเผยแพร่ภายนอก (PDPA)</span></div></footer>
+<footer><div class="wrap"><span>S Leasing ออฟฟิศ · เครื่องมือภายในทีม AM1 / AM2</span><span>ข้อมูลลูกค้าเป็นความลับ ห้ามเผยแพร่ภายนอก (PDPA)</span></div></footer>
 </div></div><nav id="mnav" hidden></nav>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -311,7 +311,7 @@ function renderNav(active) {
   const side = document.getElementById('side'), mn = document.getElementById('mnav');
   const tag = st => st === 'soon' ? '<span class="tg">เฟส 2</span>' : st === 'lock' ? `<span class="tg">${ico('lock', 12)}</span>` : '';
   const name = ME.nick ? 'คุณ' + ME.nick : ME.name;
-  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-s.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศจำลอง · AM1 / AM2</p>
+  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-s.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศ · AM1 / AM2</p>
     <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
     <button class="nv" data-k="home" title="หน้าแรก"><i>${ico('home')}</i><span class="tx">หน้าแรก</span><em>หน้าแรก</em></button>
     <div class="sb-grp">แผนก</div>
