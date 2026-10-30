@@ -143,6 +143,8 @@
   .nv em{display:none;font-style:normal}.sbmini .nv{flex-direction:column;gap:3px;min-height:56px}.sbmini .nv em{display:block;font-size:10.5px;line-height:1.2;text-align:center}
   .sbmini .nv.lk em::after{content:' 🔒';font-size:8px}.nv .tg svg{vertical-align:-1px}
   .nv i{width:30px;height:30px}#mnav button svg{margin-bottom:1px}
+  .shell.nav.sbhov{grid-template-columns:72px 1fr}.sbhov aside{width:250px;z-index:60;box-shadow:8px 0 30px rgba(10,20,50,.25)}
+  aside{transition:width .15s ease}
 </style>
 </head>
 <body>
@@ -323,8 +325,12 @@ function renderNav(active) {
   mn.innerHTML = items.map(([k, l]) => `<button data-k="${k}">${ico(k, 22)}${l}</button>`).join('');
   [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
   const sh = document.querySelector('.shell'); sh.classList.add('nav'); document.body.classList.add('has-nav');
-  let mini = false; try { mini = localStorage.getItem('voMini') === '1'; } catch (e) {}
-  const apply = () => { sh.classList.toggle('sbmini', mini); document.getElementById('sbArr').textContent = mini ? '»' : '«'; };
+  const canHover = matchMedia('(hover:hover) and (pointer:fine)').matches;
+  let mini = canHover; try { const v = localStorage.getItem('voMini'); if (v !== null) mini = v === '1'; } catch (e) {}
+  const apply = () => { sh.classList.remove('sbhov'); sh.classList.toggle('sbmini', mini); document.getElementById('sbArr').textContent = mini ? '»' : '«'; };
+  let hvT = 0;
+  side.onmouseenter = () => { if (!canHover || !mini) return; clearTimeout(hvT); hvT = setTimeout(() => { sh.classList.remove('sbmini'); sh.classList.add('sbhov'); }, 120); };
+  side.onmouseleave = () => { clearTimeout(hvT); if (mini) { sh.classList.remove('sbhov'); sh.classList.add('sbmini'); } };
   apply(); document.getElementById('sbTog').onclick = () => { mini = !mini; try { localStorage.setItem('voMini', mini ? '1' : '0'); } catch (e) {} apply(); };
 }
 
