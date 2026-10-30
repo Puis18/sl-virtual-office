@@ -145,6 +145,19 @@
   .nv i{width:30px;height:30px}#mnav button svg{margin-bottom:1px}
   .shell.nav.sbhov{grid-template-columns:72px 1fr}.sbhov aside{width:250px;z-index:60;box-shadow:8px 0 30px rgba(10,20,50,.25)}
   aside{transition:width .15s ease}
+
+  /* filter bar redesign 30/10 */
+  .fbar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;gap:8px;align-items:center;box-shadow:0 1px 2px rgba(18,27,46,.04),0 4px 14px rgba(18,27,46,.04)}
+  .fbar input,.fbar select{min-height:42px;border:1px solid var(--line);border-radius:999px;background-color:#F6F8FB;color:var(--ink);font:inherit;font-size:14px;transition:border-color .15s,background-color .15s,box-shadow .15s}
+  .fbar input{flex:1 1 240px;padding:0 16px 0 40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235A6478' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+  .fbar select{-webkit-appearance:none;appearance:none;flex:0 1 auto;max-width:260px;min-width:120px;padding:0 36px 0 16px;cursor:pointer;font-weight:500;text-overflow:ellipsis;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231E3365' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+  .fbar input:hover,.fbar select:hover{border-color:#B9C3D3;background-color:#fff}
+  .fbar input:focus,.fbar select:focus{outline:none;border-color:var(--navy);background-color:#fff;box-shadow:0 0 0 3px rgba(30,51,101,.12)}
+  .fbar select.act{background-color:#E8EDF7;border-color:#C9D4EA;color:var(--navy)}
+  .fbar .btn{min-height:42px;border-radius:999px;padding:0 16px}
+  .fbar #fsort{margin-left:auto}
+  @media (min-width:641px){.fbar:not(:has(input)){width:fit-content;max-width:100%}}
+  @media (max-width:640px){.fbar{padding:8px;display:grid;grid-template-columns:1fr 1fr}.fbar input{grid-column:1/-1}.fbar select{max-width:none;width:100%}.fbar #fsort{margin-left:0}}
 </style>
 </head>
 <body>
@@ -643,6 +656,7 @@ function filterBar(ph, compact) {
 }
 let RERENDER = () => viewSales();
 function bindSearch() {
+  document.querySelectorAll('.fbar select').forEach(el => { if (el.id !== 'fsort') el.classList.toggle('act', !!el.value); });
   const q = document.getElementById('q');
   if (q) q.oninput = () => { SALES_Q = q.value.trim(); const pos = q.selectionStart; RERENDER(); const n = document.getElementById('q'); n.focus(); n.setSelectionRange(pos, pos); };
   const on = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); RERENDER(); }; };
