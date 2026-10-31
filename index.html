@@ -650,8 +650,9 @@ async function openCol(btn) {
     const [common, ...parts] = await Promise.all([open1('common.bin', k.common), ...codes.map(c => open1('t_' + c + '.bin', k.teams[c]))]);
     // รวมไฟล์รายทีมกลับเป็นรายเดือน
     const months = common.months.map(m => {
-      const lines = { MO: { teams: [], staff: [] }, EA: { teams: [], staff: [] } };
-      parts.forEach(p => { const x = p[m.month]; if (!x) return; for (const l of ['MO', 'EA']) { lines[l].teams.push(...x[l].teams); lines[l].staff.push(...x[l].staff); } });
+      const lines = { MO: { teams: [], staff: [], rows: [], shows: {} }, EA: { teams: [], staff: [], rows: [], shows: {} } };
+      parts.forEach(p => { const x = p[m.month]; if (!x) return; for (const l of ['MO', 'EA']) { const L = lines[l], X = x[l];
+        L.teams.push(...X.teams); L.staff.push(...X.staff); L.rows.push(...(X.rows || [])); Object.assign(L.shows, X.shows || {}); } });
       return Object.assign({}, m, { lines });
     }).filter(m => m.lines.MO.teams.length || m.lines.EA.teams.length);
     if (!months.length) throw new Error('COL_NOT_READY');
