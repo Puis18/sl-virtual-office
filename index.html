@@ -196,7 +196,8 @@ async function api(action, extra = {}) {
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
   ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
-  DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง'
+  DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง',
+  COL_NOT_READY:'Dashboard ติดตามหนี้ยังไม่มีข้อมูล — รออัปโหลด Collection Report ของเดือนล่าสุด'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
 
@@ -231,7 +232,7 @@ const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติด�
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily (ตามสิทธิ์) · Dealer · Brands · Hub Master', phase:1, min:'SELF' },
-  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'OD Dashboard · Collection Follow-up', phase:1, min:'SELF' },
+  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้รายเดือน (TM ขึ้นไป) · Collection Follow-up', phase:1, min:'SELF' },
   { mk:'D', name:'ฝ่ายพัฒนา Dealer', desc:'TM Field Visit · Hub RM Calendar · Showroom', phase:2, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'นโยบาย Dealer · เงื่อนไข MO / EA · โบรชัวร์', phase:2, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
@@ -296,6 +297,7 @@ function viewLobby(me, profile) {
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
     if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { top === 'SELF' ? viewSales() : openDash(b); return; }
+    if (b.dataset.i === '1' && st === 'เปิดใช้งาน') { top === 'SELF' ? (document.getElementById('dmsg').innerHTML = '<p class="msg" role="status">Dashboard ติดตามหนี้เปิดให้ TM ขึ้นไปก่อน</p>') : openCol(b); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
             : st === 'เฟส 2' ? d.name + ' จะเปิดใช้ในเฟส 2'
             : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้';
@@ -317,6 +319,7 @@ function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove())
 function go(key) {
   if (key === 'home') return viewLobby(ME, PROFILE);
   if (key === 'staff') return viewStaff();
+  if (key === 'od') return topScope() === 'SELF' ? toast('Dashboard ติดตามหนี้เปิดให้ TM ขึ้นไปก่อน') : openCol();
   if (key === 'sales') return SALES ? viewSales() : (toast('กำลังโหลดยอดขาย…'), loadSales(topScope()).then(() => viewSales()));
   const i = DEPT_KEY.indexOf(key), st = deptState(i), d = DEPTS[i];
   toast(st === 'lock' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ' : st === 'soon' ? d.name + ' จะเปิดใช้ในเฟส 2' : d.name + ' กำลังสร้าง จะเปิดให้ใช้เร็ว ๆ นี้');
@@ -622,6 +625,39 @@ async function openDash(btn) {
     msg('กำลังเปิด Dashboard…');
     const shell = await (await fetch(DASH_BASE + 'shell.html?v=' + k.build)).text();
     window.__VO_PAYLOAD__ = common;
+    document.open(); document.write(shell); document.close();
+  } catch (e) { msg(say(e)); if (btn) btn.disabled = false; }
+}
+
+/* ---------- Dashboard ติดตามหนี้รายเดือน (ตามสิทธิ์ · TM ขึ้นไป) ---------- */
+const COL_BASE = DASH_BASE + 'col/';
+async function openCol(btn) {
+  const msg = t => { const d = document.getElementById('dmsg'); if (d) d.innerHTML = `<p class="msg" role="status">${esc(t)}</p>`; else toast(t); };
+  if (btn) btn.disabled = true;
+  try {
+    msg('กำลังตรวจสิทธิ์…');
+    const k = await api('colKeys');
+    const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    const open1 = async (file, key) => {
+      const r = await fetch(COL_BASE + file + '?v=' + k.build); if (!r.ok) throw new Error('โหลดไฟล์ไม่สำเร็จ (' + r.status + ')');
+      const buf = new Uint8Array(await r.arrayBuffer());
+      const ck = await crypto.subtle.importKey('raw', b64(key), 'AES-GCM', false, ['decrypt']);
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, ck, buf.slice(12));
+      return JSON.parse(await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+    };
+    const codes = Object.keys(k.teams);
+    msg(`กำลังโหลดข้อมูล ${codes.length} ทีม…`);
+    const [common, ...parts] = await Promise.all([open1('common.bin', k.common), ...codes.map(c => open1('t_' + c + '.bin', k.teams[c]))]);
+    // รวมไฟล์รายทีมกลับเป็นรายเดือน
+    const months = common.months.map(m => {
+      const lines = { MO: { teams: [], staff: [] }, EA: { teams: [], staff: [] } };
+      parts.forEach(p => { const x = p[m.month]; if (!x) return; for (const l of ['MO', 'EA']) { lines[l].teams.push(...x[l].teams); lines[l].staff.push(...x[l].staff); } });
+      return Object.assign({}, m, { lines });
+    }).filter(m => m.lines.MO.teams.length || m.lines.EA.teams.length);
+    if (!months.length) throw new Error('COL_NOT_READY');
+    msg('กำลังเปิด Dashboard ติดตามหนี้…');
+    const shell = await (await fetch(COL_BASE + 'shell.html?v=' + k.build)).text();
+    window.__VO_COL__ = { months };
     document.open(); document.write(shell); document.close();
   } catch (e) { msg(say(e)); if (btn) btn.disabled = false; }
 }
