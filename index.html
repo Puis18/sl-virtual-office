@@ -225,14 +225,13 @@ const ICON = {
   lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'
 };
-const DEPT_KEY = ['sales', 'od', 'dealer', 'product', 'hr', 'admin', 'mis', 'dir'];
+const DEPT_KEY = ['sales', 'od', 'product', 'hr', 'admin', 'mis', 'dir'];
 const ico = (k, sz = 18) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
-const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', dealer:'Dealer', product:'โปรดักต์', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
+const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
-  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily (ตามสิทธิ์) · Dealer · Brands · Hub Master', phase:1, min:'SELF' },
+  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
-  { mk:'D', name:'ฝ่ายพัฒนา Dealer', desc:'TM Field Visit · Hub RM Calendar · Showroom', phase:2, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'โบรชัวร์สินค้า · นโยบาย Dealer · เงื่อนไข MO / EA', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
@@ -284,7 +283,8 @@ function viewLobby(me, profile) {
     </section>
     <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
-      ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small id="dashmsg">ตามสิทธิ์ของคุณ</small></span></button>` : ''}
+      ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small>ตามสิทธิ์ของคุณ</small></span></button>
+      <button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}
       <button class="qk" id="sum"><i style="background:var(--green)">${ico('sales', 20)}</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
       ${RANK[top] >= RANK.HUB ? `<button class="qk" id="mgr"><i style="background:var(--red)">${ico('staff', 20)}</i><span><b>รายชื่อพนักงาน</b><small>เพิ่ม · ย้ายทีม · ปิดการใช้งาน</small></span></button>` : ''}
     </div></section>
@@ -295,7 +295,7 @@ function viewLobby(me, profile) {
 
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
     const d = DEPTS[b.dataset.i], st = b.dataset.st;
-    if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { top === 'SELF' ? viewSales() : openDash(b); return; }
+    if (b.dataset.i === '0' && st === 'เปิดใช้งาน') { viewSales(); return; }
     if (st === 'เปิดใช้งาน' && ROOMS[DEPT_KEY[b.dataset.i]]) { viewRoom(DEPT_KEY[b.dataset.i]); return; }
     const t = st === 'ไม่มีสิทธิ์' ? d.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'
             : st === 'เฟส 2' ? d.name + ' จะเปิดใช้ในเฟส 2'
@@ -305,6 +305,7 @@ function viewLobby(me, profile) {
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
   const sm = document.getElementById('sum'); if (sm) sm.onclick = () => go('sales');
   const qd = document.getElementById('qDash'); if (qd) qd.onclick = () => openDash(qd);
+  const q2 = document.getElementById('qDash2'); if (q2) q2.onclick = () => openDash(q2, 'v2.html');
   renderNav('home'); RERENDER = () => viewLobby(ME, PROFILE);
   if (top === 'ALL') loadPending();
   loadSales(top);
@@ -473,11 +474,14 @@ function viewSales() {
       <p>เป้า ${s.scope === 'SELF' ? '30 เคส/คน' : '500 เคส/ทีม'} ต่อเดือน</p></div>
   </div></section>
   ${s.scope !== 'SELF' ? `<div class="wrap" style="padding-top:14px"><button class="ext" id="dash" style="width:100%;font:inherit;cursor:pointer;text-align:left">
-    <span><b>เปิด Dashboard Daily (ตามสิทธิ์ของคุณ)</b><small id="dashmsg">ทุกหน้าเหมือนเดิม เห็นเฉพาะทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button></div>` : ''}
+    <span><b>เปิด Dashboard Daily (ตามสิทธิ์ของคุณ)</b><small>ทุกหน้าเหมือนเดิม เห็นเฉพาะทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button>
+    <button class="ext" id="dash2" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
+    <span><b>เปิด Dashboard V2 (ตามสิทธิ์ของคุณ)</b><small>ภาพรวม · ทีม · พนักงาน · Incentive · คัดลอกสรุปส่ง LINE</small></span><span aria-hidden="true">→</span></button></div>` : ''}
   <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
   <main class="wrap" id="tab"></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
   const db = document.getElementById('dash'); if (db) db.onclick = () => openDash(db);
+  const d2 = document.getElementById('dash2'); if (d2) d2.onclick = () => openDash(d2, 'v2.html');
   app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.t; viewSales(); });
   const box = document.getElementById('tab');
   box.innerHTML = ({ overview: tabOverview, people: tabPeople, os: tabOS, shops: tabShops })[SALES_TAB](s);
@@ -617,8 +621,9 @@ function tabShops(s) {
 
 /* ================= Dashboard Daily ตามสิทธิ์ (TM ขึ้นไป) ================= */
 const DASH_BASE = 'https://puis18.github.io/sleasing-dashboard/vo/';
-async function openDash(btn) {
-  const msg = t => { const m = document.getElementById('dashmsg'); if (m) m.textContent = t;
+async function openDash(btn, page = 'shell.html') {
+  const m = btn && btn.querySelector('small');
+  const msg = t => { if (m) m.textContent = t;
     const d = document.getElementById('dmsg'); if (d && !m) d.innerHTML = `<p class="msg" role="status">${esc(t)}</p>`; };
   if (btn) btn.disabled = true;
   try {
@@ -646,7 +651,8 @@ async function openDash(btn) {
     common.showrooms = keep(common.showrooms, 'showroom_name_en');
     common.records = records;
     msg('กำลังเปิด Dashboard…');
-    const shell = await (await fetch(DASH_BASE + 'shell.html?v=' + k.build)).text();
+    const sr = await fetch(DASH_BASE + page + '?v=' + k.build); if (!sr.ok) throw new Error(page === 'v2.html' ? 'Dashboard V2 ยังไม่พร้อม (รอรอบอัปเดตตอนเช้า)' : 'โหลดหน้า Dashboard ไม่สำเร็จ');
+    const shell = await sr.text();
     window.__VO_PAYLOAD__ = common;
     document.open(); document.write(shell); document.close();
   } catch (e) { msg(say(e)); if (btn) btn.disabled = false; }
