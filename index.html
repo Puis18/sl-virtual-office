@@ -283,7 +283,10 @@ function thaiDate() {
 }
 
 let ME, PROFILE, SALES;
+// จำหน้าเริ่มต้นของแต่ละคน: ปิดตอนอยู่แผนที่ → เปิดครั้งหน้าที่แผนที่ · อยู่หน้าแรก → เปิดหน้าแรก (เก็บในเครื่องของคนนั้น)
+function startPref(v) { try { if (v) localStorage.setItem('voStart', v); else return localStorage.getItem('voStart') || 'home'; } catch (e) { return 'home'; } }
 function viewLobby(me, profile) {
+  startPref('home');
   ME = me; PROFILE = profile; window.scrollTo(0, 0);
   const top = me.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
   const name = me.nick || me.name;
@@ -508,7 +511,7 @@ function omWalkable(x, y) {
   const r = omRoomAt(x, y); return !!(r && omIn(r));
 }
 function viewMap() {
-  window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap;
+  window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap; startPref('map');
   app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">มุมมองเมนู</button></div>
     <div class="omstage" id="omstage"><div id="omworld"></div>
     <div class="omhint" id="omhint">แตะพื้นเพื่อเดิน · กดชื่อห้องด้านบนเพื่อไปทันที</div><div class="ompanel" id="ompanel" role="dialog" aria-live="polite"></div></div></div>`;
@@ -1103,7 +1106,7 @@ function viewMsg(title, text) {
     const [me, profile] = await Promise.all([api('me'), liff.getProfile().catch(() => null)]);
     if (me.state === 'UNREGISTERED') viewRegister(me.lineName);
     else if (me.state === 'PENDING') viewPending();
-    else if (me.state === 'APPROVED') viewLobby(me, profile);
+    else if (me.state === 'APPROVED') { const sp = startPref(); viewLobby(me, profile); if (sp === 'map') go('map'); }
     else viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
   } catch (e) { viewMsg('เกิดข้อผิดพลาด', say(e)); }
 })();
