@@ -158,6 +158,28 @@
   .fbar #fsort{margin-left:auto}
   @media (min-width:641px){.fbar:not(:has(input)){width:fit-content;max-width:100%}}
   @media (max-width:640px){.fbar{padding:8px;display:grid;grid-template-columns:1fr 1fr}.fbar input{grid-column:1/-1}.fbar select{max-width:none;width:100%}.fbar #fsort{margin-left:0}}
+
+  /* ---- แผนที่ออฟฟิศ ---- */
+  .omap{display:flex;flex-direction:column;height:calc(100vh - 0px);min-height:480px}
+  .omtop{display:flex;align-items:center;gap:8px;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:#fff;border-bottom:1px solid var(--line)}
+  .omchips{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}.omchips::-webkit-scrollbar{display:none}
+  .omchip{flex-shrink:0;font:600 13px inherit;font-family:inherit;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:6px 12px;display:flex;align-items:center;gap:6px;min-height:34px}
+  .omchip i{width:9px;height:9px;border-radius:50%;display:block}.omchip.lock{color:#9AA1B5}
+  .omtop .btn{min-height:34px;font-size:13px;white-space:nowrap}
+  .omstage{position:relative;flex:1;overflow:hidden;touch-action:none;cursor:pointer;background:#E9EDF5}
+  #omworld{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #omworld text{font-family:inherit}
+  #omMe.walk .bob{animation:ombob .32s infinite}@keyframes ombob{50%{transform:translateY(-3px)}}
+  .omhint{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(18,27,46,.85);color:#fff;font-size:13px;padding:7px 14px;border-radius:999px;white-space:nowrap;pointer-events:none;transition:opacity .4s}
+  .ompanel{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto;background:#fff;border-radius:18px;box-shadow:0 14px 40px rgba(18,27,46,.25);padding:14px 16px;transform:translateY(140%);transition:transform .3s ease;z-index:6}
+  .ompanel.on{transform:none}
+  .omph{display:flex;align-items:center;gap:12px}.omph h2{margin:0;font-size:18px}.omph p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .ompic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;flex-shrink:0}
+  .omx{margin-left:auto;border:none;background:#EEF1F7;border-radius:50%;width:32px;height:32px;font-size:18px;color:var(--muted);flex-shrink:0}
+  .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
+  @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
+  body.has-nav .omap{height:calc(100vh - 70px)}
+  @media (min-width:900px){.shell.nav .omap{height:100vh}}
 </style>
 </head>
 <body>
@@ -226,6 +248,7 @@ const ICON = {
   dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'
 };
 const DEPT_KEY = ['sales', 'od', 'product', 'hr', 'admin', 'mis', 'dir'];
+ICON.map = '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>';
 const ico = (k, sz = 18) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
 const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
@@ -340,8 +363,167 @@ function viewRoom(key) {
   </div><p class="empty" style="padding:12px 0 0">เครื่องมือจะเปิดในหน้าต่างใหม่ · เฟสถัดไปจะย้ายเข้ามาใช้ล็อกอินและสิทธิ์เดียวกับออฟฟิศ</p></section></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
 }
+
+/* ================= แผนที่ออฟฟิศ (แบบการ์ตูน) — เดินไปห้องแผนก แล้วเข้าห้องได้ตามสิทธิ์ ================= */
+const OM = { W: 1120, H: 700, CY1: 300, CY2: 400, RW: 250, GAP: 20, X0: 25 };
+OM.CX = (OM.CY1 + OM.CY2) / 2;
+const OM_TINT = { navy: ['#E5ECF5', '#1E3365'], red: ['#F8E8EB', '#9F1C33'], green: ['#E6F1EA', '#126C3D'] };
+const OM_LAYOUT = [   // ห้องแผนก 7 ห้อง + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
+  ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['hr', 'green'],
+  ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['lobby', 'navy']
+];
+let OMR = [], om = null;
+function omRooms() {
+  return OM_LAYOUT.map(([k, tone], i) => {
+    const di = DEPT_KEY.indexOf(k), d = DEPTS[di];
+    const st = k === 'lobby' ? 'open' : deptState(di);
+    const r = { k, tone, floor: OM_TINT[tone][0], acc: OM_TINT[tone][1], st, lobby: k === 'lobby', meet: k === 'dir',
+      name: k === 'lobby' ? 'ล็อบบี้' : d.name.replace('ฝ่ายทรัพยากรบุคคล', 'ฝ่าย HR'),
+      desc: k === 'lobby' ? 'หน้าแรก · เรื่องที่ต้องดูวันนี้' : d.desc, row: i < 4 ? 0 : 1 };
+    const c = i % 4; r.x = OM.X0 + c * (OM.RW + OM.GAP); r.w = OM.RW;
+    if (r.row === 0) { r.y = 30; r.h = OM.CY1 - 30; } else { r.y = OM.CY2; r.h = OM.H - 30 - OM.CY2; }
+    r.dx = r.x + r.w / 2; r.dy = r.row === 0 ? OM.CY1 : OM.CY2;
+    return r;
+  });
+}
+const omIn = r => r.st !== 'lock';
+function omPerson(x, y, shirt, hair, skin = '#F5C9A3', flip = 1) {
+  return `<g transform="translate(${x},${y}) scale(${flip},1)"><ellipse cx="0" cy="22" rx="13" ry="5" fill="rgba(27,36,64,.16)"/>
+    <g class="bob"><rect x="-10" y="2" width="20" height="20" rx="9" fill="${shirt}"/><circle cx="0" cy="-8" r="12" fill="${skin}"/>
+    <path d="M-12 -9 Q-12 -22 0 -21 Q12 -22 12 -9 Q8 -15 0 -15 Q-6 -15 -12 -9Z" fill="${hair}"/>
+    <circle cx="-4" cy="-7" r="1.7" fill="#2A2238"/><circle cx="4" cy="-7" r="1.7" fill="#2A2238"/>
+    <path d="M-3 -2 Q0 1 3 -2" stroke="#2A2238" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <circle cx="-7" cy="-3" r="2" fill="#F29C9C" opacity=".55"/><circle cx="7" cy="-3" r="2" fill="#F29C9C" opacity=".55"/></g></g>`;
+}
+const omDesk = (x, y) => `<g transform="translate(${x},${y})"><rect x="-30" y="-14" width="60" height="30" rx="6" fill="#E9D3B0" stroke="#CDB28A" stroke-width="2"/>
+  <rect x="-12" y="-11" width="24" height="15" rx="3" fill="#2B3A63"/><rect x="-9" y="-8" width="18" height="9" rx="1.5" fill="#8EC5FF"/><circle cx="0" cy="30" r="9" fill="#6B7AA3"/></g>`;
+const omPlant = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-8" y="2" width="16" height="12" rx="3" fill="#E7A86B"/>
+  <circle cx="-6" cy="-4" r="9" fill="#3FA96B"/><circle cx="6" cy="-6" r="9" fill="#2F9459"/><circle cx="0" cy="-12" r="9" fill="#46B877"/></g>`;
+const OM_SHIRT = ['#1E3365', '#9F1C33', '#126C3D', '#3D5F8F', '#C04A60', '#2E7D52'], OM_HAIR = ['#2A2238', '#5B3A29', '#1E1E1E', '#7A4A2A'];
+
+function omDraw() {
+  const { W, H, CY1, CY2, CX } = OM;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">
+  <defs><pattern id="omtile" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#F7F8FB"/><path d="M0 0H40V40" fill="none" stroke="#E3E7F0" stroke-width="2"/></pattern></defs>
+  <rect width="${W}" height="${H}" fill="#D5DCEA"/><rect x="10" y="${CY1}" width="${W - 20}" height="${CY2 - CY1}" fill="url(#omtile)"/>`;
+  OMR.forEach((r, i) => {
+    const ok = omIn(r), fl = ok ? r.floor : '#E2E4EA';
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="${fl}"/>
+      <rect x="${r.x + 40}" y="${r.y + 40}" width="${r.w - 80}" height="${r.h - 80}" rx="20" fill="${ok ? r.acc : '#A9AEBC'}" opacity=".08"/>`;
+    if (r.lobby) {
+      const cx = r.x + r.w / 2, by = r.y + r.h - 22;
+      s += `<rect x="${cx - 62}" y="${by - 46}" width="124" height="40" rx="20" fill="#fff" stroke="#1E3365" stroke-width="2"/><image href="logo.png" x="${cx - 52}" y="${by - 41}" width="104" height="30" preserveAspectRatio="xMidYMid meet"/>`;
+      s += omPerson(cx, by - 88, '#9F1C33', '#2A2238');
+      s += `<rect x="${cx - 70}" y="${by - 82}" width="140" height="28" rx="14" fill="#1E3365"/><rect x="${cx - 70}" y="${by - 82}" width="140" height="9" rx="4.5" fill="#3A5490"/>`;
+      s += omPlant(r.x + 30, r.y + r.h - 40, 1.1) + omPlant(r.x + r.w - 30, r.y + r.h - 40, 1.1);
+    } else if (r.meet) {
+      s += `<rect x="${r.x + 55}" y="${r.y + 75}" width="${r.w - 110}" height="70" rx="30" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`;
+      for (let k = 0; k < 4; k++) s += `<circle cx="${r.x + 80 + k * 30}" cy="${r.y + 62}" r="9" fill="#6B7AA3"/><circle cx="${r.x + 80 + k * 30}" cy="${r.y + 158}" r="9" fill="#6B7AA3"/>`;
+      s += omPlant(r.x + 28, r.y + r.h - 34) + omPlant(r.x + r.w - 28, r.y + 40);
+    } else {
+      const top = r.row === 0 ? r.y + 70 : r.y + 95;
+      s += omDesk(r.x + 70, top) + omDesk(r.x + r.w - 70, top) + omDesk(r.x + 70, top + 95) + omDesk(r.x + r.w - 70, top + 95);
+      s += omPlant(r.x + r.w / 2, r.row === 0 ? r.y + 36 : r.y + r.h - 34, .9);
+      if (ok) s += omPerson(r.x + 70, top + 40, OM_SHIRT[i % 6], OM_HAIR[i % 4]) + omPerson(r.x + r.w - 70, top + 135, OM_SHIRT[(i + 2) % 6], OM_HAIR[(i + 1) % 4], '#E9B48A', -1);
+    }
+    const wt = 10, d0 = r.dx - 34, d1 = r.dx + 34, wy = r.row === 0 ? r.y + r.h - wt / 2 : r.y + wt / 2;
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="${wt}"/>
+      <rect x="${d0}" y="${wy - wt}" width="${d1 - d0}" height="${wt * 2}" fill="${fl}"/>`;
+    if (!ok) s += `<rect x="${d0}" y="${wy - 5}" width="${d1 - d0}" height="10" rx="5" fill="#9AA1B5"/>`;
+    const ly = r.row === 0 ? CY1 + 26 : CY2 - 26, tw = r.name.length * 13 + 46 + (r.st === 'soon' ? 44 : 0);
+    s += `<g transform="translate(${r.dx},${ly})"><rect x="${-tw / 2}" y="-15" width="${tw}" height="30" rx="15" fill="#fff" stroke="${ok ? r.acc : '#B7BCCB'}" stroke-width="2"/>
+      <circle cx="${-tw / 2 + 15}" cy="0" r="10" fill="${ok ? r.acc : '#B7BCCB'}"/><g transform="translate(${-tw / 2 + 8},-7)" style="color:#fff">${ico(ok ? (r.lobby ? 'home' : r.k) : 'lock', 14)}</g>
+      <text x="${-tw / 2 + 30}" y="5" font-size="14" font-weight="600" fill="${ok ? '#121B2E' : '#9AA1B5'}">${esc(r.name)}${r.st === 'soon' ? ' · เฟส 2' : ''}</text></g>`;
+  });
+  const nm = String(ME.nick || ME.name || '').slice(0, 10);
+  s += `<g id="omMe">${omPerson(0, 0, '#1E3365', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#9F1C33"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g></svg>`;
+  return s;
+}
+const omRoomAt = (x, y) => OMR.find(r => x > r.x + 16 && x < r.x + r.w - 16 && y > r.y + 16 && y < r.y + r.h - 16);
+function omWalkable(x, y) {
+  if (x < 24 || x > OM.W - 24) return false;
+  if (y > OM.CY1 + 8 && y < OM.CY2 - 8) return true;
+  const door = OMR.find(r => Math.abs(x - r.dx) < 26 && Math.abs(y - r.dy) < 22);
+  if (door) return omIn(door);
+  const r = omRoomAt(x, y); return !!(r && omIn(r));
+}
+function viewMap() {
+  window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap;
+  OMR = omRooms();
+  app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">มุมมองเมนู</button></div>
+    <div class="omstage" id="omstage"><div id="omworld">${omDraw()}</div>
+    <div class="omhint" id="omhint">แตะพื้นเพื่อเดิน · กดชื่อห้องด้านบนเพื่อไปทันที</div><div class="ompanel" id="ompanel" role="dialog" aria-live="polite"></div></div></div>`;
+  document.getElementById('omlist').onclick = () => go('home');
+  document.getElementById('omchips').innerHTML = OMR.map(r => `<button class="omchip ${omIn(r) ? '' : 'lock'}" data-k="${r.k}" type="button">${omIn(r) ? `<i style="background:${r.acc}"></i>` : ico('lock', 12)}${esc(r.name)}</button>`).join('');
+  document.querySelectorAll('#omchips .omchip').forEach(b => b.onclick = () => omGo(b.dataset.k));
+  const home = OMR.find(r => r.k === (topScope() === 'ALL' ? 'dir' : 'sales'));
+  if (om) cancelAnimationFrame(om.raf);
+  om = { me: { x: home.dx, y: home.row === 0 ? home.y + home.h / 2 + 10 : home.y + home.h / 2 - 10 }, path: [], keys: {}, last: 0, cur: null, enterT: 0, shown: null, open: null, cam: { s: 1, tx: 0, ty: 0 },
+    el: document.getElementById('omMe'), stage: document.getElementById('omstage'), world: document.getElementById('omworld') };
+  om.cur = omRoomAt(om.me.x, om.me.y); om.shown = om.cur && om.cur.k;
+  om.stage.addEventListener('pointerdown', omTap);
+  omPlace(); om.raf = requestAnimationFrame(omTick);
+}
+function omPlace() {
+  om.el.setAttribute('transform', `translate(${om.me.x},${om.me.y})`);
+  const sw = om.stage.clientWidth, sh = om.stage.clientHeight, s = Math.min(1, Math.max(sw / OM.W, sh / OM.H, 0.62));
+  let tx = sw / 2 - om.me.x * s, ty = sh / 2 - om.me.y * s;
+  tx = Math.min(0, Math.max(sw - OM.W * s, tx)); ty = Math.min(0, Math.max(sh - OM.H * s, ty));
+  if (OM.W * s < sw) tx = (sw - OM.W * s) / 2; if (OM.H * s < sh) ty = (sh - OM.H * s) / 2;
+  om.cam = { s, tx, ty }; om.world.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+}
+function omRoute(tx, ty) {
+  const pts = [], from = omRoomAt(om.me.x, om.me.y), to = omRoomAt(tx, ty);
+  if (from && from !== to) pts.push([from.dx, from.dy], [from.dx, OM.CX]);
+  if (to && to !== from) pts.push([to.dx, OM.CX], [to.dx, to.dy]);
+  if (!to && from) pts.push([tx, OM.CX]);
+  pts.push([tx, ty]); om.path = pts;
+}
+function omGo(k) {
+  const r = OMR.find(x => x.k === k);
+  if (!omIn(r)) { toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); return; }
+  om.shown = null; omHint(); omRoute(r.dx, r.row === 0 ? r.dy - 70 : r.dy + 70);
+}
+function omTap(e) {
+  if (e.target.closest('.ompanel')) return;
+  const b = om.stage.getBoundingClientRect(), x = (e.clientX - b.left - om.cam.tx) / om.cam.s, y = (e.clientY - b.top - om.cam.ty) / om.cam.s;
+  const r = omRoomAt(x, y) || OMR.find(q => x > q.x && x < q.x + q.w && y > q.y && y < q.y + q.h);
+  if (r && !omIn(r)) { toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); return; }
+  if (!omWalkable(x, y)) return;
+  omHint(); omRoute(x, y);
+}
+const omHint = () => { const h = document.getElementById('omhint'); if (h) h.style.opacity = 0; };
+addEventListener('keydown', e => { if (om && document.getElementById('omstage') && e.key.startsWith('Arrow') && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { om.keys[e.key] = 1; om.path = []; omHint(); e.preventDefault(); } });
+addEventListener('keyup', e => { if (om) delete om.keys[e.key]; });
+addEventListener('resize', () => { if (om && document.getElementById('omstage')) omPlace(); });
+function omTick(t) {
+  if (!document.getElementById('omstage')) { om = null; return; }          // ออกจากหน้าแผนที่แล้ว
+  const dt = Math.min(.05, (t - om.last) / 1000 || 0); om.last = t; const sp = 240 * dt, K = om.keys; let moved = false;
+  const kx = (K.ArrowRight ? 1 : 0) - (K.ArrowLeft ? 1 : 0), ky = (K.ArrowDown ? 1 : 0) - (K.ArrowUp ? 1 : 0);
+  if (kx || ky) { const nx = om.me.x + kx * sp, ny = om.me.y + ky * sp; if (omWalkable(nx, om.me.y)) om.me.x = nx; if (omWalkable(om.me.x, ny)) om.me.y = ny; moved = true; }
+  else if (om.path.length) { const [px, py] = om.path[0], dx = px - om.me.x, dy = py - om.me.y, d = Math.hypot(dx, dy);
+    if (d <= sp) { om.me.x = px; om.me.y = py; om.path.shift(); } else { om.me.x += dx / d * sp; om.me.y += dy / d * sp; } moved = true; }
+  if (moved) omPlace(); om.el.classList.toggle('walk', moved);
+  const r = omRoomAt(om.me.x, om.me.y);
+  if (r !== om.cur) { om.cur = r; om.enterT = t; om.shown = null; omClose(); }
+  if (om.cur && !moved && t - om.enterT > 250 && !om.open && om.shown !== om.cur.k) { om.shown = om.cur.k; omOpen(om.cur); }
+  om.raf = requestAnimationFrame(omTick);
+}
+function omOpen(r) {
+  om.open = r.k; const p = document.getElementById('ompanel');
+  const btn = r.st === 'soon' ? `<p class="omnote">ห้องนี้กำลังตกแต่ง · จะเปิดใช้ในเฟส 2</p>`
+    : `<button class="btn ok omgo" id="omenter" type="button">${r.lobby ? 'ไปหน้าแรก' : 'เข้าห้อง ' + esc(r.name)} →</button>`;
+  p.innerHTML = `<div class="omph"><div class="ompic" style="background:${r.acc}">${ico(r.lobby ? 'home' : r.k, 22)}</div>
+    <div><h2>${esc(r.name)}</h2><p>${esc(r.desc)}</p></div><button class="omx" id="omx" type="button" aria-label="ปิด">×</button></div>${btn}`;
+  p.classList.add('on');
+  document.getElementById('omx').onclick = omClose;
+  const en = document.getElementById('omenter'); if (en) en.onclick = () => go(r.lobby ? 'home' : r.k);
+}
+function omClose() { const p = document.getElementById('ompanel'); if (p) p.classList.remove('on'); if (om) om.open = null; }
+
 function go(key) {
   if (key === 'home') return viewLobby(ME, PROFILE);
+  if (key === 'map') return SALES || topScope() === 'SELF' ? viewMap() : loadSales(topScope()).then(viewMap, viewMap);
   if (key === 'staff') return viewStaff();
   if (ROOMS[key] && deptState(DEPT_KEY.indexOf(key)) === 'open') return viewRoom(key);
   if (key === 'sales') return SALES ? viewSales() : (toast('กำลังโหลดยอดขาย…'), loadSales(topScope()).then(() => viewSales()));
@@ -356,12 +538,13 @@ function renderNav(active) {
   side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-round.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศ · AM1 / AM2</p>
     <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
     <button class="nv" data-k="home" title="หน้าแรก"><i>${ico('home')}</i><span class="tx">หน้าแรก</span><em>หน้าแรก</em></button>
+    <button class="nv" data-k="map" title="แผนที่ออฟฟิศ"><i>${ico('map')}</i><span class="tx">แผนที่ออฟฟิศ</span><em>แผนที่</em></button>
     <div class="sb-grp">แผนก</div>
     ${DEPTS.map((d, i) => { const st = deptState(i); return `<button class="nv ${st === 'lock' ? 'lk' : ''}" data-k="${DEPT_KEY[i]}" title="${esc(d.name)}"><i>${ico(DEPT_KEY[i])}</i><span class="tx">${esc(d.name)}</span>${tag(st)}<em>${SHORT[DEPT_KEY[i]]}</em></button>`; }).join('')}
     ${canManage() ? `<div class="sb-grp">จัดการ</div><button class="nv" data-k="staff" title="รายชื่อพนักงาน"><i>${ico('staff')}</i><span class="tx">รายชื่อพนักงาน</span><em>พนักงาน</em></button>` : ''}
     <div class="sb-me"><div class="av">${PROFILE && PROFILE.pictureUrl ? `<img src="${esc(PROFILE.pictureUrl)}" alt="">` : esc(String(ME.nick || ME.name).charAt(0))}</div>
       <div><b>${esc(name)}</b><small>${esc(ME.roles.map(roleLabel).join(' / '))}</small></div></div>`;
-  const items = [['home', 'หน้าแรก'], ['sales', 'ฝ่ายขาย'], ['od', 'ติดตามหนี้']].concat(canManage() ? [['staff', 'พนักงาน']] : []);
+  const items = [['home', 'หน้าแรก'], ['map', 'แผนที่'], ['sales', 'ฝ่ายขาย'], ['od', 'ติดตามหนี้']].concat(canManage() ? [['staff', 'พนักงาน']] : []);
   mn.innerHTML = items.map(([k, l]) => `<button data-k="${k}">${ico(k, 22)}${l}</button>`).join('');
   [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
   const sh = document.querySelector('.shell'); sh.classList.add('nav'); document.body.classList.add('has-nav');
