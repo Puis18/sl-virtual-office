@@ -178,8 +178,6 @@
   .omx{margin-left:auto;border:none;background:#EEF1F7;border-radius:50%;width:32px;height:32px;font-size:18px;color:var(--muted);flex-shrink:0}
   .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
   @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
-  body.has-nav .omap{height:calc(100vh - 70px)}
-  @media (min-width:900px){.shell.nav .omap{height:100vh}}
 </style>
 </head>
 <body>
@@ -365,8 +363,12 @@ function viewRoom(key) {
 }
 
 /* ================= แผนที่ออฟฟิศ (แบบการ์ตูน) — เดินไปห้องแผนก แล้วเข้าห้องได้ตามสิทธิ์ ================= */
-const OM = { W: 1120, H: 700, CY1: 300, CY2: 400, RW: 250, GAP: 20, X0: 25 };
+const OM = { W: 1120, H: 700, CY1: 300, CY2: 400, RW: 250, GAP: 20, X0: 25, P: false };
 OM.CX = (OM.CY1 + OM.CY2) / 2;
+// มือถือ: แนวตั้ง ทางเดินกลางจากบนลงล่าง ห้อง 2 ฝั่ง × 4 แถว
+const OMP = { W: 400, H: 860, CXL: 170, CXR: 230, RH: 196, GAP: 14, Y0: 16 };
+OMP.CX = (OMP.CXL + OMP.CXR) / 2;
+const omW = () => OM.P ? OMP.W : OM.W, omH = () => OM.P ? OMP.H : OM.H;
 const OM_TINT = { navy: ['#E5ECF5', '#1E3365'], red: ['#F8E8EB', '#9F1C33'], green: ['#E6F1EA', '#126C3D'] };
 const OM_LAYOUT = [   // ห้องแผนก 7 ห้อง + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
   ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['hr', 'green'],
@@ -380,9 +382,17 @@ function omRooms() {
     const r = { k, tone, floor: OM_TINT[tone][0], acc: OM_TINT[tone][1], st, lobby: k === 'lobby', meet: k === 'dir',
       name: k === 'lobby' ? 'ล็อบบี้' : d.name.replace('ฝ่ายทรัพยากรบุคคล', 'ฝ่าย HR'),
       desc: k === 'lobby' ? 'หน้าแรก · เรื่องที่ต้องดูวันนี้' : d.desc, row: i < 4 ? 0 : 1 };
-    const c = i % 4; r.x = OM.X0 + c * (OM.RW + OM.GAP); r.w = OM.RW;
-    if (r.row === 0) { r.y = 30; r.h = OM.CY1 - 30; } else { r.y = OM.CY2; r.h = OM.H - 30 - OM.CY2; }
-    r.dx = r.x + r.w / 2; r.dy = r.row === 0 ? OM.CY1 : OM.CY2;
+    if (OM.P) {
+      const left = i % 2 === 0, row = Math.floor(i / 2);
+      r.x = left ? 10 : OMP.CXR; r.w = OMP.CXL - 10; r.y = OMP.Y0 + row * (OMP.RH + OMP.GAP); r.h = OMP.RH;
+      r.dx = left ? OMP.CXL : OMP.CXR; r.dy = r.y + r.h / 2; r.vert = true;          // ประตูอยู่ผนังฝั่งทางเดิน
+      r.cx = OMP.CX; r.cy = r.dy; r.tx = r.x + r.w / 2; r.ty = r.y + r.h / 2 + 24;
+    } else {
+      const c = i % 4; r.x = OM.X0 + c * (OM.RW + OM.GAP); r.w = OM.RW;
+      if (r.row === 0) { r.y = 30; r.h = OM.CY1 - 30; } else { r.y = OM.CY2; r.h = OM.H - 30 - OM.CY2; }
+      r.dx = r.x + r.w / 2; r.dy = r.row === 0 ? OM.CY1 : OM.CY2;
+      r.cx = r.dx; r.cy = OM.CX; r.tx = r.dx; r.ty = r.row === 0 ? r.dy - 70 : r.dy + 70;
+    }
     return r;
   });
 }
@@ -402,6 +412,7 @@ const omPlant = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})
 const OM_SHIRT = ['#1E3365', '#9F1C33', '#126C3D', '#3D5F8F', '#C04A60', '#2E7D52'], OM_HAIR = ['#2A2238', '#5B3A29', '#1E1E1E', '#7A4A2A'];
 
 function omDraw() {
+  if (OM.P) return omDrawP();
   const { W, H, CY1, CY2, CX } = OM;
   let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">
   <defs><pattern id="omtile" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#F7F8FB"/><path d="M0 0H40V40" fill="none" stroke="#E3E7F0" stroke-width="2"/></pattern></defs>
@@ -439,50 +450,97 @@ function omDraw() {
   s += `<g id="omMe">${omPerson(0, 0, '#1E3365', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#9F1C33"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g></svg>`;
   return s;
 }
+
+function omMeTag() {
+  const nm = String(ME.nick || ME.name || '').slice(0, 10);
+  return `<g id="omMe">${omPerson(0, 0, '#1E3365', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#9F1C33"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g>`;
+}
+function omDrawP() {   // แนวตั้งสำหรับมือถือ
+  const { W, H, CXL, CXR } = OMP;
+  let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">
+  <defs><pattern id="omtile" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="#F7F8FB"/><path d="M0 0H30V30" fill="none" stroke="#E3E7F0" stroke-width="2"/></pattern></defs>
+  <rect width="${W}" height="${H}" fill="#D5DCEA"/><rect x="${CXL}" y="6" width="${CXR - CXL}" height="${H - 12}" fill="url(#omtile)"/>`;
+  OMR.forEach((r, i) => {
+    const ok = omIn(r), fl = ok ? r.floor : '#E2E4EA', cx = r.x + r.w / 2, left = r.dx === CXL;
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="${fl}"/>`;
+    const fy = r.y + 58;   // เฟอร์นิเจอร์ใต้ป้ายชื่อ
+    if (r.lobby) {
+      s += `<rect x="${cx - 50}" y="${fy + 40}" width="100" height="22" rx="11" fill="#1E3365"/>` + omPerson(cx, fy + 30, '#9F1C33', '#2A2238');
+      s += `<rect x="${cx - 54}" y="${r.y + r.h - 46}" width="108" height="32" rx="16" fill="#fff" stroke="#1E3365" stroke-width="2"/><image href="logo.png" x="${cx - 46}" y="${r.y + r.h - 42}" width="92" height="24" preserveAspectRatio="xMidYMid meet"/>`;
+    } else if (r.meet) {
+      s += `<rect x="${cx - 42}" y="${fy + 22}" width="84" height="50" rx="22" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`;
+      for (let k = 0; k < 3; k++) s += `<circle cx="${cx - 26 + k * 26}" cy="${fy + 12}" r="7" fill="#6B7AA3"/><circle cx="${cx - 26 + k * 26}" cy="${fy + 82}" r="7" fill="#6B7AA3"/>`;
+    } else {
+      s += omDesk(cx - 36, fy + 18) + omDesk(cx + 36, fy + 18);
+      if (ok) s += omPerson(cx - 36, fy + 56, OM_SHIRT[i % 6], OM_HAIR[i % 4]);
+      s += omPlant(left ? r.x + 22 : r.x + r.w - 22, r.y + r.h - 22, .8);
+    }
+    const wt = 8, wx = left ? r.x + r.w - wt / 2 : r.x + wt / 2;
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="${wt}"/>
+      <rect x="${wx - wt}" y="${r.dy - 28}" width="${wt * 2}" height="56" fill="${fl}"/>`;
+    if (!ok) s += `<rect x="${wx - 4}" y="${r.dy - 28}" width="8" height="56" rx="4" fill="#9AA1B5"/>`;
+    // ป้ายชื่อห้อง (ในห้อง ด้านบน · ตัวใหญ่อ่านง่าย)
+    const nm = r.name.replace('สำนักผู้อำนวยการ', 'สำนัก ผอ.');
+    s += `<g transform="translate(${cx},${r.y + 24})"><rect x="-70" y="-14" width="140" height="28" rx="14" fill="#fff" stroke="${ok ? r.acc : '#B7BCCB'}" stroke-width="2"/>
+      <circle cx="-56" cy="0" r="10" fill="${ok ? r.acc : '#B7BCCB'}"/><g transform="translate(-63,-7)" style="color:#fff">${ico(ok ? (r.lobby ? 'home' : r.k) : 'lock', 14)}</g>
+      <text x="-42" y="5" font-size="13.5" font-weight="600" fill="${ok ? '#121B2E' : '#9AA1B5'}">${esc(nm)}</text></g>`;
+    if (r.st === 'soon' || !ok) s += `<text x="${cx}" y="${r.y + r.h - 12}" text-anchor="middle" font-size="11.5" fill="#5A6478">${!ok ? 'ไม่มีสิทธิ์เข้า' : 'เฟส 2'}</text>`;
+  });
+  return s + omMeTag() + '</svg>';
+}
 const omRoomAt = (x, y) => OMR.find(r => x > r.x + 16 && x < r.x + r.w - 16 && y > r.y + 16 && y < r.y + r.h - 16);
 function omWalkable(x, y) {
-  if (x < 24 || x > OM.W - 24) return false;
-  if (y > OM.CY1 + 8 && y < OM.CY2 - 8) return true;
-  const door = OMR.find(r => Math.abs(x - r.dx) < 26 && Math.abs(y - r.dy) < 22);
+  if (OM.P) { if (y < 20 || y > OMP.H - 20) return false; if (x > OMP.CXL + 8 && x < OMP.CXR - 8) return true; }
+  else { if (x < 24 || x > OM.W - 24) return false; if (y > OM.CY1 + 8 && y < OM.CY2 - 8) return true; }
+  const door = OMR.find(r => r.vert ? Math.abs(x - r.dx) < 22 && Math.abs(y - r.dy) < 26 : Math.abs(x - r.dx) < 26 && Math.abs(y - r.dy) < 22);
   if (door) return omIn(door);
   const r = omRoomAt(x, y); return !!(r && omIn(r));
 }
 function viewMap() {
   window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap;
-  OMR = omRooms();
   app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">มุมมองเมนู</button></div>
-    <div class="omstage" id="omstage"><div id="omworld">${omDraw()}</div>
+    <div class="omstage" id="omstage"><div id="omworld"></div>
     <div class="omhint" id="omhint">แตะพื้นเพื่อเดิน · กดชื่อห้องด้านบนเพื่อไปทันที</div><div class="ompanel" id="ompanel" role="dialog" aria-live="polite"></div></div></div>`;
+  omFit();
+  OM.P = document.getElementById('omstage').clientWidth < 700; OMR = omRooms();
+  document.getElementById('omworld').innerHTML = omDraw();
   document.getElementById('omlist').onclick = () => go('home');
   document.getElementById('omchips').innerHTML = OMR.map(r => `<button class="omchip ${omIn(r) ? '' : 'lock'}" data-k="${r.k}" type="button">${omIn(r) ? `<i style="background:${r.acc}"></i>` : ico('lock', 12)}${esc(r.name)}</button>`).join('');
   document.querySelectorAll('#omchips .omchip').forEach(b => b.onclick = () => omGo(b.dataset.k));
   const home = OMR.find(r => r.k === (topScope() === 'ALL' ? 'dir' : 'sales'));
   if (om) cancelAnimationFrame(om.raf);
-  om = { me: { x: home.dx, y: home.row === 0 ? home.y + home.h / 2 + 10 : home.y + home.h / 2 - 10 }, path: [], keys: {}, last: 0, cur: null, enterT: 0, shown: null, open: null, cam: { s: 1, tx: 0, ty: 0 },
+  om = { me: { x: home.tx, y: home.ty }, path: [], keys: {}, last: 0, cur: null, enterT: 0, shown: null, open: null, cam: { s: 1, tx: 0, ty: 0 },
     el: document.getElementById('omMe'), stage: document.getElementById('omstage'), world: document.getElementById('omworld') };
   om.cur = omRoomAt(om.me.x, om.me.y); om.shown = om.cur && om.cur.k;
   om.stage.addEventListener('pointerdown', omTap);
   omPlace(); om.raf = requestAnimationFrame(omTick);
 }
+// ให้แผนที่สูงพอดีจอ: ไม่ล้นใต้แถบเมนูด้านล่างบนมือถือ
+function omFit() {
+  const m = document.querySelector('.omap'); if (!m) return;
+  const nav = document.getElementById('mnav'), nh = nav && !nav.hidden && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0;
+  m.style.height = Math.max(380, innerHeight - m.getBoundingClientRect().top - window.scrollY - nh) + 'px';
+}
 function omPlace() {
   om.el.setAttribute('transform', `translate(${om.me.x},${om.me.y})`);
-  const sw = om.stage.clientWidth, sh = om.stage.clientHeight, s = Math.min(1, Math.max(sw / OM.W, sh / OM.H, 0.62));
+  const W = omW(), H = omH(), sw = om.stage.clientWidth, sh = om.stage.clientHeight;
+  const s = OM.P ? Math.min(1.25, sw / W) : Math.min(1, Math.max(sw / W, sh / H, 0.62));   // มือถือ: พอดีความกว้างจอ
   let tx = sw / 2 - om.me.x * s, ty = sh / 2 - om.me.y * s;
-  tx = Math.min(0, Math.max(sw - OM.W * s, tx)); ty = Math.min(0, Math.max(sh - OM.H * s, ty));
-  if (OM.W * s < sw) tx = (sw - OM.W * s) / 2; if (OM.H * s < sh) ty = (sh - OM.H * s) / 2;
+  tx = Math.min(0, Math.max(sw - W * s, tx)); ty = Math.min(0, Math.max(sh - H * s, ty));
+  if (W * s < sw) tx = (sw - W * s) / 2; if (H * s < sh) ty = (sh - H * s) / 2;
   om.cam = { s, tx, ty }; om.world.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
 }
 function omRoute(tx, ty) {
   const pts = [], from = omRoomAt(om.me.x, om.me.y), to = omRoomAt(tx, ty);
-  if (from && from !== to) pts.push([from.dx, from.dy], [from.dx, OM.CX]);
-  if (to && to !== from) pts.push([to.dx, OM.CX], [to.dx, to.dy]);
-  if (!to && from) pts.push([tx, OM.CX]);
+  if (from && from !== to) pts.push([from.dx, from.dy], [from.cx, from.cy]);
+  if (to && to !== from) pts.push([to.cx, to.cy], [to.dx, to.dy]);
+  if (!to && from) pts.push(OM.P ? [OMP.CX, ty] : [tx, OM.CX]);
   pts.push([tx, ty]); om.path = pts;
 }
 function omGo(k) {
   const r = OMR.find(x => x.k === k);
   if (!omIn(r)) { toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); return; }
-  om.shown = null; omHint(); omRoute(r.dx, r.row === 0 ? r.dy - 70 : r.dy + 70);
+  om.shown = null; omHint(); omRoute(r.tx, r.ty);
 }
 function omTap(e) {
   if (e.target.closest('.ompanel')) return;
@@ -495,7 +553,7 @@ function omTap(e) {
 const omHint = () => { const h = document.getElementById('omhint'); if (h) h.style.opacity = 0; };
 addEventListener('keydown', e => { if (om && document.getElementById('omstage') && e.key.startsWith('Arrow') && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { om.keys[e.key] = 1; om.path = []; omHint(); e.preventDefault(); } });
 addEventListener('keyup', e => { if (om) delete om.keys[e.key]; });
-addEventListener('resize', () => { if (om && document.getElementById('omstage')) omPlace(); });
+addEventListener('resize', () => { const st = document.getElementById('omstage'); if (!om || !st) return; omFit(); if ((st.clientWidth < 700) !== OM.P) viewMap(); else omPlace(); });
 function omTick(t) {
   if (!document.getElementById('omstage')) { om = null; return; }          // ออกจากหน้าแผนที่แล้ว
   const dt = Math.min(.05, (t - om.last) / 1000 || 0); om.last = t; const sp = 240 * dt, K = om.keys; let moved = false;
