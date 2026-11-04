@@ -178,9 +178,15 @@
   .omhint{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(18,27,46,.85);color:#fff;font-size:13px;padding:7px 14px;border-radius:999px;white-space:nowrap;pointer-events:none;transition:opacity .4s}
   .ompanel{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto;background:#fff;border-radius:18px;box-shadow:0 14px 40px rgba(18,27,46,.25);padding:14px 16px;transform:translateY(140%);transition:transform .3s ease;z-index:6}
   .ompanel.on{transform:none}
+  .ompanel{max-height:calc(100% - 24px);overflow-y:auto}
   .omph{display:flex;align-items:center;gap:12px}.omph h2{margin:0;font-size:18px}.omph p{margin:2px 0 0;color:var(--muted);font-size:13px}
   .ompic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;flex-shrink:0}
   .omx{margin-left:auto;border:none;background:#EEF1F7;border-radius:50%;width:32px;height:32px;font-size:18px;color:var(--muted);flex-shrink:0}
+  .omtools{display:grid;gap:8px;margin-top:12px;max-height:46vh;overflow-y:auto}
+  .omtool{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:#FAFBFE;text-align:left;font:inherit;color:var(--ink);text-decoration:none}
+  .omtool:hover{border-color:var(--navy)}.omtool i{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;flex-shrink:0;font-style:normal}
+  .omtool b{display:block;font-size:15px}.omtool small{display:block;font-size:12.5px;color:var(--muted)}.omtool span{flex:1;min-width:0}
+  .omtool em{font-style:normal;color:var(--navy);font-weight:700;font-size:13px;white-space:nowrap}
   .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
   @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
 </style>
@@ -567,15 +573,34 @@ function omTick(t) {
   if (om.cur && !moved && t - om.enterT > 250 && !om.open && om.shown !== om.cur.k) { om.shown = om.cur.k; omOpen(om.cur); }
   om.raf = requestAnimationFrame(omTick);
 }
+// เครื่องมือในแต่ละห้อง — กดแล้วเปิดงานได้ทันที ไม่ต้องเข้าหน้าห้องอีกรอบ
+function omTools(r) {
+  const top = topScope(), T = [];
+  if (r.k === 'sales') {
+    if (top !== 'SELF') {
+      T.push({ ic: 'dash', c: 'var(--navy)', n: 'Dashboard Daily', d: 'ตามสิทธิ์ของคุณ', run: b => { toast('กำลังเปิด Dashboard Daily…'); openDash(b); } });
+      T.push({ ic: 'dash', c: 'var(--red)', n: 'Dashboard V2', d: 'ภาพรวม · ทีม · พนักงาน · Incentive', run: b => { toast('กำลังเปิด Dashboard V2…'); openDash(b, 'v2.html'); } });
+    }
+    T.push({ ic: 'sales', c: 'var(--green)', n: 'สรุปยอดขาย', d: 'ทีม · พนักงาน · iOS / Android · ร้าน', run: () => go('sales') });
+    if (RANK[top] >= RANK.HUB) T.push({ ic: 'staff', c: 'var(--red)', n: 'รายชื่อพนักงาน', d: 'เพิ่ม · ย้ายทีม · ปิดการใช้งาน', run: () => viewStaff() });
+  } else if (r.lobby) {
+    T.push({ ic: 'home', c: 'var(--navy)', n: 'หน้าแรก', d: 'ยอดเทียบเป้า · เรื่องที่ต้องดูวันนี้', run: () => go('home') });
+  } else if (ROOMS[r.k]) {
+    ROOMS[r.k].tools().forEach(t => T.push({ ic: t.ic, c: t.color, n: t.name, d: t.desc, url: t.url }));
+  }
+  return T;
+}
 function omOpen(r) {
-  om.open = r.k; const p = document.getElementById('ompanel');
-  const btn = r.st === 'soon' ? `<p class="omnote">ห้องนี้กำลังตกแต่ง · จะเปิดใช้ในเฟส 2</p>`
-    : `<button class="btn ok omgo" id="omenter" type="button">${r.lobby ? 'ไปหน้าแรก' : 'เข้าห้อง ' + esc(r.name)} →</button>`;
+  om.open = r.k; const p = document.getElementById('ompanel'), T = r.st === 'soon' ? [] : omTools(r);
+  const body = T.length ? `<div class="omtools">${T.map((t, i) => t.url
+      ? `<a class="omtool" href="${esc(t.url)}" target="_blank" rel="noopener"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></a>`
+      : `<button class="omtool" type="button" data-i="${i}"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></button>`).join('')}</div>`
+    : `<p class="omnote">${r.st === 'soon' ? 'ห้องนี้กำลังตกแต่ง · จะเปิดใช้ในเฟส 2' : 'ห้องนี้กำลังเตรียมเครื่องมือ · จะเปิดให้ใช้เร็ว ๆ นี้'}</p>`;
   p.innerHTML = `<div class="omph"><div class="ompic" style="background:${r.acc}">${ico(r.lobby ? 'home' : r.k, 22)}</div>
-    <div><h2>${esc(r.name)}</h2><p>${esc(r.desc)}</p></div><button class="omx" id="omx" type="button" aria-label="ปิด">×</button></div>${btn}`;
+    <div><h2>${esc(r.name)}</h2><p>${esc(r.desc)}</p></div><button class="omx" id="omx" type="button" aria-label="ปิด">×</button></div>${body}`;
   p.classList.add('on');
   document.getElementById('omx').onclick = omClose;
-  const en = document.getElementById('omenter'); if (en) en.onclick = () => go(r.lobby ? 'home' : r.k);
+  p.querySelectorAll('button.omtool').forEach(b => b.onclick = () => T[+b.dataset.i].run(b));
 }
 function omClose() { const p = document.getElementById('ompanel'); if (p) p.classList.remove('on'); if (om) om.open = null; }
 
