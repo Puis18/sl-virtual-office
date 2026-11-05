@@ -562,16 +562,19 @@ function viewCards() {
     c.querySelector('.omart').onclick = () => { if (!omIn(r)) toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); else walk(); };
   });
 }
-function viewMap() { window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap; return viewCards(); }
+function viewMap() {   // เปิดทุกครั้ง: คอม = ผังการ์ตูนเดินได้ · มือถือ = การ์ดห้อง
+  if (innerWidth >= 700) return viewWalk();
+  window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap; return viewCards();
+}
 function viewWalk() {
   window.scrollTo(0, 0); renderNav('map'); RERENDER = viewWalk;
-  app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">← การ์ดห้อง</button></div>
+  app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">ดูแบบการ์ด</button></div>
     <div class="omstage" id="omstage"><div id="omworld"></div>
     <div class="omhint" id="omhint">แตะพื้นเพื่อเดิน · กดชื่อห้องด้านบนเพื่อไปทันที</div><div class="ompanel" id="ompanel" role="dialog" aria-live="polite"></div></div></div>`;
   omFit();
   OM.P = document.getElementById('omstage').clientWidth < 700; OMR = omRooms();
   document.getElementById('omworld').innerHTML = omDraw();
-  document.getElementById('omlist').onclick = () => go('map');
+  document.getElementById('omlist').onclick = () => { window.scrollTo(0, 0); RERENDER = viewCards; viewCards(); };
   document.getElementById('omchips').innerHTML = OMR.map(r => `<button class="omchip ${omIn(r) ? '' : 'lock'}" data-k="${r.k}" type="button">${omIn(r) ? `<i style="background:${r.acc}"></i>` : ico('lock', 12)}${esc(r.name)}</button>`).join('');
   document.querySelectorAll('#omchips .omchip').forEach(b => b.onclick = () => omGo(b.dataset.k));
   const home = OMR.find(r => r.k === (topScope() === 'ALL' ? 'dir' : 'sales'));
@@ -1160,7 +1163,7 @@ function viewMsg(title, text) {
     const [me, profile] = await Promise.all([api('me'), liff.getProfile().catch(() => null)]);
     if (me.state === 'UNREGISTERED') viewRegister(me.lineName);
     else if (me.state === 'PENDING') viewPending();
-    else if (me.state === 'APPROVED') { viewLobby(me, profile); go('map'); }   // เปิดทุกครั้งที่หน้าการ์ดห้อง (คอมและมือถือ)
+    else if (me.state === 'APPROVED') { viewLobby(me, profile); go('map'); }   // เปิดทุกครั้ง: คอม = ผังการ์ตูน · มือถือ = การ์ดห้อง
     else viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
   } catch (e) { viewMsg('เกิดข้อผิดพลาด', say(e)); }
 })();
