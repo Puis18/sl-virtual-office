@@ -187,6 +187,16 @@
   .omtool:hover{border-color:var(--navy)}.omtool i{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;flex-shrink:0;font-style:normal}
   .omtool b{display:block;font-size:15px}.omtool small{display:block;font-size:12.5px;color:var(--muted)}.omtool span{flex:1;min-width:0}
   .omtool em{font-style:normal;color:var(--navy);font-weight:700;font-size:13px;white-space:nowrap}
+  /* การ์ดห้อง (มือถือ) */
+  .omcards{display:flex;flex-direction:column;gap:14px;padding:14px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));background:#E9EDF5;min-height:100%}
+  .omch{display:flex;align-items:center;gap:10px}.omch b{display:block;font-size:18px;color:var(--navy)}.omch small{color:var(--muted);font-size:13px}.omch .btn{margin-left:auto;min-height:36px;font-size:13px}
+  .omcard{background:#fff;border-radius:18px;padding:14px;box-shadow:0 2px 0 rgba(30,51,101,.06);border:1px solid var(--line)}
+  .omcard.lk{background:#F3F4F7}.omcard.lk h3{color:#8A91A3}
+  .omcardh{display:flex;align-items:center;gap:10px}.omcardh h3{margin:0;font-size:17px}.omcardh small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4}
+  .omcardh .ompic{width:38px;height:38px}
+  .omart{display:block;width:100%;height:auto;margin:10px 0 0}
+  .omwalker{transition:transform .6s ease-in-out}.omwalker.go{transform:translate(70px,64px)}
+  .omcard .omtools{max-height:none;margin-top:10px}
   .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
   @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
 </style>
@@ -510,8 +520,47 @@ function omWalkable(x, y) {
   if (door) return omIn(door);
   const r = omRoomAt(x, y); return !!(r && omIn(r));
 }
+
+/* ---------- มือถือ: การ์ดห้องแบบการ์ตูน (อ่านง่าย กดครั้งเดียวเข้างาน) ---------- */
+function omCardArt(r, i) {   // ภาพห้องขนาดย่อ 320×120 · ประตูซ้าย
+  const ok = omIn(r), fl = ok ? r.floor : '#E2E4EA';
+  let s = `<svg viewBox="0 0 320 120" class="omart" aria-hidden="true"><rect x="4" y="4" width="312" height="112" rx="14" fill="${fl}" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="6"/>
+    <rect x="1" y="44" width="10" height="34" fill="${fl}"/>`;
+  if (r.lobby) s += `<rect x="150" y="62" width="110" height="22" rx="11" fill="#1E3365"/>` + omPerson(205, 50, '#9F1C33', '#2A2238') + `<image href="logo.png" x="160" y="90" width="90" height="20" preserveAspectRatio="xMidYMid meet"/>`;
+  else if (r.meet) { s += `<rect x="120" y="40" width="140" height="44" rx="22" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`; for (let k = 0; k < 4; k++) s += `<circle cx="${140 + k * 33}" cy="30" r="7" fill="#6B7AA3"/><circle cx="${140 + k * 33}" cy="94" r="7" fill="#6B7AA3"/>`; }
+  else { s += omDesk(118, 44) + omDesk(194, 44) + omDesk(270, 44); if (ok) s += omPerson(118, 80, OM_SHIRT[i % 6], OM_HAIR[i % 4]) + omPerson(270, 80, OM_SHIRT[(i + 3) % 6], OM_HAIR[(i + 1) % 4], '#E9B48A', -1); }
+  s += omPlant(40, 96, .8) + `<g class="omwalker" style="transform:translate(-30px,64px)">${omPerson(0, 0, '#1E3365', '#2A2238')}</g>`;
+  if (!ok) s += `<rect x="1" y="44" width="10" height="34" rx="4" fill="#9AA1B5"/>`;
+  return s + '</svg>';
+}
+function viewCards() {
+  OM.P = true; OMR = omRooms();
+  const rk = r => r.lobby ? 0 : !omIn(r) ? 3 : r.st === 'soon' ? 2 : 1;   // ล็อบบี้ → ห้องที่ใช้ได้ → เฟส 2 → ไม่มีสิทธิ์
+  const order = OMR.slice().sort((a, b) => rk(a) - rk(b));
+  app.innerHTML = `<div class="omcards"><div class="omch"><div><b>ออฟฟิศ</b><small>เลือกห้อง แล้วกดงานที่ต้องการ</small></div><button class="btn no" id="omlist" type="button">มุมมองเมนู</button></div>
+    ${order.map(r => { const i = OMR.indexOf(r), ok = omIn(r), T = ok && r.st !== 'soon' ? omTools(r) : [];
+      return `<section class="omcard ${ok ? '' : 'lk'}" data-k="${r.k}">
+        <div class="omcardh"><span class="ompic" style="background:${ok ? r.acc : '#9AA1B5'}">${ico(ok ? (r.lobby ? 'home' : r.k) : 'lock', 20)}</span>
+          <div><h3>${esc(r.name)}</h3><small>${esc(!ok ? 'ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ' : r.st === 'soon' ? 'กำลังตกแต่ง · เปิดใช้ในเฟส 2' : r.desc)}</small></div></div>
+        ${omCardArt(r, i)}
+        ${T.length ? `<div class="omtools">${T.map((t, j) => t.url
+          ? `<a class="omtool" href="${esc(t.url)}" target="_blank" rel="noopener"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></a>`
+          : `<button class="omtool" type="button" data-j="${j}"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></button>`).join('')}</div>`
+          : ok && r.st !== 'soon' ? '<p class="omnote">ห้องนี้กำลังเตรียมเครื่องมือ · จะเปิดให้ใช้เร็ว ๆ นี้</p>' : ''}
+      </section>`; }).join('')}</div>`;
+  document.getElementById('omlist').onclick = () => go('home');
+  app.querySelectorAll('.omcard').forEach(c => {
+    const r = OMR.find(x => x.k === c.dataset.k), T = omIn(r) && r.st !== 'soon' ? omTools(r) : [];
+    const walk = () => { const w = c.querySelector('.omwalker'); if (!w || matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+      w.classList.add('go'); return 650; };
+    c.querySelectorAll('button.omtool').forEach(b => b.onclick = () => { const ms = walk(); setTimeout(() => T[+b.dataset.j].run(b), ms); });
+    c.querySelectorAll('a.omtool').forEach(a => a.addEventListener('click', walk));
+    c.querySelector('.omart').onclick = () => { if (!omIn(r)) toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); else walk(); };
+  });
+}
 function viewMap() {
   window.scrollTo(0, 0); renderNav('map'); RERENDER = viewMap; startPref('map');
+  if (innerWidth < 700) return viewCards();   // มือถือ: การ์ดห้อง
   app.innerHTML = `<div class="omap"><div class="omtop"><div class="omchips" id="omchips"></div><button class="btn no" id="omlist" type="button">มุมมองเมนู</button></div>
     <div class="omstage" id="omstage"><div id="omworld"></div>
     <div class="omhint" id="omhint">แตะพื้นเพื่อเดิน · กดชื่อห้องด้านบนเพื่อไปทันที</div><div class="ompanel" id="ompanel" role="dialog" aria-live="polite"></div></div></div>`;
@@ -568,6 +617,7 @@ const omHint = () => { const h = document.getElementById('omhint'); if (h) h.sty
 addEventListener('keydown', e => { if (om && document.getElementById('omstage') && e.key.startsWith('Arrow') && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { om.keys[e.key] = 1; om.path = []; omHint(); e.preventDefault(); } });
 addEventListener('keyup', e => { if (om) delete om.keys[e.key]; });
 addEventListener('resize', () => { const st = document.getElementById('omstage'); if (!om || !st) return; omFit(); if ((st.clientWidth < 700) !== OM.P) viewMap(); else omPlace(); });
+addEventListener('resize', () => { if (document.querySelector('.omcards') && innerWidth >= 700) viewMap(); });
 function omTick(t) {
   if (!document.getElementById('omstage')) { om = null; return; }          // ออกจากหน้าแผนที่แล้ว
   const dt = Math.min(.05, (t - om.last) / 1000 || 0); om.last = t; const sp = 240 * dt, K = om.keys; let moved = false;
