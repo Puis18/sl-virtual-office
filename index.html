@@ -274,15 +274,18 @@ const ICON = {
   lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'
 };
-const DEPT_KEY = ['sales', 'od', 'product', 'hr', 'admin', 'mis', 'dir'];
+const DEPT_KEY = ['sales', 'od', 'product', 'mkt', 'hr', 'admin', 'mis', 'dir'];
+ICON.mkt = '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6"/><path d="M18 6a7 7 0 0 1 0 12"/>';
+ICON.meeting = ICON.hr;
 ICON.map = '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>';
 const ico = (k, sz = 18) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
-const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
+const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', mkt:'การตลาด', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'โบรชัวร์สินค้า · นโยบาย Dealer · เงื่อนไข MO / EA', phase:1, min:'SELF' },
+  { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · ตารางราคาสินค้า', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
   { mk:'M', name:'ฝ่าย MIS', desc:'ผู้ใช้และสิทธิ์ · สถานะข้อมูล · แจ้งปัญหา', phase:2, min:'ALL' },
@@ -380,6 +383,9 @@ const ROOMS = {
       : null,
     { ic: 'od', color: 'var(--red)', name: 'รายการลูกค้าที่ต้องติดตาม', desc: 'หน้าสำหรับพนักงาน · โทรติดตามและบันทึกนัดชำระ', url: OD_URL + '?page=staff' }
   ].filter(Boolean) },
+  mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
+    { ic: 'mkt', color: 'var(--red)', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' }
+  ] },
   product: { title: 'ฝ่ายโปรดักต์', sub: 'ข้อมูลสินค้าและเงื่อนไข สำหรับใช้งานและส่งให้ร้าน', tools: () => [
     { ic: 'product', color: 'var(--green)', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
   ] }
@@ -402,25 +408,28 @@ const OMP = { W: 400, H: 860, CXL: 170, CXR: 230, RH: 196, GAP: 14, Y0: 16 };
 OMP.CX = (OMP.CXL + OMP.CXR) / 2;
 const omW = () => OM.P ? OMP.W : OM.W, omH = () => OM.P ? OMP.H : OM.H;
 const OM_TINT = { navy: ['#E5ECF5', '#1E3365'], red: ['#F8E8EB', '#9F1C33'], green: ['#E6F1EA', '#126C3D'] };
-const OM_LAYOUT = [   // ห้องแผนก 7 ห้อง + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
-  ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['hr', 'green'],
-  ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['lobby', 'navy']
+const OM_LAYOUT = [   // ห้องแผนก 8 ห้อง + ห้องประชุมส่วนกลาง + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
+  ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['mkt', 'red'], ['hr', 'green'],
+  ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['meeting', 'green'], ['lobby', 'navy']
 ];
 let OMR = [], om = null;
 function omRooms() {
+  const n = OM_LAYOUT.length, cols = Math.ceil(n / 2), rows = Math.ceil(n / 2);
+  OM.W = OM.X0 * 2 + cols * OM.RW + (cols - 1) * OM.GAP;                 // ผังคอมกว้างตามจำนวนห้อง
+  OMP.H = OMP.Y0 * 2 + rows * OMP.RH + (rows - 1) * OMP.GAP;            // ผังมือถือสูงตามจำนวนห้อง
   return OM_LAYOUT.map(([k, tone], i) => {
-    const di = DEPT_KEY.indexOf(k), d = DEPTS[di];
-    const st = k === 'lobby' ? 'open' : deptState(di);
-    const r = { k, tone, floor: OM_TINT[tone][0], acc: OM_TINT[tone][1], st, lobby: k === 'lobby', meet: k === 'dir',
-      name: k === 'lobby' ? 'ล็อบบี้' : d.name.replace('ฝ่ายทรัพยากรบุคคล', 'ฝ่าย HR'),
-      desc: k === 'lobby' ? 'หน้าแรก · เรื่องที่ต้องดูวันนี้' : d.desc, row: i < 4 ? 0 : 1 };
+    const di = DEPT_KEY.indexOf(k), d = DEPTS[di] || {}, common = k === 'lobby' || k === 'meeting';
+    const st = common ? 'open' : deptState(di);
+    const r = { k, tone, floor: OM_TINT[tone][0], acc: OM_TINT[tone][1], st, lobby: k === 'lobby', meet: k === 'dir' || k === 'meeting', common: k === 'meeting',
+      name: k === 'lobby' ? 'ล็อบบี้' : k === 'meeting' ? 'ห้องประชุม' : d.name.replace('ฝ่ายทรัพยากรบุคคล', 'ฝ่าย HR'),
+      desc: k === 'lobby' ? 'หน้าแรก · เรื่องที่ต้องดูวันนี้' : k === 'meeting' ? 'ห้องส่วนกลาง · ประชุมทีม' : d.desc, row: i < cols ? 0 : 1 };
     if (OM.P) {
       const left = i % 2 === 0, row = Math.floor(i / 2);
       r.x = left ? 10 : OMP.CXR; r.w = OMP.CXL - 10; r.y = OMP.Y0 + row * (OMP.RH + OMP.GAP); r.h = OMP.RH;
       r.dx = left ? OMP.CXL : OMP.CXR; r.dy = r.y + r.h / 2; r.vert = true;          // ประตูอยู่ผนังฝั่งทางเดิน
       r.cx = OMP.CX; r.cy = r.dy; r.tx = r.x + r.w / 2; r.ty = r.y + r.h / 2 + 24;
     } else {
-      const c = i % 4; r.x = OM.X0 + c * (OM.RW + OM.GAP); r.w = OM.RW;
+      const c = i % cols; r.x = OM.X0 + c * (OM.RW + OM.GAP); r.w = OM.RW;
       if (r.row === 0) { r.y = 30; r.h = OM.CY1 - 30; } else { r.y = OM.CY2; r.h = OM.H - 30 - OM.CY2; }
       r.dx = r.x + r.w / 2; r.dy = r.row === 0 ? OM.CY1 : OM.CY2;
       r.cx = r.dx; r.cy = OM.CX; r.tx = r.dx; r.ty = r.row === 0 ? r.dy - 70 : r.dy + 70;
@@ -544,7 +553,7 @@ function omCardArt(r, i) {   // ภาพห้องขนาดย่อ 320×
 function viewCards() {
   OM.P = true; OMR = omRooms();
   const rk = r => r.lobby ? 0 : !omIn(r) ? 3 : r.st === 'soon' ? 2 : 1;   // ล็อบบี้ → ห้องที่ใช้ได้ → เฟส 2 → ไม่มีสิทธิ์
-  const order = OMR.slice().sort((a, b) => rk(a) - rk(b));
+  const order = OMR.filter(r => !r.common).sort((a, b) => rk(a) - rk(b));
   app.innerHTML = `<div class="omcards"><div class="omch"><div><b>ออฟฟิศ</b><small>เลือกห้อง แล้วกดงานที่ต้องการ</small></div><button class="btn no omwalkbtn" id="omwalk" type="button">เดินในแผนที่</button><button class="btn no" id="omlist" type="button">หน้าแรก</button></div><div class="omgrid">
     ${order.map(r => { const i = OMR.indexOf(r), ok = omIn(r), T = ok && r.st !== 'soon' ? omTools(r) : [];
       return `<section class="omcard ${ok ? '' : 'lk'}" data-k="${r.k}">
@@ -673,7 +682,7 @@ function omOpen(r) {
   const body = T.length ? `<div class="omtools">${T.map((t, i) => t.url
       ? `<a class="omtool" href="${esc(t.url)}" target="_blank" rel="noopener"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></a>`
       : `<button class="omtool" type="button" data-i="${i}"><i style="background:${t.c}">${ico(t.ic, 18)}</i><span><b>${esc(t.n)}</b><small>${esc(t.d)}</small></span><em>เปิด →</em></button>`).join('')}</div>`
-    : `<p class="omnote">${r.st === 'soon' ? 'ห้องนี้กำลังตกแต่ง · จะเปิดใช้ในเฟส 2' : 'ห้องนี้กำลังเตรียมเครื่องมือ · จะเปิดให้ใช้เร็ว ๆ นี้'}</p>`;
+    : `<p class="omnote">${r.common ? 'ห้องส่วนกลาง · ใช้ประชุมทีม' : r.st === 'soon' ? 'ห้องนี้กำลังตกแต่ง · จะเปิดใช้ในเฟส 2' : 'ห้องนี้กำลังเตรียมเครื่องมือ · จะเปิดให้ใช้เร็ว ๆ นี้'}</p>`;
   p.innerHTML = `<div class="omph"><div class="ompic" style="background:${r.acc}">${ico(r.lobby ? 'home' : r.k, 22)}</div>
     <div><h2>${esc(r.name)}</h2><p>${esc(r.desc)}</p></div><button class="omx" id="omx" type="button" aria-label="ปิด">×</button></div>${body}`;
   p.classList.add('on');
