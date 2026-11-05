@@ -284,8 +284,8 @@ const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติด�
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
-  { mk:'P', name:'ฝ่ายโปรดักต์', desc:'โบรชัวร์สินค้า · นโยบาย Dealer · เงื่อนไข MO / EA', phase:1, min:'SELF' },
-  { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · ตารางราคาสินค้า', phase:1, min:'SELF' },
+  { mk:'P', name:'ฝ่ายโปรดักต์', desc:'นโยบาย Dealer · เงื่อนไข MO / EA', phase:2, min:'SELF' },
+  { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · โบรชัวร์สินค้า', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
   { mk:'M', name:'ฝ่าย MIS', desc:'ผู้ใช้และสิทธิ์ · สถานะข้อมูล · แจ้งปัญหา', phase:2, min:'ALL' },
@@ -384,9 +384,7 @@ const ROOMS = {
     { ic: 'od', color: 'var(--red)', name: 'รายการลูกค้าที่ต้องติดตาม', desc: 'หน้าสำหรับพนักงาน · โทรติดตามและบันทึกนัดชำระ', url: OD_URL + '?page=staff' }
   ].filter(Boolean) },
   mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
-    { ic: 'mkt', color: 'var(--red)', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' }
-  ] },
-  product: { title: 'ฝ่ายโปรดักต์', sub: 'ข้อมูลสินค้าและเงื่อนไข สำหรับใช้งานและส่งให้ร้าน', tools: () => [
+    { ic: 'mkt', color: 'var(--red)', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
     { ic: 'product', color: 'var(--green)', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
   ] }
 };
