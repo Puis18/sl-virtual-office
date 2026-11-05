@@ -200,6 +200,11 @@
   .omart{display:block;width:100%;height:auto;margin:10px 0 0}
   .omwalker{transition:transform .6s ease-in-out}.omwalker.go{transform:translate(70px,64px)}
   .omcard .omtools{max-height:none;margin-top:10px}
+  .omcard .omtools,.omcard .omnote{display:none}.omcard.open .omtools{display:grid}.omcard.open .omnote{display:block}
+  .omcardh,.omart{cursor:pointer}
+  .omcardh::after{content:'';margin-left:auto;width:9px;height:9px;border-right:2.5px solid var(--muted);border-bottom:2.5px solid var(--muted);transform:rotate(45deg);transition:transform .2s;flex-shrink:0}
+  .omcard.open .omcardh::after{transform:rotate(-135deg)}.omcard.lk .omcardh::after{display:none}
+
   .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
   @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
 </style>
@@ -559,7 +564,15 @@ function viewCards() {
       w.classList.add('go'); return 650; };
     c.querySelectorAll('button.omtool').forEach(b => b.onclick = () => { const ms = walk(); setTimeout(() => T[+b.dataset.j].run(b), ms); });
     c.querySelectorAll('a.omtool').forEach(a => a.addEventListener('click', walk));
-    c.querySelector('.omart').onclick = () => { if (!omIn(r)) toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); else walk(); };
+    // แตะการ์ด (หัวหรือภาพ) = เข้าห้อง: กางเมนูของห้องนี้ และย่อห้องอื่น
+    const enter = () => {
+      if (!omIn(r)) { toast(r.name + ' ไม่อยู่ในสิทธิ์ของตำแหน่งคุณ'); return; }
+      const open = !c.classList.contains('open');
+      app.querySelectorAll('.omcard.open').forEach(x => x.classList.remove('open'));
+      if (open) { c.classList.add('open'); walk(); setTimeout(() => c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80); }
+      else { const w = c.querySelector('.omwalker'); if (w) w.classList.remove('go'); }
+    };
+    c.querySelector('.omart').onclick = enter; c.querySelector('.omcardh').onclick = enter;
   });
 }
 function viewMap() {   // เปิดทุกครั้ง: คอม = ผังการ์ตูนเดินได้ · มือถือ = การ์ดห้อง
