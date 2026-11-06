@@ -141,6 +141,7 @@
   /* มือถือ: ทางลัดขึ้นก่อนตัวเลข · หน้าเอกสาร */
   @media (max-width:899px){main.wrap .qsec{order:-1}main.wrap{gap:22px}.quick{grid-template-columns:1fr 1fr;gap:10px}.qk{flex-direction:column;align-items:flex-start;gap:8px;padding:12px}.qk small{font-size:11.5px}}
   .qk.more{border-style:dashed;justify-content:center}
+  .pteam{color:var(--navy)!important;font-weight:600}
   .dgrp{margin-top:22px}.dgrp h2{font-size:16px;color:var(--navy);margin:0 0 10px}
   .dlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
   .dlist .qk{flex-direction:row;align-items:center}
@@ -1208,11 +1209,17 @@ function renderStaff(msg) {
 async function loadPending() {
   const box = document.getElementById('admin');
   try {
-    const { list } = await api('pending');
+    const [{ list }, roster] = await Promise.all([api('pending'), STAFF ? Promise.resolve(STAFF) : api('staffList').catch(() => null)]);
+    // สังกัดทีมของผู้ขอ: ดูจากรายชื่อพนักงาน (ทีม + Hub) ถ้าโหลดไม่ได้ก็แสดงแบบเดิม
+    const teamOf = emp => { if (!roster) return '';
+      const st = (roster.staff || []).find(x => String(x.emp) === String(emp)); if (!st || !st.team) return '';
+      const t = (roster.teams || []).find(x => x.code === st.team) || {};
+      return 'ทีม ' + st.team + (t.name ? ' ' + String(t.name).replace(/^TEAM\s+\S+\s*/i, '') : '') + (t.hub ? ' · Hub ' + t.hub : ''); };
     box.innerHTML = `<div class="card"><div class="hd"><h2>คำขอรออนุมัติ (${list.length})</h2></div>
       ${list.length ? '<p class="empty">ตรวจว่าชื่อ LINE ตรงกับเจ้าของรหัสพนักงานก่อนกดอนุมัติ</p>' : ''}
       ${list.map(x => `<div class="row"><div><b>${esc(x.name)}</b> (${esc(x.nick)})
-        <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · LINE: ${esc(x.lineName)}</small></div>
+        <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · LINE: ${esc(x.lineName)}</small>
+        ${teamOf(x.emp) ? `<small class="pteam">${esc(teamOf(x.emp))}</small>` : ''}</div>
         <div><button class="btn ok" data-emp="${esc(x.emp)}" data-d="APPROVE">อนุมัติ</button>
         <button class="btn no" data-emp="${esc(x.emp)}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p class="empty">ไม่มีคำขอค้าง</p>'}</div>`;
     box.querySelectorAll('button[data-emp]').forEach(b => b.onclick = async () => {
