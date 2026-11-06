@@ -1252,6 +1252,7 @@ function deepLink() {
     else if (me.state === 'PENDING') viewPending();
     else if (me.state === 'APPROVED') {   // ลิงก์ตรง ?go=... (เมนู LINE) ไปหน้านั้นเลย · ไม่มี: คอม = แผนที่ · มือถือ = หน้าแรก
       const dl = deepLink(); viewLobby(me, profile);
+      if (dl) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // ใช้ลิงก์ตรงครั้งเดียว: กดรีเฟรช/เปิดซ้ำ กลับหน้าปกติ
       if (dl) { if (dl !== 'home') go(dl); } else if (innerWidth >= 700) go('map');
     }
     else viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
