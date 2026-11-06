@@ -138,6 +138,13 @@
   .fi:hover{background:#F6F8FB}.fi span:nth-child(2){flex:1}.fi b{display:block;font-size:15px}.fi small{display:block;font-size:13px;color:var(--muted)}
   .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.dot.red{background:var(--red)}.dot.green{background:var(--green)}.dot.amber{background:#C98A1B}
   @media (min-width:900px){.shell.nav .mobile-only{display:none}}
+  /* มือถือ: ทางลัดขึ้นก่อนตัวเลข · หน้าเอกสาร */
+  @media (max-width:899px){main.wrap .qsec{order:-1}main.wrap{gap:22px}.quick{grid-template-columns:1fr 1fr;gap:10px}.qk{flex-direction:column;align-items:flex-start;gap:8px;padding:12px}.qk small{font-size:11.5px}}
+  .qk.more{border-style:dashed;justify-content:center}
+  .dgrp{margin-top:22px}.dgrp h2{font-size:16px;color:var(--navy);margin:0 0 10px}
+  .dlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+  .dlist .qk{flex-direction:row;align-items:center}
+  .dnote{font-size:13px;color:var(--muted);margin:14px 0 0}
   /* ย่อแถบเมนู */
   .sb-tog{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 6px;background:rgba(255,255,255,.08);border:none;color:#C7D0E3;border-radius:8px;min-height:34px;font-size:12px}
   .sb-logo .sb-ic{display:none}.sbmini .sb-logo .sb-ic{display:block}.sbmini .sb-logo .sb-full{display:none}.dot{min-width:10px}.goal .v{font-size:34px}
@@ -277,9 +284,10 @@ const ICON = {
 const DEPT_KEY = ['sales', 'od', 'product', 'mkt', 'hr', 'admin', 'mis', 'dir'];
 ICON.mkt = '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6"/><path d="M18 6a7 7 0 0 1 0 12"/>';
 ICON.meeting = ICON.hr;
+ICON.docs = '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/>';
 ICON.map = '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>';
 const ico = (k, sz = 18) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
-const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', mkt:'การตลาด', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน' };
+const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', mkt:'การตลาด', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน', docs:'เอกสาร' };
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
@@ -315,6 +323,7 @@ function viewLobby(me, profile) {
     <div class="av">${profile && profile.pictureUrl ? `<img src="${esc(profile.pictureUrl)}" alt="">` : esc(String(name).charAt(0))}</div>`;
 
   const cards = DEPTS.map((d, i) => {
+    if (deptState(i) !== 'open') return '';   // มือถือ: โชว์เฉพาะห้องที่ใช้ได้
     const allowed = RANK[top] >= RANK[d.min];
     const cls = !allowed ? 'locked' : d.phase === 1 ? 'open' : '';
     const st = !allowed ? 'ไม่มีสิทธิ์' : d.phase === 1 ? 'เปิดใช้งาน' : 'เฟส 2';
@@ -338,14 +347,16 @@ function viewLobby(me, profile) {
       <div class="kpi"><span>สัดส่วน iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
     </section>
     <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
-    <section><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
+    <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
       ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small>ตามสิทธิ์ของคุณ</small></span></button>
       <button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}
       <button class="qk" id="sum"><i style="background:var(--green)">${ico('sales', 20)}</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
+      ${quickDocs().map(qkLink).join('')}
+      <button class="qk more" id="qDocs"><i style="background:var(--navy)">${ico('docs', 20)}</i><span><b>เอกสารทั้งหมด</b><small>ค้นหาคู่มือ · สไลด์ · ราคา</small></span></button>
       ${RANK[top] >= RANK.HUB ? `<button class="qk" id="mgr"><i style="background:var(--red)">${ico('staff', 20)}</i><span><b>รายชื่อพนักงาน</b><small>เพิ่ม · ย้ายทีม · ปิดการใช้งาน</small></span></button>` : ''}
     </div></section>
     <section class="mobile-only"><div class="sec-h"><h2>แผนกทั้งหมด</h2></div>
-      <div class="grid">${cards}</div><div id="dmsg"></div></section>
+      <div class="grid">${cards}</div><div id="dmsg"></div><p class="dnote">ห้องอื่นดูได้ที่แผนที่ออฟฟิศ · บางห้องจะเปิดในเฟส 2</p></section>
     <section id="admin"></section>
   </main>`;
 
@@ -360,6 +371,7 @@ function viewLobby(me, profile) {
   });
   const mg = document.getElementById('mgr'); if (mg) mg.onclick = () => viewStaff();
   const sm = document.getElementById('sum'); if (sm) sm.onclick = () => go('sales');
+  document.getElementById('qDocs').onclick = () => go('docs'); bindRecent(app);
   const qd = document.getElementById('qDash'); if (qd) qd.onclick = () => openDash(qd);
   const q2 = document.getElementById('qDash2'); if (q2) q2.onclick = () => openDash(q2, 'v2.html');
   renderNav('home'); RERENDER = () => viewLobby(ME, PROFILE);
@@ -384,17 +396,17 @@ const ROOMS = {
     { ic: 'od', color: 'var(--red)', name: 'รายการลูกค้าที่ต้องติดตาม', desc: 'หน้าสำหรับพนักงาน · โทรติดตามและบันทึกนัดชำระ', url: OD_URL + '?page=staff' }
   ].filter(Boolean) },
   product: { title: 'ฝ่ายโปรดักต์', sub: 'สไลด์นโยบาย เงื่อนไขสินค้า และคู่มือแคมเปญ', tools: () => [
-    { ic: 'product', color: 'var(--green)', name: 'สรุปเงินดาวน์ EA Policy', desc: 'เงื่อนไขเงินดาวน์ EA', url: 'https://claude.ai/artifact/1dYFtXxgaGRcku2WKkWtZV' },
-    { ic: 'product', color: 'var(--red)', name: 'คู่มือ Lockdown OPPO', desc: 'แคมเปญผ่อนล็อกดาวน์ · OPPO Brand Shop', url: 'https://claude.ai/artifact/FF4v7fiJFJUR3Hbq4kseHP' },
-    { ic: 'product', color: 'var(--red)', name: 'คู่มือ Lockdown realme', desc: 'แคมเปญผ่อนล็อกดาวน์ · ทุกร้าน', url: 'https://claude.ai/artifact/LNphpXtPZEDt9CRawCssEe' },
-    { ic: 'product', color: 'var(--navy)', name: 'Hub Master Dealer', desc: 'สไลด์นำเสนอดีลเลอร์ Hub Master', url: 'https://claude.ai/artifact/2HW3oSNTpBArgciD6ro7TH' },
-    { ic: 'product', color: 'var(--green)', name: 'ผลงาน Hub Master', desc: 'อัปเดตทุกวัน · เปิด Dashboard Daily แล้วกดแท็บ Hub Master', url: 'https://puis18.github.io/sleasing-dashboard/' },
-    { ic: 'product', color: 'var(--red)', name: 'คู่มือร้าน Hub ฉบับง่าย', desc: 'ขั้นตอนลงทะเบียนร้านในเครือ (Sub Dealer)', url: 'https://claude.ai/artifact/FvfbG2LvXgZb5bD3YDgftb' },
-    { ic: 'product', color: 'var(--navy)', name: 'Company Profile', desc: 'สไลด์แนะนำบริษัท S Leasing', url: 'https://drive.google.com/file/d/1qkLvIYJgBlzrra46yOyfB03py_97Scc3/view' }
+    { ic: 'product', color: 'var(--green)', g: 'shop', name: 'สรุปเงินดาวน์ EA Policy', desc: 'เงื่อนไขเงินดาวน์ EA', url: 'https://claude.ai/artifact/1dYFtXxgaGRcku2WKkWtZV' },
+    { ic: 'product', color: 'var(--red)', g: 'shop', name: 'คู่มือ Lockdown OPPO', desc: 'แคมเปญผ่อนล็อกดาวน์ · OPPO Brand Shop', url: 'https://claude.ai/artifact/FF4v7fiJFJUR3Hbq4kseHP' },
+    { ic: 'product', color: 'var(--red)', g: 'shop', name: 'คู่มือ Lockdown realme', desc: 'แคมเปญผ่อนล็อกดาวน์ · ทุกร้าน', url: 'https://claude.ai/artifact/LNphpXtPZEDt9CRawCssEe' },
+    { ic: 'product', color: 'var(--navy)', g: 'hub', name: 'Hub Master Dealer', desc: 'สไลด์นำเสนอดีลเลอร์ Hub Master', url: 'https://claude.ai/artifact/2HW3oSNTpBArgciD6ro7TH' },
+    { ic: 'product', color: 'var(--green)', g: 'hub', name: 'ผลงาน Hub Master', desc: 'อัปเดตทุกวัน · เปิด Dashboard Daily แล้วกดแท็บ Hub Master', url: 'https://puis18.github.io/sleasing-dashboard/' },
+    { ic: 'product', color: 'var(--red)', g: 'hub', name: 'คู่มือร้าน Hub ฉบับง่าย', desc: 'ขั้นตอนลงทะเบียนร้านในเครือ (Sub Dealer)', url: 'https://claude.ai/artifact/FvfbG2LvXgZb5bD3YDgftb' },
+    { ic: 'product', color: 'var(--navy)', g: 'shop', name: 'Company Profile', desc: 'สไลด์แนะนำบริษัท S Leasing', url: 'https://drive.google.com/file/d/1qkLvIYJgBlzrra46yOyfB03py_97Scc3/view' }
   ] },
   mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
-    { ic: 'mkt', color: 'var(--red)', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
-    { ic: 'product', color: 'var(--green)', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
+    { ic: 'mkt', color: 'var(--red)', g: 'shop', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
+    { ic: 'product', color: 'var(--green)', g: 'shop', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
   ] }
 };
 function viewRoom(key) {
@@ -405,6 +417,43 @@ function viewRoom(key) {
     ${r.tools().map(t => `<a class="qk" href="${esc(t.url)}" target="_blank" rel="noopener" style="text-decoration:none"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></a>`).join('')}
   </div><p class="empty" style="padding:12px 0 0">เครื่องมือจะเปิดในหน้าต่างใหม่ · เฟสถัดไปจะย้ายเข้ามาใช้ล็อกอินและสิทธิ์เดียวกับออฟฟิศ</p></section></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
+}
+
+/* ---------- เอกสาร: รวมเครื่องมือจากฝ่ายการตลาด + โปรดักต์ จัดกลุ่มตามงาน + ค้นหา ---------- */
+const DOC_GRP = [['shop', 'ใช้คุยกับร้านและลูกค้า'], ['hub', 'ร้านในเครือ · Hub Master'], ['', 'อื่น ๆ']];
+function docList() { return ['mkt', 'product'].filter(k => ROOMS[k] && deptState(DEPT_KEY.indexOf(k)) === 'open').flatMap(k => ROOMS[k].tools()); }
+const qkLink = t => `<a class="qk" href="${esc(t.url)}" target="_blank" rel="noopener" data-n="${esc(t.name)}" style="text-decoration:none"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></a>`;
+// ใช้ล่าสุด: จำชื่อเอกสารที่กดไว้ในเครื่องของคนนั้น
+function recent(n) {
+  let r = []; try { r = JSON.parse(localStorage.getItem('voRecent') || '[]'); } catch (e) {}
+  if (n) { r = [n].concat(r.filter(x => x !== n)).slice(0, 6); try { localStorage.setItem('voRecent', JSON.stringify(r)); } catch (e) {} }
+  return r;
+}
+function bindRecent(root) { root.querySelectorAll('a.qk[data-n]').forEach(a => a.addEventListener('click', () => recent(a.dataset.n))); }
+function quickDocs() {   // หน้าแรก: เอกสารที่ใช้ล่าสุด 2 อัน · ยังไม่เคยกด = Pricelist + โบรชัวร์
+  const all = docList(), r = recent().map(n => all.find(t => t.name === n)).filter(Boolean);
+  return (r.length ? r : all.filter(t => t.name === 'Pricelist' || t.name === 'โบรชัวร์สินค้า')).slice(0, 2);
+}
+function viewDocs() {
+  window.scrollTo(0, 0); renderNav('docs'); RERENDER = viewDocs;
+  const all = docList();
+  app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับหน้าแรก</button>
+    <h1>เอกสาร</h1><small>ราคา โบรชัวร์ คู่มือ และสไลด์ · รวมจากฝ่ายการตลาดและฝ่ายโปรดักต์</small></div></div></section>
+  <main class="wrap" style="gap:0"><div class="fbar"><input id="dq" type="search" placeholder="ค้นหา เช่น oppo, ราคา, Hub" aria-label="ค้นหาเอกสาร" autocomplete="off"></div>
+    <div id="dl"></div><p class="dnote">เอกสารจะเปิดในหน้าต่างใหม่</p></main>`;
+  const draw = q => {
+    q = q.trim().toLowerCase();
+    const hit = q ? all.filter(t => (t.name + ' ' + t.desc).toLowerCase().includes(q)) : all;
+    const rc = q ? [] : recent().map(n => all.find(t => t.name === n)).filter(Boolean).slice(0, 3);
+    const grp = (h, L) => L.length ? `<section class="dgrp"><h2>${esc(h)}</h2><div class="dlist">${L.map(qkLink).join('')}</div></section>` : '';
+    const html = grp('ใช้ล่าสุด', rc) + DOC_GRP.map(([g, h]) => grp(h, hit.filter(t => (t.g || '') === g))).join('');
+    const dl = document.getElementById('dl');
+    dl.innerHTML = html || `<p class="empty" style="padding:20px 0">ไม่พบเอกสารที่ตรงกับ “${esc(q)}”</p>`;
+    bindRecent(dl);
+  };
+  document.getElementById('dq').oninput = e => draw(e.target.value);
+  document.getElementById('back').onclick = () => go('home');
+  draw('');
 }
 
 /* ================= แผนที่ออฟฟิศ (แบบการ์ตูน) — เดินไปห้องแผนก แล้วเข้าห้องได้ตามสิทธิ์ ================= */
@@ -701,7 +750,14 @@ function omClose() { const p = document.getElementById('ompanel'); if (p) p.clas
 function go(key) {
   if (key === 'home') return viewLobby(ME, PROFILE);
   if (key === 'map') return SALES || topScope() === 'SELF' ? viewMap() : loadSales(topScope()).then(viewMap, viewMap);
-  if (key === 'staff') return viewStaff();
+  if (key === 'staff') return canManage() ? viewStaff() : viewLobby(ME, PROFILE);
+  if (key === 'docs') return viewDocs();
+  if (key === 'dash' || key === 'dash2') {   // ลิงก์ตรงจากเมนู LINE: เปิด Dashboard เลย
+    viewLobby(ME, PROFILE);
+    if (topScope() === 'SELF') return toast('Dashboard เปิดได้ตั้งแต่ระดับ TM ขึ้นไป');
+    return openDash(null, key === 'dash2' ? 'v2.html' : undefined);
+  }
+  if (DEPT_KEY.indexOf(key) < 0) return viewLobby(ME, PROFILE);
   if (ROOMS[key] && deptState(DEPT_KEY.indexOf(key)) === 'open') return viewRoom(key);
   if (key === 'sales') return SALES ? viewSales() : (toast('กำลังโหลดยอดขาย…'), loadSales(topScope()).then(() => viewSales()));
   const i = DEPT_KEY.indexOf(key), st = deptState(i), d = DEPTS[i];
@@ -716,12 +772,13 @@ function renderNav(active) {
     <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
     <button class="nv" data-k="home" title="หน้าแรก"><i>${ico('home')}</i><span class="tx">หน้าแรก</span><em>หน้าแรก</em></button>
     <button class="nv" data-k="map" title="แผนที่ออฟฟิศ"><i>${ico('map')}</i><span class="tx">แผนที่ออฟฟิศ</span><em>แผนที่</em></button>
+    <button class="nv" data-k="docs" title="เอกสาร"><i>${ico('docs')}</i><span class="tx">เอกสาร</span><em>เอกสาร</em></button>
     <div class="sb-grp">แผนก</div>
     ${DEPTS.map((d, i) => { const st = deptState(i); return `<button class="nv ${st === 'lock' ? 'lk' : ''}" data-k="${DEPT_KEY[i]}" title="${esc(d.name)}"><i>${ico(DEPT_KEY[i])}</i><span class="tx">${esc(d.name)}</span>${tag(st)}<em>${SHORT[DEPT_KEY[i]]}</em></button>`; }).join('')}
     ${canManage() ? `<div class="sb-grp">จัดการ</div><button class="nv" data-k="staff" title="รายชื่อพนักงาน"><i>${ico('staff')}</i><span class="tx">รายชื่อพนักงาน</span><em>พนักงาน</em></button>` : ''}
     <div class="sb-me"><div class="av">${PROFILE && PROFILE.pictureUrl ? `<img src="${esc(PROFILE.pictureUrl)}" alt="">` : esc(String(ME.nick || ME.name).charAt(0))}</div>
       <div><b>${esc(name)}</b><small>${esc(ME.roles.map(roleLabel).join(' / '))}</small></div></div>`;
-  const items = [['home', 'หน้าแรก'], ['map', 'แผนที่'], ['sales', 'ฝ่ายขาย'], ['od', 'ติดตามหนี้']].concat(canManage() ? [['staff', 'พนักงาน']] : []);
+  const items = [['home', 'หน้าแรก'], ['sales', 'ยอดขาย'], ['docs', 'เอกสาร'], ['map', 'แผนที่']].concat(canManage() ? [['staff', 'พนักงาน']] : []);
   mn.innerHTML = items.map(([k, l]) => `<button data-k="${k}">${ico(k, 22)}${l}</button>`).join('');
   [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
   const sh = document.querySelector('.shell'); sh.classList.add('nav'); document.body.classList.add('has-nav');
@@ -1185,6 +1242,12 @@ function viewMsg(title, text) {
   app.innerHTML = `<div class="card single"><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`;
 }
 
+// อ่าน ?go= จาก URL (รองรับทั้งเปิดผ่าน liff.line.me ที่ส่งมาเป็น liff.state)
+function deepLink() {
+  const p = new URLSearchParams(location.search); let g = p.get('go');
+  if (!g && p.get('liff.state')) { try { g = new URLSearchParams(p.get('liff.state').replace(/^[^?]*\?/, '')).get('go'); } catch (e) {} }
+  return String(g || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 (async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -1192,7 +1255,10 @@ function viewMsg(title, text) {
     const [me, profile] = await Promise.all([api('me'), liff.getProfile().catch(() => null)]);
     if (me.state === 'UNREGISTERED') viewRegister(me.lineName);
     else if (me.state === 'PENDING') viewPending();
-    else if (me.state === 'APPROVED') { viewLobby(me, profile); go('map'); }   // เปิดทุกครั้ง: คอม = ผังการ์ตูน · มือถือ = การ์ดห้อง
+    else if (me.state === 'APPROVED') {   // ลิงก์ตรง ?go=... (เมนู LINE) ไปหน้านั้นเลย · ไม่มี: คอม = แผนที่ · มือถือ = หน้าแรก
+      const dl = deepLink(); viewLobby(me, profile);
+      if (dl) { if (dl !== 'home') go(dl); } else if (innerWidth >= 700) go('map');
+    }
     else viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
   } catch (e) { viewMsg('เกิดข้อผิดพลาด', say(e)); }
 })();
