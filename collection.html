@@ -317,7 +317,6 @@ textarea{padding:10px;min-height:76px;resize:vertical}
           <button type="button" data-act="grp" data-v="hub" aria-pressed="false">ราย HUB</button>
           <button type="button" data-act="grp" data-v="team" aria-pressed="true">รายทีม</button>
           <button type="button" data-act="grp" data-v="staff" aria-pressed="false">รายพนักงาน</button>
-          <button type="button" data-act="grp" data-v="stype" aria-pressed="false">พนักงาน / ร้าน</button>
           <button type="button" data-act="grp" data-v="bucket" aria-pressed="false">ราย Bucket</button>
         </div>
         <div class="grid2" id="groups" style="margin-top:10px"></div>
@@ -390,7 +389,7 @@ textarea{padding:10px;min-height:76px;resize:vertical}
     <div class="sh-body">
       <div class="fld" id="fldAm"><span class="lab">AM</span><div class="seg" data-seg="am"></div></div>
       <div class="fld" id="fldBu"><span class="lab">กลุ่มหนี้</span><div class="seg" data-seg="bu"></div></div>
-      <div class="fld"><span class="lab">ใครทำสัญญา</span><div class="seg" data-seg="stype"></div></div>
+      <div class="fld"><span class="lab">ผู้ขาย</span><div class="seg" data-seg="stype"></div></div>
       <div class="fld" id="fldOd"><span class="lab">ชนิด OD</span><div class="seg" data-seg="od"></div></div>
       <div class="fld"><span class="lab">Bucket</span><div class="seg" data-seg="bucket"></div></div>
       <div class="fld" id="fldHub"><label for="sHub">HUB</label><select id="sHub" data-f="hub"></select></div>
@@ -495,7 +494,7 @@ const PAGE=40;
 const HUB_NONE='__NONE__', hubKey=r=>r.hub||HUB_NONE;   // บัญชีที่ไม่มี HUB (เช่น ทีมที่ยังไม่อยู่ในตาราง HUB)
 
 let OD_DATA=[], LOGS={}, ACKS={}, META={}, EXTRA=0, CYCLE_START='', USERS=[], editUser=null, curId=null, EF={};
-const STL={Staff:'พนักงานทำ',Dealer:'ร้านทำ'};
+const STL={Staff:'Staff',Dealer:'Dealer'};
 const state={tab:'overview',am:'ALL',hub:'',bu:'ALL',stype:'ALL',od:'ALL',team:'',staff:'',bucket:'',status:'',remain:'',search:'',grp:'team',gsort:'cnt',lsort:'prio',limit:PAGE,gexp:false};
 const DEFAULT_STATE=JSON.parse(JSON.stringify(state));
 let AMS=[], BUS=[], HAS_REMAIN=false, HAS_NEW=false;
@@ -710,7 +709,6 @@ function group(rows,g){
   rows.forEach(r=>{ let k,t,s;
     if(g==='hub'){k=hubKey(r);t=r.hub?r.hub+' · '+(r.hubName||''):'ไม่ระบุ HUB';s=r.hubMgr?'หัวหน้า HUB: '+r.hubMgr:'';}
     else if(g==='team'){k=r.teamCode;t=r.teamCode+' · '+(r.teamName||'');s=(r.tm?'TM '+r.tm:'')+(r.hub?' · HUB '+r.hub:'');}
-    else if(g==='stype'){k=r.staffType;t=STL[r.staffType]||r.staffType;s=r.staffType==='Dealer'?'สัญญาที่ร้านเป็นผู้ทำ':'สัญญาที่พนักงานขายเป็นผู้ทำ';}
     else if(g==='staff'){k=r.staff;t=r.staff;s=(r.nick?r.nick+' · ':'')+r.teamCode+' · '+(STL[r.staffType]||r.staffType);}
     else {k=r.bucket;t=r.bucket;s=r.bucket==='OD1'?'ค้าง 1 งวด':r.bucket==='OD2'?'ค้าง 2 งวด':r.bucket==='OD3'?'ค้าง 3 งวด':'ค้างเกิน 3 งวด';}
     let o=m.get(k); if(!o){ o={k:k,t:t,s:s,n:0,amt:0,tgt:0,fu:0,appt:0,apptAmt:0,miss:0,paid:0}; m.set(k,o); }
@@ -823,7 +821,7 @@ function syncSheet(){
   $('#fldRemain').classList.toggle('hidden-f',!HAS_REMAIN);
   seg('am',[['ALL','ทั้งหมด']].concat(AMS.map(a=>[a,a+' ('+cnt('am',a)+')'])));
   seg('bu',[['ALL','ทั้งหมด']].concat(BUS.map(b=>[b,b+' ('+cnt('bu',b)+')'])));
-  seg('stype',[['ALL','ทั้งหมด'],['Staff','พนักงานทำ'],['Dealer','ร้านทำ']]);
+  seg('stype',[['ALL','ทั้งหมด'],['Staff','Staff'],['Dealer','Dealer']]);
   seg('od',[['ALL','ทั้งหมด'],['NEW','New OD']]);
   const bks=[...new Set(OD_DATA.map(r=>r.bucket))].sort();
   seg('bucket',[['','ทั้งหมด']].concat(bks.map(b=>[b,b+' ('+filtered('bucket').filter(r=>r.bucket===b).length+')'])));
@@ -850,7 +848,7 @@ function openModal(id){
   $('#eTitle').textContent=r.customer||'(ไม่มีชื่อ)';
   $('#eSub').textContent='สัญญา '+r.contractNo+' · '+r.am+' · '+r.teamCode+' '+(r.teamName||'');
   const info=[
-    ['ผู้ขาย (Owner)',r.staff+(r.nick?' ('+r.nick+')':'')],['ใครทำสัญญา',STL[r.staffType]||r.staffType],['TM',r.tm||'-'],
+    ['ผู้ขาย (Owner)',r.staff+(r.nick?' ('+r.nick+')':'')],['ประเภทผู้ขาย',STL[r.staffType]||r.staffType],['TM',r.tm||'-'],
     ['HUB',(r.hub||'-')+(r.hubName?' · '+r.hubName:'')],['หัวหน้า HUB',r.hubMgr||'-'],
     ['Bucket',r.bucket+(r.bucketLM?' (เดือนก่อน '+r.bucketLM+')':'')+(r.newOD?' · New OD':'')],['เบอร์โทร',r.mobile||'-'],
     ['ยอดค้าง','฿'+baht(r._oa)],['ค่าปรับ (ถ้าเกินวันที่ 6)',r.lateFee>0?'฿'+baht(r.lateFee):'-'],['งวดค้าง',(r.overdueInst!=null?Math.abs(r.overdueInst):'-')+' งวด'],
@@ -1039,7 +1037,6 @@ document.addEventListener('click',e=>{
       const g=el.dataset.g||state.grp, key=decodeURIComponent(el.dataset.k);
       // เลือกจากการ์ดสรุป = เริ่มมุมมองใหม่ ไม่สะสมตัวกรองเดิมจนเหลือ 0 บัญชี
       if(g==='hub'){ state.hub=key; state.team=''; state.staff=''; state.bucket=''; state.status=''; state.grp='team'; render(); break; }
-      if(g==='stype'){ state.stype=key; state.team=''; state.staff=''; state.bucket=''; state.status=''; state.grp='team'; render(); break; }
       if(g==='team'){ state.team=key; state.staff=''; state.bucket=''; state.status=''; }
       else if(g==='staff'){ state.staff=key; state.bucket=''; state.status=''; }
       else { state.bucket=key; state.status=''; }
