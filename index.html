@@ -55,6 +55,10 @@
   .dept b{font-size:16px} .dept small{font-size:13px;color:var(--sub);line-height:1.55}
   .msg{margin:14px 0 0;padding:12px 16px;border:1px solid #C9D4E8;border-radius:10px;background:#EEF2F9;color:var(--navy);font-size:14px}
   .card{background:#fff;border:1px solid var(--line);border-radius:12px}
+  .pace{margin:14px 0}.pace-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:4px 20px 0}
+  .pace-g>div{background:var(--bg,#F5F7FB);border-radius:10px;padding:12px}.pace-g span{display:block;font-size:13px;color:var(--muted)}.pace-g b{display:block;font-size:26px;line-height:1.2;margin:4px 0}.pace-g small{font-size:12px;color:var(--muted)}
+  .pace-v{margin:12px 20px 4px;padding:8px 12px;border-left:4px solid;background:#FAFBFD;border-radius:6px}
+  @media (max-width:560px){.pace-g{gap:6px;padding:4px 12px 0}.pace-g>div{padding:10px 8px}.pace-g span{font-size:12px}.pace-g b{font-size:21px}.pace-g small{font-size:11px}.pace-v{margin:10px 12px 4px}}
   .card .hd{padding:14px 20px;border-bottom:1px solid #E6EAF1;display:flex;justify-content:space-between;align-items:center}
   .card .hd h2{margin:0;font-size:17px}
   .row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid #EEF1F5}
@@ -923,12 +927,50 @@ function viewSales() {
   const clr = document.getElementById('clr'); if (clr) clr.onclick = () => { SALES_TEAM = ''; viewSales(); };
 }
 
+// การ์ด Pacing (TM ขึ้นไป · ตามตัวกรอง): ยอดถึงเมื่อวาน · คาดการณ์สิ้นเดือน · ต้องทำต่อวันที่เหลือ
+// ข้อมูลเป็น T-1: ถ้าข้อมูลถึงวันที่ d แปลว่าเหลือวันขาย (วันที่ d+1 ถึงสิ้นเดือน)
+function pacing(s) {
+  if (!s || s.scope === 'SELF' || !s.target || !s.month || !s.latest) return null;
+  const day = +String(s.latest).slice(8) || 1;
+  const dim = new Date(+s.month.slice(0, 4), +s.month.slice(5, 7), 0).getDate();
+  const left = Math.max(0, dim - day), mtd = s.mtd.apps;
+  const perDay = mtd / day, fc = Math.round(perDay * dim);
+  const need = Math.max(0, s.target - mtd), needDay = left ? Math.ceil(need / left) : 0;
+  return { day, dim, left, mtd, perDay, fc, fcP: pct(fc, s.target), need, needDay, gap: needDay ? needDay / Math.max(perDay, 0.1) : 0 };
+}
+function pacingCard(s) {
+  const p = pacing(s);
+  if (!p) return '';
+  const ok = p.fc >= s.target, c = ok ? 'var(--green)' : p.fcP >= 85 ? '#B45309' : 'var(--red)';
+  const verdict = p.need === 0 ? 'ถึงเป้าทั้งเดือนแล้ว 🎉'
+    : !p.left ? `สิ้นเดือนแล้ว ขาดอีก ${nf(p.need)} เคส`
+    : ok ? `ถ้ารักษาระดับนี้ จะถึงเป้า (คาดว่า ${p.fcP}%)`
+    : `ต้องเร่งขึ้น ${Math.round((p.gap - 1) * 100)}% จากค่าเฉลี่ยตอนนี้`;
+  const one = s.teams && s.teams.length === 1 ? s.teams[0].code : '';
+  // ทีมที่ต้องเร่งมากที่สุด (เมื่อดูหลายทีม)
+  const behind = !one && p.left ? (s.teams || []).filter(t => t.target && t.apps < t.target)
+    .map(t => ({ code: t.code, nd: Math.ceil((t.target - t.apps) / p.left), avg: t.apps / p.day }))
+    .map(t => ({ ...t, x: t.nd / Math.max(t.avg, 0.1) })).sort((a, b) => b.x - a.x).slice(0, 5) : [];
+  return `<section class="card pace"><div class="hd"><h2>Pacing เดือนนี้${one ? ' · ' + esc(one) : ''}</h2>
+      <small style="color:var(--muted)">ข้อมูลถึง ${esc(thDay(s.latest))} · เหลือ ${p.left} วัน</small></div>
+    <div class="pace-g">
+      <div><span>ยอดถึงเมื่อวาน</span><b>${nf(p.mtd)}</b><small>เฉลี่ย ${p.perDay.toFixed(1)} เคส/วัน</small></div>
+      <div><span>คาดการณ์สิ้นเดือน</span><b style="color:${c}">${nf(p.fc)}</b><small>${p.fcP}% ของเป้า ${nf(s.target)}</small></div>
+      <div><span>ต้องทำต่อวัน</span><b style="color:${p.need && !ok ? c : 'var(--ink)'}">${p.need ? nf(p.needDay) : '—'}</b><small>${p.need ? `ขาดอีก ${nf(p.need)} เคส` : 'ถึงเป้าแล้ว'}</small></div>
+    </div>
+    <p class="pace-v" style="border-color:${c}"><b style="color:${c}">${esc(verdict)}</b></p>
+    ${behind.length ? `<div class="tw"><table><thead><tr><th>ทีมที่ต้องเร่งมากสุด</th><th class="n">ทำได้/วัน</th><th class="n">ต้องทำ/วัน</th></tr></thead><tbody>
+      ${behind.map(t => `<tr class="click" data-team="${esc(t.code)}"><td><b>${esc(t.code)}</b></td><td class="n">${t.avg.toFixed(1)}</td><td class="n" style="color:var(--red);font-weight:600">${nf(t.nd)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    <p class="empty">คาดการณ์ = ค่าเฉลี่ยต่อวันตั้งแต่ต้นเดือน × จำนวนวันทั้งเดือน · ต้องทำต่อวัน = เคสที่ขาด ÷ วันที่เหลือ</p></section>`;
+}
+
 function tabOverview(s) {
   const fb = s.scope === 'SELF' ? '' : filterBar('ค้นหารหัสทีม ชื่อทีม หรือชื่อพนักงาน');
   const max = Math.max(1, ...s.daily.map(d => d[1] + d[2] + d[3]));
   const bars = s.daily.map(([d, i, a, o]) => `<div class="db" title="${esc(thDay(d))}: ${nf(i + a + o)} เคส (iOS ${nf(i)} · Android ${nf(a)})">
     <div class="stk" style="height:${Math.max(2, (i + a + o) / max * 100)}%"><i class="oth" style="flex:${o}"></i><i class="and" style="flex:${a}"></i><i class="ios" style="flex:${i}"></i></div><span>${+d.slice(8)}</span></div>`).join('');
   return `${fb}
+  ${pacingCard(s)}
   <section class="kpis">
     <div class="kpi"><span>เคสวันล่าสุด (${esc(thDay(s.latest))})</span><b style="color:var(--ink)">${nf(s.today.apps)}</b></div>
     <div class="kpi"><span>ยอดจัดวันล่าสุด</span><b style="color:var(--ink)">${mb(s.today.amt)}</b></div>
