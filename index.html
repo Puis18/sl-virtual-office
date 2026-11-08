@@ -391,15 +391,11 @@ function deptState(i) { const d = DEPTS[i], ok = RANK[topScope()] >= RANK[d.min]
 function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove()); const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2800); }
 
 /* ---------- ห้องแผนก: ปุ่มเปิดเครื่องมือเดิม (เฟสแรก) ---------- */
-const OD_URL = 'https://script.google.com/macros/s/AKfycbzo5FBSzCbaix26haBGUq4Wfdri3Uw18Do2gkq7ejjELYJzCkDN8KoaTbgthsrqUW2FVA/exec';
 const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
 const ROOMS = {
-  od: { title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · AM1 + AM2', tools: () => [
-    RANK[topScope()] >= RANK.HUB
-      ? { ic: 'dash', color: 'var(--navy)', name: 'Dashboard ติดตามหนี้ & นัดชำระ', desc: 'ภาพรวม OD ทุกทีม · Bucket OD1–OD3/NPL · นัดที่พลาด', url: OD_URL }
-      : null,
-    { ic: 'od', color: 'var(--red)', name: 'รายการลูกค้าที่ต้องติดตาม', desc: 'หน้าสำหรับพนักงาน · โทรติดตามและบันทึกนัดชำระ', url: OD_URL + '?page=staff' }
-  ].filter(Boolean) },
+  od: { title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
+    { ic: 'dash', color: 'var(--navy)', name: 'Collection', desc: 'รายชื่อลูกค้าค้างชำระ · บันทึกผลติดตามและนัดชำระ · เห็นเฉพาะตามสิทธิ์ของคุณ (ตัวเอง / ทีม / HUB / AM)', url: 'collection.html' }
+  ] },
   product: { title: 'ฝ่ายโปรดักต์', sub: 'สไลด์นโยบาย เงื่อนไขสินค้า และคู่มือแคมเปญ', tools: () => [
     { ic: 'product', color: 'var(--green)', g: 'shop', name: 'สรุปเงินดาวน์ EA Policy', desc: 'เงื่อนไขเงินดาวน์ EA', url: 'https://claude.ai/artifact/1dYFtXxgaGRcku2WKkWtZV' },
     { ic: 'product', color: 'var(--red)', g: 'shop', name: 'คู่มือ Lockdown OPPO', desc: 'แคมเปญผ่อนล็อกดาวน์ · OPPO Brand Shop', url: 'https://claude.ai/artifact/FF4v7fiJFJUR3Hbq4kseHP' },
