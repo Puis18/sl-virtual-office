@@ -141,6 +141,7 @@
   /* มือถือ: ทางลัดขึ้นก่อนตัวเลข · หน้าเอกสาร */
   @media (max-width:899px){main.wrap .qsec{order:-1}main.wrap{gap:22px}.quick{grid-template-columns:1fr 1fr;gap:10px}.qk{flex-direction:column;align-items:flex-start;gap:8px;padding:12px}.qk small{font-size:11.5px}}
   .qk.more{border-style:dashed;justify-content:center}
+  .mvtag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:#FFF4E0;color:#8A5200;margin-right:8px;vertical-align:2px}
   .pteam{color:var(--navy)!important;font-weight:600}
   .dgrp{margin-top:22px}.dgrp h2{font-size:16px;color:var(--navy);margin:0 0 10px}
   .dlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
@@ -252,7 +253,7 @@ async function api(action, extra = {}) {
 }
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
-  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
+  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', MOVE_EXISTS:'มีคำขอย้าย LINE ของรหัสนี้รออนุมัติอยู่แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
   DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
@@ -376,7 +377,7 @@ function viewLobby(me, profile) {
   const qd = document.getElementById('qDash'); if (qd) qd.onclick = () => openDash(qd);
   const q2 = document.getElementById('qDash2'); if (q2) q2.onclick = () => openDash(q2, 'v2.html');
   renderNav('home'); RERENDER = () => viewLobby(ME, PROFILE);
-  if (top === 'ALL') loadPending();
+  if (RANK[top] >= RANK.HUB) loadPending();   // ผู้อนุมัติ: Hub RM ขึ้นไป (หลังบ้านคัดเฉพาะคนในสิทธิ์)
   loadSales(top);
 }
 
@@ -1211,9 +1212,9 @@ async function loadPending() {
       const t = (roster.teams || []).find(x => x.code === st.team) || {};
       return 'ทีม ' + st.team + (t.name ? ' ' + String(t.name).replace(/^TEAM\s+\S+\s*/i, '') : '') + (t.hub ? ' · Hub ' + t.hub : ''); };
     box.innerHTML = `<div class="card"><div class="hd"><h2>คำขอรออนุมัติ (${list.length})</h2></div>
-      ${list.length ? '<p class="empty">ตรวจว่าชื่อ LINE ตรงกับเจ้าของรหัสพนักงานก่อนกดอนุมัติ</p>' : ''}
-      ${list.map(x => `<div class="row"><div><b>${esc(x.name)}</b> (${esc(x.nick)})
-        <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · LINE: ${esc(x.lineName)}</small>
+      ${list.length ? '<p class="empty">ตรวจว่าชื่อ LINE ตรงกับเจ้าของรหัสพนักงานก่อนกดอนุมัติ · คำขอ "ย้าย LINE" อนุมัติแล้ว LINE เดิมจะเข้าไม่ได้ทันที</p>' : ''}
+      ${list.map(x => `<div class="row"><div>${x.type === 'MOVE' ? '<span class="mvtag">ขอย้าย LINE</span>' : ''}<b>${esc(x.name)}</b> (${esc(x.nick)})
+        <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · ${x.type === 'MOVE' ? `LINE เดิม: ${esc(x.oldLineName || '—')} → ใหม่: ${esc(x.lineName)}` : `LINE: ${esc(x.lineName)}`}</small>
         ${teamOf(x.emp) ? `<small class="pteam">${esc(teamOf(x.emp))}</small>` : ''}</div>
         <div><button class="btn ok" data-emp="${esc(x.emp)}" data-d="APPROVE">อนุมัติ</button>
         <button class="btn no" data-emp="${esc(x.emp)}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p class="empty">ไม่มีคำขอค้าง</p>'}</div>`;
@@ -1222,22 +1223,33 @@ async function loadPending() {
       try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d }); loadPending(); }
       catch (e) { alert(say(e)); b.disabled = false; }
     });
-  } catch (e) { box.innerHTML = `<p class="msg">${esc(say(e))}</p>`; }
+  } catch (e) { box.innerHTML = e.message === 'FORBIDDEN' ? '' : `<p class="msg">${esc(say(e))}</p>`; }
 }
 
 function viewRegister(lineName) {
   app.innerHTML = `<div class="card single"><h1>ลงทะเบียนครั้งแรก</h1>
     <p>สวัสดีคุณ ${esc(lineName)} กรุณากรอกรหัสพนักงาน ระบบจะส่งให้ผู้ดูแลอนุมัติก่อนเข้าใช้งาน</p>
-    <label for="emp">รหัสพนักงาน</label><input id="emp" inputmode="numeric" autocomplete="off" placeholder="เช่น 36208">
+    <label for="emp">รหัสพนักงาน</label><input id="emp" inputmode="numeric" autocomplete="off" placeholder="เช่น 12345">
     <button class="btn primary" id="go">ส่งคำขอเข้าใช้งาน</button><div class="err" id="err" role="alert"></div></div>`;
   document.getElementById('go').onclick = async () => {
     const emp = document.getElementById('emp').value.trim(), err = document.getElementById('err');
     if (!emp) { err.textContent = 'กรุณากรอกรหัสพนักงาน'; return; }
     err.textContent = 'กำลังส่ง…';
-    try { await api('register', { empCode: emp }); viewPending(); } catch (e) { err.textContent = say(e); }
+    try { await api('register', { empCode: emp }); viewPending(); }
+    catch (e) {
+      if (e.message !== 'EMP_ALREADY_LINKED') { err.textContent = say(e); return; }
+      // รหัสนี้ผูกกับ LINE อื่นอยู่ → ขอย้ายมาใช้ LINE นี้ (หัวหน้าอนุมัติ · LINE เดิมยังใช้ได้จนกว่าจะอนุมัติ)
+      err.innerHTML = `รหัสนี้ใช้กับ LINE อีกบัญชีอยู่ ถ้าเป็นของคุณและต้องการย้ายมาใช้ LINE นี้ กดปุ่มด้านล่าง
+        <button class="btn primary" id="mv" style="margin-top:10px">ขอย้ายมาใช้ LINE นี้</button>`;
+      document.getElementById('mv').onclick = async () => {
+        err.textContent = 'กำลังส่ง…';
+        try { await api('requestMove', { empCode: emp }); viewPending('move'); } catch (e2) { err.textContent = say(e2); }
+      };
+    }
   };
 }
-function viewPending() {
+function viewPending(kind) {
+  if (kind === 'move') { app.innerHTML = `<div class="card single"><h1>ส่งคำขอย้าย LINE แล้ว</h1><p>รอหัวหน้า (Hub RM ขึ้นไป) อนุมัติ ระหว่างนี้ LINE เดิมยังใช้งานได้ตามปกติ เมื่ออนุมัติแล้ว เปิด Office จากเมนู LINE นี้อีกครั้ง</p></div>`; return; }
   app.innerHTML = `<div class="card single"><h1>รอการอนุมัติ</h1><p>ส่งคำขอแล้ว เมื่อผู้ดูแลอนุมัติ เปิดลิงก์นี้อีกครั้งเพื่อเข้าใช้งาน</p></div>`;
 }
 function viewMsg(title, text) {
@@ -1257,6 +1269,7 @@ function deepLink() {
     const [me, profile] = await Promise.all([api('me'), liff.getProfile().catch(() => null)]);
     if (me.state === 'UNREGISTERED') viewRegister(me.lineName);
     else if (me.state === 'PENDING') viewPending();
+    else if (me.state === 'MOVE_PENDING') viewPending('move');
     else if (me.state === 'APPROVED') {   // ลิงก์ตรง ?go=... (เมนู LINE) ไปหน้านั้นเลย · ไม่มี: คอม = แผนที่ · มือถือ = หน้าแรก
       const dl = deepLink(); viewLobby(me, profile);
       if (dl) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // ใช้ลิงก์ตรงครั้งเดียว: กดรีเฟรช/เปิดซ้ำ กลับหน้าปกติ
