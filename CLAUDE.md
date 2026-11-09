@@ -18,6 +18,11 @@
 - `index.html` ไฟล์เดียว รวม HTML, CSS และ JS ทั้งหมด
 - โลโก้: `logo.png`, `logo-s.png`, `logo-round.png` (สี navy #1E3365 / red #9F1C33 / green #126C3D)
 - หลังบ้าน: Apps Script Web App (`API_URL`) ผูกกับชีต Staff_Master_AM1_AM2 ทำหน้าที่ตรวจสิทธิ์และคัดข้อมูลยอดขายตามสิทธิ์ที่เซิร์ฟเวอร์
+  - โปรเจกต์ Apps Script (ผูกกับชีต): scriptId `1iePjcAx6gLJawlsumO8oWMNtCO2EL-meyHiLb7ZOn7T1oFBFNBE4QXC5` · deployment ใช้งานจริง `AKfycbyXqPr50…` (ชี้เวอร์ชันใหม่ด้วย `clasp deploy -i <id> -V <เวอร์ชัน>` ห้ามสร้าง deployment ใหม่)
+  - แก้หลังบ้านผ่าน clasp บน Mac ของคุณปุ้ย (Remote Control) · เวอร์ชัน 15 = ขอย้าย LINE + ผู้อนุมัติ Hub RM ขึ้นไป (ย้อนกลับ: ชี้กลับเวอร์ชัน 14)
+- ลงทะเบียน/อนุมัติ: 1 รหัสพนักงาน = 1 LINE · ผู้อนุมัติคือ Hub RM ขึ้นไป อนุมัติได้เฉพาะคนใน Hub/AM ของตัวเอง (ห้ามอนุมัติตัวเอง ยกเว้น ผอ.)
+  - ขอย้าย LINE: LINE ใหม่กรอกรหัสเดิม → ปุ่ม "ขอย้ายมาใช้ LINE นี้" → คำขออยู่ในชีต LineMove → อนุมัติแล้วย้าย LINE ID ทันที (บันทึก AuditLog)
+  - เมนูล่าง LINE OA ตามตำแหน่งซิงก์จากชีตนี้ทุกชั่วโมง (StaffMenuSync.gs ในโปรเจกต์บอท LINE Bot - S Leasing Tools)
 - ยอดขายรายวันถูก push ทุกวัน 08:47 จาก repo `Puis18/sleasing-dashboard-build` (ไฟล์ vo_sales_push.py, vo_dash_build.py)
 - เช็กว่าขึ้นระบบสำเร็จหรือยังจาก `gh api repos/Puis18/sl-virtual-office/deployments` แล้วดู statuses
 
