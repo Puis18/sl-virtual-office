@@ -253,7 +253,7 @@ async function api(action, extra = {}) {
 }
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
-  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', MOVE_EXISTS:'มีคำขอย้าย LINE ของรหัสนี้รออนุมัติอยู่แล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
+  ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', MOVE_EXISTS:'มีคำขอย้าย LINE ของรหัสนี้รออนุมัติอยู่แล้ว', NOT_LINKED:'รหัสนี้ยังไม่ได้ลงทะเบียน กดส่งคำขอเข้าใช้งานได้เลย', NO_REQUEST:'คำขอนี้ถูกจัดการไปแล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
   DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
@@ -1216,11 +1216,11 @@ async function loadPending() {
       ${list.map(x => `<div class="row"><div>${x.type === 'MOVE' ? '<span class="mvtag">ขอย้าย LINE</span>' : ''}<b>${esc(x.name)}</b> (${esc(x.nick)})
         <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · ${x.type === 'MOVE' ? `LINE เดิม: ${esc(x.oldLineName || '—')} → ใหม่: ${esc(x.lineName)}` : `LINE: ${esc(x.lineName)}`}</small>
         ${teamOf(x.emp) ? `<small class="pteam">${esc(teamOf(x.emp))}</small>` : ''}</div>
-        <div><button class="btn ok" data-emp="${esc(x.emp)}" data-d="APPROVE">อนุมัติ</button>
-        <button class="btn no" data-emp="${esc(x.emp)}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p class="empty">ไม่มีคำขอค้าง</p>'}</div>`;
+        <div><button class="btn ok" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="APPROVE">อนุมัติ</button>
+        <button class="btn no" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p class="empty">ไม่มีคำขอค้าง</p>'}</div>`;
     box.querySelectorAll('button[data-emp]').forEach(b => b.onclick = async () => {
       b.disabled = true;
-      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d }); loadPending(); }
+      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d, type: b.dataset.t }); loadPending(); }
       catch (e) { alert(say(e)); b.disabled = false; }
     });
   } catch (e) { box.innerHTML = e.message === 'FORBIDDEN' ? '' : `<p class="msg">${esc(say(e))}</p>`; }
