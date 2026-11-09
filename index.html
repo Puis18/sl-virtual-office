@@ -141,6 +141,10 @@
   /* มือถือ: ทางลัดขึ้นก่อนตัวเลข · หน้าเอกสาร */
   @media (max-width:899px){main.wrap .qsec{order:-1}main.wrap{gap:22px}.quick{grid-template-columns:1fr 1fr;gap:10px}.qk{flex-direction:column;align-items:flex-start;gap:8px;padding:12px}.qk small{font-size:11.5px}}
   .qk.more{border-style:dashed;justify-content:center}
+  #mnav button{position:relative}.nv{position:relative}
+  .bdg{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-style:normal;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+  .nv .bdg{position:static;margin-left:auto}
+  #admin:empty,#admin2:empty{display:none}#admin{order:-2}.pendbox{border-color:#E3B3BC;box-shadow:0 0 0 3px rgba(159,28,51,.08)}
   .mvtag{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:#FFF4E0;color:#8A5200;margin-right:8px;vertical-align:2px}
   .pteam{color:var(--navy)!important;font-weight:600}
   .dgrp{margin-top:22px}.dgrp h2{font-size:16px;color:var(--navy);margin:0 0 10px}
@@ -342,6 +346,7 @@ function viewLobby(me, profile) {
       <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
   </div></section>
   <main class="wrap">
+    <section id="admin"></section>
     <div id="hfilter"></div>
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
@@ -359,7 +364,6 @@ function viewLobby(me, profile) {
     </div></section>
     <section class="mobile-only"><div class="sec-h"><h2>แผนกทั้งหมด</h2></div>
       <div class="grid">${cards}</div><div id="dmsg"></div><p class="dnote">ห้องอื่นดูได้ที่แผนที่ออฟฟิศ · บางห้องจะเปิดในเฟส 2</p></section>
-    <section id="admin"></section>
   </main>`;
 
   app.querySelectorAll('.dept').forEach(b => b.onclick = () => {
@@ -778,6 +782,7 @@ function renderNav(active) {
   const items = [['home', 'หน้าแรก'], ['sales', 'ยอดขาย'], ['docs', 'เอกสาร'], ['map', 'แผนที่']].concat(canManage() ? [['staff', 'พนักงาน']] : []);
   mn.innerHTML = items.map(([k, l]) => `<button data-k="${k}">${ico(k, 22)}${l}</button>`).join('');
   [side, mn].forEach(el => { el.hidden = false; el.querySelectorAll('[data-k]').forEach(b => { b.classList.toggle('on', b.dataset.k === active); b.onclick = () => go(b.dataset.k); }); });
+  setPendBadge(PEND_N);
   const sh = document.querySelector('.shell'); sh.classList.add('nav'); document.body.classList.add('has-nav');
   const canHover = matchMedia('(hover:hover) and (pointer:fine)').matches;
   let mini = canHover; try { const v = localStorage.getItem('voMini'); if (v !== null) mini = v === '1'; } catch (e) {}
@@ -1128,10 +1133,11 @@ async function viewStaff(msg) {
   window.scrollTo(0, 0); renderNav('staff');
   app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
     <h1>จัดการรายชื่อพนักงาน</h1><small>เพิ่มคนใหม่ · ย้ายทีม/เปลี่ยนตำแหน่ง · ปิดการใช้งาน — ทุกการแก้ไขถูกบันทึกในชีต AuditLog</small></div></div></section>
+    <div class="wrap" id="admin2" style="padding-top:20px"></div>
     <main class="wrap" id="sm"><div class="skel"></div></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
   try { STAFF = await api('staffList'); } catch (e) { document.getElementById('sm').innerHTML = `<p class="msg">${esc(say(e))}</p>`; return; }
-  renderStaff(msg);
+  renderStaff(msg); loadPending('admin2');
 }
 let STF_AM = '', STF_HUB = '', STF_TEAM = '';
 function renderStaff(msg) {
@@ -1202,8 +1208,17 @@ function renderStaff(msg) {
   });
 }
 
-async function loadPending() {
-  const box = document.getElementById('admin');
+let PEND_N = 0;
+function setPendBadge(n) {   // ตัวเลขแจ้งเตือนคำขอรออนุมัติ ที่ปุ่ม "พนักงาน" (มือถือ + แถบซ้ายคอม)
+  PEND_N = n;
+  document.querySelectorAll('#mnav [data-k="staff"], #side [data-k="staff"]').forEach(b => {
+    let g = b.querySelector('.bdg'); if (!n) { if (g) g.remove(); return; }
+    if (!g) { g = document.createElement('em'); g.className = 'bdg'; b.appendChild(g); }
+    g.textContent = n > 99 ? '99+' : n; });
+}
+async function loadPending(boxId) {
+  boxId = boxId || 'admin';
+  const box = document.getElementById(boxId); if (!box) return;
   try {
     const [{ list }, roster] = await Promise.all([api('pending'), STAFF ? Promise.resolve(STAFF) : api('staffList').catch(() => null)]);
     // สังกัดทีมของผู้ขอ: ดูจากรายชื่อพนักงาน (ทีม + Hub) ถ้าโหลดไม่ได้ก็แสดงแบบเดิม
@@ -1211,19 +1226,21 @@ async function loadPending() {
       const st = (roster.staff || []).find(x => String(x.emp) === String(emp)); if (!st || !st.team) return '';
       const t = (roster.teams || []).find(x => x.code === st.team) || {};
       return 'ทีม ' + st.team + (t.name ? ' ' + String(t.name).replace(/^TEAM\s+\S+\s*/i, '') : '') + (t.hub ? ' · Hub ' + t.hub : ''); };
-    box.innerHTML = `<div class="card"><div class="hd"><h2>คำขอรออนุมัติ (${list.length})</h2></div>
+    setPendBadge(list.length);
+    if (!list.length) { box.innerHTML = ''; return; }   // ไม่มีคำขอ: ซ่อนกล่อง
+    box.innerHTML = `<div class="card pendbox"><div class="hd"><h2>คำขอรออนุมัติ (${list.length})</h2></div>
       ${list.length ? '<p class="empty">ตรวจว่าชื่อ LINE ตรงกับเจ้าของรหัสพนักงานก่อนกดอนุมัติ · คำขอ "ย้าย LINE" อนุมัติแล้ว LINE เดิมจะเข้าไม่ได้ทันที</p>' : ''}
       ${list.map(x => `<div class="row"><div>${x.type === 'MOVE' ? '<span class="mvtag">ขอย้าย LINE</span>' : ''}<b>${esc(x.name)}</b> (${esc(x.nick)})
         <small>${esc(x.emp)} · ${esc(x.pos)} · ${esc(x.am)} · ${x.type === 'MOVE' ? `LINE เดิม: ${esc(x.oldLineName || '—')} → ใหม่: ${esc(x.lineName)}` : `LINE: ${esc(x.lineName)}`}</small>
         ${teamOf(x.emp) ? `<small class="pteam">${esc(teamOf(x.emp))}</small>` : ''}</div>
         <div><button class="btn ok" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="APPROVE">อนุมัติ</button>
-        <button class="btn no" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || '<p class="empty">ไม่มีคำขอค้าง</p>'}</div>`;
+        <button class="btn no" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || ''}</div>`;
     box.querySelectorAll('button[data-emp]').forEach(b => b.onclick = async () => {
       b.disabled = true;
-      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d, type: b.dataset.t }); loadPending(); }
+      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d, type: b.dataset.t }); loadPending(boxId); }
       catch (e) { alert(say(e)); b.disabled = false; }
     });
-  } catch (e) { box.innerHTML = e.message === 'FORBIDDEN' ? '' : `<p class="msg">${esc(say(e))}</p>`; }
+  } catch (e) { setPendBadge(0); box.innerHTML = e.message === 'FORBIDDEN' ? '' : `<p class="msg">${esc(say(e))}</p>`; }
 }
 
 function viewRegister(lineName) {
