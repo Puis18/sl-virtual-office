@@ -407,7 +407,7 @@ function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove())
 /* ---------- ห้องแผนก: ปุ่มเปิดเครื่องมือเดิม (เฟสแรก) ---------- */
 const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
 const ROOMS = {
-  od: { title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
+  od: { direct: 'collection.html', title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
     { ic: 'dash', color: 'var(--navy)', name: 'ติดตามหนี้ · Collection', desc: 'รายชื่อลูกค้าค้างชำระ · บันทึกผลติดตามและนัดชำระ · เห็นเฉพาะตามสิทธิ์ของคุณ (ตัวเอง / ทีม / HUB / AM)', url: 'collection.html' }
   ] },
   product: { title: 'ฝ่ายโปรดักต์', sub: 'สไลด์นโยบาย เงื่อนไขสินค้า และคู่มือแคมเปญ', tools: () => [
@@ -425,7 +425,8 @@ const ROOMS = {
   ] }
 };
 function viewRoom(key) {
-  const r = ROOMS[key]; window.scrollTo(0, 0); renderNav(key);
+  const r = ROOMS[key];
+  if (r.direct) { location.href = r.direct; return; }   // ห้องที่มีเครื่องมือเดียว (ติดตามหนี้) เปิดเครื่องมือเลย ไม่ต้องผ่านหน้าห้อง window.scrollTo(0, 0); renderNav(key);
   app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
     <h1>${esc(r.title)}</h1><small>${esc(r.sub)}</small></div></div></section>
   <main class="wrap"><section><div class="sec-h"><h2>เครื่องมือในห้องนี้</h2></div><div class="quick">
