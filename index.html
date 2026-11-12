@@ -369,7 +369,7 @@ function viewLobby(me, profile) {
     <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
       ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small>ตามสิทธิ์ของคุณ</small></span></button>
-      <button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}
+      ${canV2() ? `<button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}` : ''}
       <button class="qk" id="sum"><i style="background:var(--green)">${ico('sales', 20)}</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
       ${quickDocs().map(qkLink).join('')}
       <button class="qk more" id="qDocs"><i style="background:var(--navy)">${ico('docs', 20)}</i><span><b>เอกสารทั้งหมด</b><small>ค้นหาคู่มือ · สไลด์ · ราคา</small></span></button>
@@ -738,7 +738,7 @@ function omTools(r) {
   if (r.k === 'sales') {
     if (top !== 'SELF') {
       T.push({ ic: 'dash', c: 'var(--navy)', n: 'Dashboard Daily', d: 'ตามสิทธิ์ของคุณ', run: b => { toast('กำลังเปิด Dashboard Daily…'); openDash(b); } });
-      T.push({ ic: 'dash', c: 'var(--red)', n: 'Dashboard V2', d: 'ภาพรวม · ทีม · พนักงาน · Incentive', run: b => { toast('กำลังเปิด Dashboard V2…'); openDash(b, 'v2.html'); } });
+      if (canV2()) T.push({ ic: 'dash', c: 'var(--red)', n: 'Dashboard V2', d: 'ภาพรวม · ทีม · พนักงาน · Incentive', run: b => { toast('กำลังเปิด Dashboard V2…'); openDash(b, 'v2.html'); } });
     }
     if (RANK[top] >= RANK.TEAM) T.push({ ic: 'home', c: 'var(--green)', n: 'ปฏิทินลงพื้นที่', d: 'วางแผนเยี่ยมร้าน · เช็คอิน · Daily · เข้าด้วย LINE', run: b => openField(b) });
     T.push({ ic: 'sales', c: 'var(--green)', n: 'สรุปยอดขาย', d: 'ทีม · พนักงาน · iOS / Android · ร้าน', run: () => go('sales') });
@@ -772,6 +772,7 @@ function go(key) {
   if (key === 'dash' || key === 'dash2') {   // ลิงก์ตรงจากเมนู LINE: เปิด Dashboard เลย
     viewLobby(ME, PROFILE);
     if (topScope() === 'SELF') return toast('Dashboard เปิดได้ตั้งแต่ระดับ TM ขึ้นไป');
+    if (key === 'dash2' && !canV2()) return toast('Dashboard V2 เปิดได้ตั้งแต่ระดับ Hub RM ขึ้นไป');
     return openDash(null, key === 'dash2' ? 'v2.html' : undefined);
   }
   if (key === 'field') {   // ลิงก์ตรงจากเมนู LINE: เปิดปฏิทินลงพื้นที่เลย
@@ -937,8 +938,8 @@ function viewSales() {
   </div></section>
   ${s.scope !== 'SELF' ? `<div class="wrap" style="padding-top:14px"><button class="ext" id="dash" style="width:100%;font:inherit;cursor:pointer;text-align:left">
     <span><b>เปิด Dashboard Daily (ตามสิทธิ์ของคุณ)</b><small>ทุกหน้าเหมือนเดิม เห็นเฉพาะทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button>
-    <button class="ext" id="dash2" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
-    <span><b>เปิด Dashboard V2 (ตามสิทธิ์ของคุณ)</b><small>ภาพรวม · ทีม · พนักงาน · Incentive · คัดลอกสรุปส่ง LINE</small></span><span aria-hidden="true">→</span></button>
+    ${canV2() ? `<button class="ext" id="dash2" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
+    <span><b>เปิด Dashboard V2 (ตามสิทธิ์ของคุณ)</b><small>ภาพรวม · ทีม · พนักงาน · Incentive · คัดลอกสรุปส่ง LINE</small></span><span aria-hidden="true">→</span></button>` : ''}
     <button class="ext" id="field" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
     <span><b>ปฏิทินลงพื้นที่ (Field & Daily)</b><small>วางแผนเยี่ยมร้าน · เช็คอิน · Daily · เข้าด้วย LINE ไม่ต้องกรอกรหัส</small></span><span aria-hidden="true">→</span></button></div>` : ''}
   <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
@@ -1145,6 +1146,7 @@ async function openField(btn) {
   }
 }
 async function openDash(btn, page = 'shell.html') {
+  if (page === 'v2.html' && !canV2()) return toast('Dashboard V2 เปิดได้ตั้งแต่ระดับ Hub RM ขึ้นไป');
   const m = btn && btn.querySelector('small');
   const msg = t => { if (m) m.textContent = t;
     const d = document.getElementById('dmsg'); if (d && !m) d.innerHTML = `<p class="msg" role="status">${esc(t)}</p>`; };
@@ -1184,6 +1186,7 @@ async function openDash(btn, page = 'shell.html') {
 /* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
 let SALES_Q = '', SALES_AM = '', SALES_HUB = '', SALES_SORT = 'apps';
 let HF_OPEN = false;   // ตัวกรองหน้าแรก (มือถือ) ขยายอยู่หรือไม่
+const canV2 = () => RANK[topScope()] >= RANK.HUB;   // Dashboard V2: Hub RM ขึ้นไป (คุณปุ้ยสั่ง 12 พ.ย. 2569)
 const topScope = () => ME.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
 const canManage = () => RANK[topScope()] >= RANK.HUB;
 const qMatch = (...xs) => !SALES_Q || xs.some(x => String(x || '').toLowerCase().includes(SALES_Q.toLowerCase()));
