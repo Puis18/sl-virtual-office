@@ -1323,6 +1323,13 @@ function viewPending(kind) {
   if (kind === 'move') { app.innerHTML = `<div class="card single"><h1>ส่งคำขอย้าย LINE แล้ว</h1><p>รอหัวหน้า (Hub RM ขึ้นไป) อนุมัติ ระหว่างนี้ LINE เดิมยังใช้งานได้ตามปกติ เมื่ออนุมัติแล้ว เปิด Office จากเมนู LINE นี้อีกครั้ง</p></div>`; return; }
   app.innerHTML = `<div class="card single"><h1>รอการอนุมัติ</h1><p>ส่งคำขอแล้ว เมื่อผู้ดูแลอนุมัติ เปิดลิงก์นี้อีกครั้งเพื่อเข้าใช้งาน</p></div>`;
 }
+// อ่านสถานะบัญชีไม่สำเร็จชั่วคราว → ปุ่มลองใหม่ (ไม่บอกว่าถูกระงับ ทำให้ตกใจ)
+function viewRetry() {
+  app.innerHTML = `<div class="card single"><h1>ระบบยังไม่ตอบสนอง</h1>
+    <p>อ่านข้อมูลบัญชีไม่สำเร็จชั่วคราว บัญชีของคุณยังใช้งานได้ตามปกติ กรุณาลองใหม่อีกครั้ง</p>
+    <button class="btn primary" id="retry">ลองใหม่</button></div>`;
+  document.getElementById('retry').onclick = () => location.reload();
+}
 function viewMsg(title, text) {
   app.innerHTML = `<div class="card single"><h1>${esc(title)}</h1><p>${esc(text)}</p></div>`;
 }
@@ -1346,7 +1353,8 @@ function deepLink() {
       if (dl) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // ใช้ลิงก์ตรงครั้งเดียว: กดรีเฟรช/เปิดซ้ำ กลับหน้าปกติ
       if (dl) { if (dl !== 'home') go(dl); } else if (innerWidth >= 700) go('map');
     }
-    else viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
+    else if (me.state === 'SUSPENDED' || me.state === 'BLOCKED') viewMsg('บัญชีถูกระงับ', 'กรุณาติดต่อผู้ดูแลระบบ');
+    else viewRetry();   // อ่านสถานะไม่ได้ (เช่น ชีตกำลังถูกเขียนอยู่) — ไม่ใช่ถูกระงับ ให้ลองใหม่
   } catch (e) { viewMsg('เกิดข้อผิดพลาด', say(e)); }
 })();
 </script>
