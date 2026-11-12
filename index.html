@@ -172,6 +172,15 @@
   .fbar input:hover,.fbar select:hover{border-color:#B9C3D3;background-color:#fff}
   .fbar input:focus,.fbar select:focus{outline:none;border-color:var(--navy);background-color:#fff;box-shadow:0 0 0 3px rgba(30,51,101,.12)}
   .fbar select.act{background-color:#E8EDF7;border-color:#C9D4EA;color:var(--navy)}
+  .ftog{display:none}
+  @media (max-width:899px){
+    .ftog{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--navy);font:inherit;font-size:15px;font-weight:600;text-align:left;box-shadow:0 1px 2px rgba(18,27,46,.04)}
+    .ftog b{margin-left:auto;font-weight:500;font-size:13.5px;color:var(--muted);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ftog.act{border-color:#C9D4EA;background:#F3F6FC}.ftog.act b{color:var(--navy);font-weight:600}
+    .ftog .chev{flex-shrink:0;transition:transform .15s}#hfilter.on .ftog .chev{transform:rotate(180deg)}
+    #hfilter #hfbody{display:none;margin-top:8px}#hfilter.on #hfbody{display:block}
+    #hfbody .fbar select{flex:1 1 calc(50% - 4px);max-width:none}
+  }
   .fbar .btn{min-height:42px;border-radius:999px;padding:0 16px}
   .fbar #fsort{margin-left:auto}
   @media (min-width:641px){.fbar:not(:has(input)){width:fit-content;max-width:100%}}
@@ -816,7 +825,19 @@ async function loadSales(top) {
     SALES = applyTargets(SALES || await api('sales'));
     const s = scoped(SALES), p = pct(s.mtd.apps, s.target);
     const hf = document.getElementById('hfilter');
-    if (hf && SALES.scope !== 'SELF') { hf.innerHTML = filterBar('', true); bindSearch(); }
+    if (hf && SALES.scope !== 'SELF') {
+      const fb = filterBar('', true), cur = [SALES_AM, SALES_HUB, SALES_TEAM].filter(Boolean).join(' · ');
+      // มือถือ: ย่อเป็นปุ่มเดียว กดแล้วค่อยขยาย (คอมแสดงตัวกรองเต็มเหมือนเดิม)
+      hf.innerHTML = /<select/.test(fb) ? `<button class="ftog${cur ? ' act' : ''}" id="ftog" aria-expanded="${HF_OPEN}" aria-controls="hfbody">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>
+        <span>ตัวกรอง</span><b>${esc(cur || 'ทั้งหมด')}</b>
+        <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div id="hfbody">${fb}</div>` : fb;
+      hf.classList.toggle('on', HF_OPEN);
+      const tg = document.getElementById('ftog');
+      if (tg) tg.onclick = () => { HF_OPEN = !HF_OPEN; hf.classList.toggle('on', HF_OPEN); tg.setAttribute('aria-expanded', HF_OPEN); };
+      bindSearch();
+    }
     set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
     const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
     set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
@@ -1089,6 +1110,7 @@ async function openDash(btn, page = 'shell.html') {
 
 /* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
 let SALES_Q = '', SALES_AM = '', SALES_HUB = '', SALES_SORT = 'apps';
+let HF_OPEN = false;   // ตัวกรองหน้าแรก (มือถือ) ขยายอยู่หรือไม่
 const topScope = () => ME.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
 const canManage = () => RANK[topScope()] >= RANK.HUB;
 const qMatch = (...xs) => !SALES_Q || xs.some(x => String(x || '').toLowerCase().includes(SALES_Q.toLowerCase()));
