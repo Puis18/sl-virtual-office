@@ -418,7 +418,7 @@ const ROOMS = {
     { ic: 'product', color: 'var(--green)', g: 'hub', name: 'ผลงาน Hub Master', desc: 'อัปเดตทุกวัน · เปิด Dashboard Daily แล้วกดแท็บ Hub Master', url: 'https://puis18.github.io/sleasing-dashboard/' },
     { ic: 'product', color: 'var(--red)', g: 'hub', name: 'คู่มือร้าน Hub ฉบับง่าย', desc: 'ขั้นตอนลงทะเบียนร้านในเครือ (Sub Dealer)', url: 'https://claude.ai/artifact/FvfbG2LvXgZb5bD3YDgftb' },
     { ic: 'product', color: 'var(--navy)', g: 'shop', name: 'Company Profile', desc: 'สไลด์แนะนำบริษัท S Leasing', url: 'https://drive.google.com/file/d/1qkLvIYJgBlzrra46yOyfB03py_97Scc3/view' }
-  ] },
+  ].filter(hubOk) },
   mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
     { ic: 'mkt', color: 'var(--red)', g: 'shop', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
     { ic: 'product', color: 'var(--green)', g: 'shop', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
@@ -1186,6 +1186,8 @@ async function openDash(btn, page = 'shell.html') {
 /* ================= ค้นหา + จัดการรายชื่อ (Hub RM ขึ้นไป) ================= */
 let SALES_Q = '', SALES_AM = '', SALES_HUB = '', SALES_SORT = 'apps';
 let HF_OPEN = false;   // ตัวกรองหน้าแรก (มือถือ) ขยายอยู่หรือไม่
+// สไลด์กลุ่ม Hub (g: 'hub') เห็นเฉพาะ Hub RM ขึ้นไป (คุณปุ้ยสั่ง 12 พ.ย. 2569)
+const hubOk = t => t.g !== 'hub' || RANK[topScope()] >= RANK.HUB;
 const canV2 = () => RANK[topScope()] >= RANK.HUB;   // Dashboard V2: Hub RM ขึ้นไป (คุณปุ้ยสั่ง 12 พ.ย. 2569)
 const topScope = () => ME.roles.reduce((a, r) => RANK[r.scope] > RANK[a] ? r.scope : a, 'SELF');
 const canManage = () => RANK[topScope()] >= RANK.HUB;
