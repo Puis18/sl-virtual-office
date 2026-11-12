@@ -306,7 +306,7 @@ const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติด�
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
   { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
-  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'OD Dashboard · Collection Follow-up', phase:1, min:'SELF' },
+  { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'เงินดาวน์ EA · คู่มือแคมเปญ · Hub Master', phase:1, min:'SELF' },
   { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · โบรชัวร์สินค้า', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
@@ -404,7 +404,9 @@ function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove())
 const OD_URL = 'https://script.google.com/macros/s/AKfycbzo5FBSzCbaix26haBGUq4Wfdri3Uw18Do2gkq7ejjELYJzCkDN8KoaTbgthsrqUW2FVA/exec';
 const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
 const ROOMS = {
-  // od: ห้องฝ่ายติดตามหนี้ ยังไม่เปิด — รอย้ายเข้ามาแบบคุมสิทธิ์ (อยู่ในฉบับร่าง)
+  od: { title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
+    { ic: 'dash', color: 'var(--navy)', name: 'ติดตามหนี้ · Collection', desc: 'รายชื่อลูกค้าค้างชำระ · บันทึกผลติดตามและนัดชำระ · เห็นเฉพาะตามสิทธิ์ของคุณ (ตัวเอง / ทีม / HUB / AM)', url: 'collection.html' }
+  ] },
   product: { title: 'ฝ่ายโปรดักต์', sub: 'สไลด์นโยบาย เงื่อนไขสินค้า และคู่มือแคมเปญ', tools: () => [
     { ic: 'product', color: 'var(--green)', g: 'shop', name: 'สรุปเงินดาวน์ EA Policy', desc: 'เงื่อนไขเงินดาวน์ EA', url: 'https://claude.ai/artifact/1dYFtXxgaGRcku2WKkWtZV' },
     { ic: 'product', color: 'var(--red)', g: 'shop', name: 'คู่มือ Lockdown OPPO', desc: 'แคมเปญผ่อนล็อกดาวน์ · OPPO Brand Shop', url: 'https://claude.ai/artifact/FF4v7fiJFJUR3Hbq4kseHP' },
