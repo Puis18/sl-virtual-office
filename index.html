@@ -80,6 +80,10 @@
   
   .db span{font-size:10px;color:var(--muted)}
   .tw{overflow-x:auto}
+  .lnk{background:none;border:none;padding:6px 0 0;color:var(--navy);font:inherit;font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:32px}
+  .sedit{display:grid;gap:8px;margin-top:8px;min-width:200px}.sedit[hidden]{display:none}.sedit label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}.sedit input{min-height:40px;font-size:15px}
+  details.gone{margin-top:0}details.gone summary{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:16px 20px;cursor:pointer;list-style:none}details.gone summary::-webkit-details-marker{display:none}
+  details.gone summary::before{content:'▸';color:var(--muted)}details.gone[open] summary::before{content:'▾'}details.gone summary small{color:var(--muted);font-size:13px}
   table{width:100%;border-collapse:collapse;font-size:14px}
   th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:10px 12px;border-bottom:1px solid #EEF1F5;vertical-align:middle}
@@ -271,6 +275,7 @@ async function api(action, extra = {}) {
 const MSG = {
   EMP_NOT_FOUND:'ไม่พบรหัสพนักงานนี้ กรุณาตรวจสอบอีกครั้ง', EMP_ALREADY_LINKED:'รหัสนี้ถูกผูกกับ LINE อื่นแล้ว กรุณาติดต่อผู้ดูแลระบบ',
   ALREADY_LINKED:'LINE นี้ลงทะเบียนไว้แล้ว', MOVE_EXISTS:'มีคำขอย้าย LINE ของรหัสนี้รออนุมัติอยู่แล้ว', NOT_LINKED:'รหัสนี้ยังไม่ได้ลงทะเบียน กดส่งคำขอเข้าใช้งานได้เลย', NO_REQUEST:'คำขอนี้ถูกจัดการไปแล้ว', INVALID_TOKEN:'การยืนยันตัวตนหมดอายุ กรุณาปิดหน้านี้แล้วเปิดลิงก์ใหม่อีกครั้ง', FORBIDDEN:'คุณไม่มีสิทธิ์ทำรายการนี้',
+  EMP_EXISTS:'มีรหัสพนักงานนี้ในระบบแล้ว ถ้าเคยลบไว้ ให้กดกู้คืนในหัวข้อ "ลบแล้ว" ด้านล่าง', BAD_NAME:'กรุณากรอกชื่อ-นามสกุลให้ครบ', BAD_EMP:'รหัสพนักงานไม่ถูกต้อง', BAD_OP:'ระบบหลังบ้านยังไม่รองรับรายการนี้ (รออัปเดต)',
   DASH_NOT_READY:'Dashboard ยังไม่พร้อม (ระบบกำลังสร้างข้อมูลของวันนี้) ลองใหม่ภายหลัง'
 };
 const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด: ' + e.message);
@@ -373,7 +378,7 @@ function viewLobby(me, profile) {
       <button class="qk" id="sum"><i style="background:var(--green)">${ico('sales', 20)}</i><span><b>สรุปยอดขาย</b><small>ทีม · พนักงาน · iOS / Android · ร้าน</small></span></button>
       ${quickDocs().map(qkLink).join('')}
       <button class="qk more" id="qDocs"><i style="background:var(--navy)">${ico('docs', 20)}</i><span><b>เอกสารทั้งหมด</b><small>ค้นหาคู่มือ · สไลด์ · ราคา</small></span></button>
-      ${RANK[top] >= RANK.HUB ? `<button class="qk" id="mgr"><i style="background:var(--red)">${ico('staff', 20)}</i><span><b>รายชื่อพนักงาน</b><small>เพิ่ม · ย้ายทีม · ปิดการใช้งาน</small></span></button>` : ''}
+      ${RANK[top] >= RANK.HUB ? `<button class="qk" id="mgr"><i style="background:var(--red)">${ico('staff', 20)}</i><span><b>รายชื่อพนักงาน</b><small>เพิ่ม · แก้ชื่อเล่น · ย้ายทีม · ลบ</small></span></button>` : ''}
     </div></section>
     <section class="mobile-only"><div class="sec-h"><h2>แผนกทั้งหมด</h2></div>
       <div class="grid">${cards}</div><div id="dmsg"></div><p class="dnote">ห้องอื่นดูได้ที่แผนที่ออฟฟิศ · บางห้องจะเปิดในเฟส 2</p></section>
@@ -742,7 +747,7 @@ function omTools(r) {
     }
     if (RANK[top] >= RANK.TEAM) T.push({ ic: 'home', c: 'var(--green)', n: 'ปฏิทินลงพื้นที่', d: 'วางแผนเยี่ยมร้าน · เช็คอิน · Daily · เข้าด้วย LINE', run: b => openField(b) });
     T.push({ ic: 'sales', c: 'var(--green)', n: 'สรุปยอดขาย', d: 'ทีม · พนักงาน · iOS / Android · ร้าน', run: () => go('sales') });
-    if (RANK[top] >= RANK.HUB) T.push({ ic: 'staff', c: 'var(--red)', n: 'รายชื่อพนักงาน', d: 'เพิ่ม · ย้ายทีม · ปิดการใช้งาน', run: () => viewStaff() });
+    if (RANK[top] >= RANK.HUB) T.push({ ic: 'staff', c: 'var(--red)', n: 'รายชื่อพนักงาน', d: 'เพิ่ม · แก้ชื่อเล่น · ย้ายทีม · ลบ', run: () => viewStaff() });
   } else if (r.lobby) {
     T.push({ ic: 'home', c: 'var(--navy)', n: 'หน้าแรก', d: 'ยอดเทียบเป้า · เรื่องที่ต้องดูวันนี้', run: () => go('home') });
   } else if (ROOMS[r.k]) {
@@ -1232,7 +1237,7 @@ let STAFF;
 async function viewStaff(msg) {
   window.scrollTo(0, 0); renderNav('staff');
   app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
-    <h1>จัดการรายชื่อพนักงาน</h1><small>เพิ่มคนใหม่ · ย้ายทีม/เปลี่ยนตำแหน่ง · ปิดการใช้งาน — ทุกการแก้ไขถูกบันทึกในชีต AuditLog</small></div></div></section>
+    <h1>จัดการรายชื่อพนักงาน</h1><small>เพิ่มคนใหม่ · แก้ชื่อ/ชื่อเล่น · ย้ายทีม/เปลี่ยนตำแหน่ง · ลบ (กู้คืนได้) — ทุกการแก้ไขถูกบันทึกในชีต AuditLog</small></div></div></section>
     <div class="wrap" id="admin2" style="padding-top:20px"></div>
     <main class="wrap" id="sm"><div class="skel"></div></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
@@ -1246,7 +1251,8 @@ function renderStaff(msg) {
   const roleOpt = sel => d.roles.map(r => `<option${r === sel ? ' selected' : ''}>${r}</option>`).join('');
   const tOf = c => d.teams.find(t => t.code === c) || {};
   const inF = c => { const t = tOf(c); return (!STF_AM || t.am === STF_AM) && (!STF_HUB || t.hub === STF_HUB) && (!STF_TEAM || c === STF_TEAM); };
-  const list = d.staff.filter(s => inF(s.team) && (!q || [s.emp, s.name, s.nick, s.team].some(x => String(x).toLowerCase().includes(q.toLowerCase()))));
+  const hit = s => inF(s.team) && (!q || [s.emp, s.name, s.nick, s.team].some(x => String(x).toLowerCase().includes(q.toLowerCase())));
+  const list = d.staff.filter(hit), gone = (d.removed || []).filter(hit);
   const uq = a => [...new Set(a.filter(Boolean))].sort();
   const ams = uq(d.teams.map(t => t.am)), hubs = uq(d.teams.filter(t => !STF_AM || t.am === STF_AM).map(t => t.hub));
   const fts = d.teams.filter(t => (!STF_AM || t.am === STF_AM) && (!STF_HUB || t.hub === STF_HUB)).sort((a, b) => a.code.localeCompare(b.code));
@@ -1271,10 +1277,15 @@ function renderStaff(msg) {
     <section class="card"><div class="hd"><h2>พนักงานในทีมที่คุณดูแล (${list.length})</h2></div>
       ${fbar}
       <div class="tw"><table><thead><tr><th>พนักงาน</th><th>ตำแหน่ง</th><th>ทีม</th><th></th></tr></thead><tbody>
-      ${list.map(s => `<tr data-emp="${esc(s.emp)}"><td><b>${esc(s.name)}</b><small>${esc(s.emp)}${s.nick ? ' · ' + esc(s.nick) : ''} · ${s.access === 'APPROVED' ? 'เข้าระบบแล้ว' : s.linked ? 'รออนุมัติ' : 'ยังไม่ลงทะเบียน'}</small></td>
-        <td><select class="r">${roleOpt(s.role)}</select></td><td><select class="t">${teamOpt(s.team)}</select></td>
-        <td style="white-space:nowrap"><button class="btn ok sv">บันทึก</button> <button class="btn no rm">ปิด</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">ไม่พบรายชื่อ</td></tr>'}
-      </tbody></table></div></section>`;
+      ${list.map(s => `<tr data-emp="${esc(s.emp)}"><td><div class="sname"><b>${esc(s.name)}</b><small>${esc(s.emp)}${s.nick ? ' · ' + esc(s.nick) : ''} · ${s.access === 'APPROVED' ? 'เข้าระบบแล้ว' : s.linked ? 'รออนุมัติ' : 'ยังไม่ลงทะเบียน'}</small>
+          <button class="lnk ed" type="button" aria-expanded="false">แก้ชื่อ / ชื่อเล่น</button></div>
+          <div class="sedit" hidden><label>ชื่อ-นามสกุล<input class="nm" value="${esc(s.name)}"></label><label>ชื่อเล่น<input class="nk" value="${esc(s.nick)}" maxlength="30"></label></div></td>
+        <td><select class="r" aria-label="ตำแหน่ง">${roleOpt(s.role)}</select></td><td><select class="t" aria-label="ทีม">${teamOpt(s.team)}</select></td>
+        <td style="white-space:nowrap"><button class="btn ok sv">บันทึก</button> <button class="btn no rm">ลบ</button></td></tr>`).join('') || '<tr><td colspan="4" class="empty">ไม่พบรายชื่อ</td></tr>'}
+      </tbody></table></div></section>
+    ${gone.length ? `<details class="card gone"><summary><b>ลบแล้ว (${gone.length})</b><small>ไม่แสดงในทีม · ข้อมูลยังเก็บในระบบ กู้คืนได้</small></summary>
+      <div class="tw"><table><tbody>${gone.map(s => `<tr data-gone="${esc(s.emp)}"><td><b>${esc(s.name)}</b><small>${esc(s.emp)}${s.nick ? ' · ' + esc(s.nick) : ''} · เดิม ${esc(s.role)} ${esc(s.team)}</small></td>
+        <td style="text-align:right"><button class="btn ok rs">กู้คืน</button></td></tr>`).join('')}</tbody></table></div></details>` : ''}`;
   const sOn = (id, f) => { const el = document.getElementById(id); if (el) el.onchange = () => { f(el.value); renderStaff(); }; };
   sOn('sam', v => { STF_AM = v; STF_HUB = STF_TEAM = ''; });
   sOn('shub', v => { STF_HUB = v; STF_TEAM = ''; });
@@ -1292,17 +1303,34 @@ function renderStaff(msg) {
   };
   document.querySelectorAll('tr[data-emp]').forEach(tr => {
     const emp = tr.dataset.emp, s = d.staff.find(x => x.emp === emp);
+    const ed = tr.querySelector('.ed'), box = tr.querySelector('.sedit');
+    ed.onclick = () => { box.hidden = !box.hidden; ed.setAttribute('aria-expanded', !box.hidden); ed.textContent = box.hidden ? 'แก้ชื่อ / ชื่อเล่น' : 'ยกเลิกแก้ชื่อ'; if (!box.hidden) tr.querySelector('.nk').focus(); };
     tr.querySelector('.sv').onclick = async b => {
       const role = tr.querySelector('.r').value, team = tr.querySelector('.t').value;
-      if (role === s.role && team === s.team) return;
-      b.target.disabled = true;
-      try { await api('staffSave', { op: 'MOVE', emp, role, team }); viewStaff(`${s.name}: ${s.role} ${s.team} → ${role} ${team}`); }
-      catch (e) { alert(say(e)); b.target.disabled = false; }
+      const name = box.hidden ? s.name : tr.querySelector('.nm').value.trim().replace(/\s+/g, ' '), nick = box.hidden ? s.nick : tr.querySelector('.nk').value.trim();
+      const moved = role !== s.role || team !== s.team, renamed = name !== s.name || nick !== s.nick;
+      if (!moved && !renamed) { alert('ยังไม่มีอะไรเปลี่ยน'); return; }
+      if (renamed && name.length < 3) { alert(MSG.BAD_NAME); return; }
+      b.target.disabled = true; const done = [];
+      try {
+        if (renamed) { await api('staffSave', { op: 'EDIT', emp, name, nick }); done.push(`ชื่อ ${s.name}${s.nick ? ' (' + s.nick + ')' : ''} → ${name}${nick ? ' (' + nick + ')' : ''}`); }
+        if (moved) { await api('staffSave', { op: 'MOVE', emp, role, team }); done.push(`${s.role} ${s.team} → ${role} ${team}`); }
+        viewStaff(`${name}: ` + done.join(' · '));
+      } catch (e) { alert(say(e)); if (done.length) viewStaff(`${name}: ` + done.join(' · ')); else b.target.disabled = false; }
     };
     tr.querySelector('.rm').onclick = async b => {
-      if (!confirm(`ปิดการใช้งาน ${s.name}? (คนนี้จะเข้าระบบไม่ได้ และหายจากรายชื่อทีม)`)) return;
+      if (!confirm(`ลบ ${s.name} ออกจากทีม?\n\n• ไม่แสดงในรายชื่อทีม และเข้าออฟฟิศไม่ได้\n• ข้อมูลยังเก็บในระบบ กู้คืนได้ที่หัวข้อ "ลบแล้ว"`)) return;
       b.target.disabled = true;
-      try { await api('staffSave', { op: 'REMOVE', emp }); viewStaff('ปิดการใช้งาน ' + s.name + ' แล้ว'); }
+      try { await api('staffSave', { op: 'REMOVE', emp }); viewStaff('ลบ ' + s.name + ' ออกจากทีมแล้ว (กู้คืนได้ที่หัวข้อ "ลบแล้ว")'); }
+      catch (e) { alert(say(e)); b.target.disabled = false; }
+    };
+  });
+  document.querySelectorAll('tr[data-gone]').forEach(tr => {
+    const s = gone.find(x => x.emp === tr.dataset.gone);
+    tr.querySelector('.rs').onclick = async b => {
+      if (!confirm(`กู้คืน ${s.name} กลับเข้าทีม ${s.team} ตำแหน่ง ${s.role}?`)) return;
+      b.target.disabled = true;
+      try { await api('staffSave', { op: 'RESTORE', emp: s.emp }); viewStaff('กู้คืน ' + s.name + ' แล้ว'); }
       catch (e) { alert(say(e)); b.target.disabled = false; }
     };
   });
