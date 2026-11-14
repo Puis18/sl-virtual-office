@@ -305,23 +305,25 @@ const ICON = {
   lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   dash:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'
 };
-const DEPT_KEY = ['sales', 'od', 'product', 'mkt', 'hr', 'admin', 'mis', 'dir'];
+const DEPT_KEY = ['sales', 'od', 'product', 'mkt', 'hr', 'admin', 'mis', 'dir', 'visit'];
+ICON.visit = '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>';
 ICON.mkt = '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a3 3 0 0 1 0 6"/><path d="M18 6a7 7 0 0 1 0 12"/>';
 ICON.meeting = ICON.hr;
 ICON.docs = '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/>';
 ICON.map = '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>';
 const ico = (k, sz = 18) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
-const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', mkt:'การตลาด', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', staff:'พนักงาน', docs:'เอกสาร' };
+const SHORT = { home:'หน้าแรก', sales:'ขาย', od:'ติดตามหนี้', product:'โปรดักต์', mkt:'การตลาด', hr:'HR', admin:'ธุรการ', mis:'MIS', dir:'ผอ.', visit:'ลงพื้นที่', staff:'พนักงาน', docs:'เอกสาร' };
 /* ---------- แผนก (การ์ดแบบ A บนโครง C) ---------- */
 const DEPTS = [
-  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · Dealer · TM Field Visit · Hub RM Calendar', phase:1, min:'SELF' },
+  { mk:'ข', name:'ฝ่ายขาย', desc:'Dashboard Daily · Dashboard V2 · สรุปยอดขาย', phase:1, min:'SELF' },
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'เงินดาวน์ EA · คู่มือแคมเปญ · Hub Master', phase:1, min:'SELF' },
   { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · โบรชัวร์สินค้า', phase:1, min:'SELF' },
   { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
   { mk:'M', name:'ฝ่าย MIS', desc:'ผู้ใช้และสิทธิ์ · สถานะข้อมูล · แจ้งปัญหา', phase:2, min:'ALL' },
-  { mk:'ผ', name:'สำนักผู้อำนวยการ', desc:'ภาพรวม AM1 / AM2 · เป้าหมาย · นโยบาย', phase:2, min:'ALL' }
+  { mk:'ผ', name:'สำนักผู้อำนวยการ', desc:'ภาพรวม AM1 / AM2 · เป้าหมาย · นโยบาย', phase:2, min:'ALL' },
+  { mk:'ล', name:'ห้องลงพื้นที่', desc:'ปฏิทินลงพื้นที่ · รายงานประจำวัน TM', phase:1, min:'TEAM' }
 ];
 const KPI = {
   SELF:['ยอดอนุมัติของฉันวันนี้','ลูกค้า OD ที่ต้องโทร','นัดที่ครบกำหนดวันนี้'],
@@ -410,6 +412,7 @@ function deptState(i) { const d = DEPTS[i], ok = RANK[topScope()] >= RANK[d.min]
 function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove()); const el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2800); }
 
 /* ---------- ห้องแผนก: ปุ่มเปิดเครื่องมือเดิม (เฟสแรก) ---------- */
+const DAILY_URL = 'https://script.google.com/macros/s/AKfycbyM_FY8Xe4QH4I3R8I_pVXZk65W3LewdHg3cTH6O7KLeCQw6ErggCcD5B2leYLOn4Nf/exec';   // รายงานประจำวัน TM (TMDailyReport)
 const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
 const ROOMS = {
   od: { direct: 'collection.html', title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
@@ -427,6 +430,10 @@ const ROOMS = {
   mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
     { ic: 'mkt', color: 'var(--red)', g: 'shop', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
     { ic: 'product', color: 'var(--green)', g: 'shop', name: 'โบรชัวร์สินค้า', desc: 'ดูโบรชัวร์แยกตามแบรนด์ · ส่งต่อให้ร้านได้', url: BROCHURE_URL }
+  ] },
+  visit: { title: 'ห้องลงพื้นที่', sub: 'วางแผนเยี่ยมร้าน เช็คอินหน้างาน และรายงานประจำวันของทีม · TM ขึ้นไป', tools: () => [
+    { ic: 'visit', color: 'var(--green)', name: 'ปฏิทินลงพื้นที่', desc: 'วางแผนเยี่ยมร้าน · เช็คอิน · เข้าด้วย LINE ไม่ต้องกรอกรหัส', run: b => openField(b) },
+    { ic: 'admin', color: 'var(--navy)', name: 'รายงานประจำวัน TM', desc: 'ส่งยอดประจำวันของทีม · ใช้ชื่อผู้ใช้และรหัสเดียวกับปฏิทิน', url: DAILY_URL }
   ] }
 };
 function viewRoom(key) {
@@ -435,8 +442,11 @@ function viewRoom(key) {
   app.innerHTML = `<section class="hero"><div class="wrap"><div class="l"><button class="back" id="back">← กลับล็อบบี้</button>
     <h1>${esc(r.title)}</h1><small>${esc(r.sub)}</small></div></div></section>
   <main class="wrap"><section><div class="sec-h"><h2>เครื่องมือในห้องนี้</h2></div><div class="quick">
-    ${r.tools().map(t => `<a class="qk" href="${esc(t.url)}" target="_blank" rel="noopener" style="text-decoration:none"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></a>`).join('')}
+    ${r.tools().map((t, i) => t.run
+      ? `<button class="qk" type="button" data-run="${i}"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></button>`
+      : `<a class="qk" href="${esc(t.url)}" target="_blank" rel="noopener" style="text-decoration:none"><i style="background:${t.color}">${ico(t.ic, 20)}</i><span><b>${esc(t.name)}</b><small>${esc(t.desc)}</small></span></a>`).join('')}
   </div><p class="empty" style="padding:12px 0 0">เครื่องมือจะเปิดในหน้าต่างใหม่ · เฟสถัดไปจะย้ายเข้ามาใช้ล็อกอินและสิทธิ์เดียวกับออฟฟิศ</p></section></main>`;
+  app.querySelectorAll('[data-run]').forEach(b => b.onclick = () => r.tools()[b.dataset.run].run(b));
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
 }
 
@@ -485,9 +495,9 @@ const OMP = { W: 400, H: 860, CXL: 170, CXR: 230, RH: 196, GAP: 14, Y0: 16 };
 OMP.CX = (OMP.CXL + OMP.CXR) / 2;
 const omW = () => OM.P ? OMP.W : OM.W, omH = () => OM.P ? OMP.H : OM.H;
 const OM_TINT = { navy: ['#E5ECF5', '#1E3365'], red: ['#F8E8EB', '#9F1C33'], green: ['#E6F1EA', '#126C3D'] };
-const OM_LAYOUT = [   // ห้องแผนก 8 ห้อง + ห้องประชุมส่วนกลาง + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
+const OM_LAYOUT = [   // ห้องแผนก 8 ห้อง + ห้องลงพื้นที่ + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
   ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['mkt', 'red'], ['hr', 'green'],
-  ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['meeting', 'green'], ['lobby', 'navy']
+  ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['visit', 'green'], ['lobby', 'navy']
 ];
 let OMR = [], om = null;
 function omRooms() {
@@ -745,13 +755,12 @@ function omTools(r) {
       T.push({ ic: 'dash', c: 'var(--navy)', n: 'Dashboard Daily', d: 'ตามสิทธิ์ของคุณ', run: b => { toast('กำลังเปิด Dashboard Daily…'); openDash(b); } });
       if (canV2()) T.push({ ic: 'dash', c: 'var(--red)', n: 'Dashboard V2', d: 'ภาพรวม · ทีม · พนักงาน · Incentive', run: b => { toast('กำลังเปิด Dashboard V2…'); openDash(b, 'v2.html'); } });
     }
-    if (RANK[top] >= RANK.TEAM) T.push({ ic: 'home', c: 'var(--green)', n: 'ปฏิทินลงพื้นที่', d: 'วางแผนเยี่ยมร้าน · เช็คอิน · Daily · เข้าด้วย LINE', run: b => openField(b) });
     T.push({ ic: 'sales', c: 'var(--green)', n: 'สรุปยอดขาย', d: 'ทีม · พนักงาน · iOS / Android · ร้าน', run: () => go('sales') });
     if (RANK[top] >= RANK.HUB) T.push({ ic: 'staff', c: 'var(--red)', n: 'รายชื่อพนักงาน', d: 'เพิ่ม · แก้ชื่อเล่น · ย้ายทีม · ลบ', run: () => viewStaff() });
   } else if (r.lobby) {
     T.push({ ic: 'home', c: 'var(--navy)', n: 'หน้าแรก', d: 'ยอดเทียบเป้า · เรื่องที่ต้องดูวันนี้', run: () => go('home') });
   } else if (ROOMS[r.k]) {
-    ROOMS[r.k].tools().forEach(t => T.push({ ic: t.ic, c: t.color, n: t.name, d: t.desc, url: t.url }));
+    ROOMS[r.k].tools().forEach(t => T.push({ ic: t.ic, c: t.color, n: t.name, d: t.desc, url: t.url, run: t.run }));
   }
   return T;
 }
@@ -944,9 +953,7 @@ function viewSales() {
   ${s.scope !== 'SELF' ? `<div class="wrap" style="padding-top:14px"><button class="ext" id="dash" style="width:100%;font:inherit;cursor:pointer;text-align:left">
     <span><b>เปิด Dashboard Daily (ตามสิทธิ์ของคุณ)</b><small>ทุกหน้าเหมือนเดิม เห็นเฉพาะทีมที่คุณดูแล</small></span><span aria-hidden="true">→</span></button>
     ${canV2() ? `<button class="ext" id="dash2" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
-    <span><b>เปิด Dashboard V2 (ตามสิทธิ์ของคุณ)</b><small>ภาพรวม · ทีม · พนักงาน · Incentive · คัดลอกสรุปส่ง LINE</small></span><span aria-hidden="true">→</span></button>` : ''}
-    <button class="ext" id="field" style="width:100%;font:inherit;cursor:pointer;text-align:left;margin-top:10px">
-    <span><b>ปฏิทินลงพื้นที่ (Field & Daily)</b><small>วางแผนเยี่ยมร้าน · เช็คอิน · Daily · เข้าด้วย LINE ไม่ต้องกรอกรหัส</small></span><span aria-hidden="true">→</span></button></div>` : ''}
+    <span><b>เปิด Dashboard V2 (ตามสิทธิ์ของคุณ)</b><small>ภาพรวม · ทีม · พนักงาน · Incentive · คัดลอกสรุปส่ง LINE</small></span><span aria-hidden="true">→</span></button>` : ''}</div>` : ''}
   <nav class="tabs wrap" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === SALES_TAB}" data-t="${k}">${l}</button>`).join('')}</nav>
   <main class="wrap" id="tab"></main>`;
   document.getElementById('back').onclick = () => viewLobby(ME, PROFILE);
