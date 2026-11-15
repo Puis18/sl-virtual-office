@@ -1,0 +1,55 @@
+--- a/code.js
++++ b/code.js
+@@ -379,10 +379,19 @@
+     return { emp: String(r[R.EMP]), name: String(r[1]), nick: String(s[S.NICK] || ''), role: String(r[R.ROLE]), team: String(r[R.TEAM]),
+              access: String(s[S.STATUS] || ''), linked: !!s[S.LINE] };
+   }).sort((a, b) => a.team.localeCompare(b.team) || a.role.localeCompare(b.role) || a.name.localeCompare(b.name));
+-  return { teams: teams, staff: list, roles: Object.keys(POS_) };
++  // ที่ลบแล้ว (ยังเก็บในชีต Active = N) — ไว้กู้คืน · เอาเฉพาะคนที่ไม่มีบทบาทที่ใช้งานอยู่เลย
++  const active = new Set(list.map(s => s.emp)), gone = {};
++  data_('Roles').forEach(r => {
++    const emp = String(r[R.EMP]);
++    if (!POS_[r[R.ROLE]] || !codes.has(String(r[R.TEAM])) || r[R.ACTIVE] !== 'N' || active.has(emp)) return;
++    const s = staff[emp] || [];
++    gone[emp] = { emp: emp, name: String(r[1]), nick: String(s[S.NICK] || ''), role: String(r[R.ROLE]), team: String(r[R.TEAM]) };
++  });
++  const removed = Object.keys(gone).map(k => gone[k]).sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
++  return { teams: teams, staff: list, removed: removed, roles: Object.keys(POS_) };
+ }
+ 
+-// op: ADD (เพิ่มคนใหม่) · MOVE (ย้ายทีม/เปลี่ยนตำแหน่ง) · REMOVE (ปิดการใช้งาน)
++// op: ADD (เพิ่มคนใหม่) · MOVE (ย้ายทีม/เปลี่ยนตำแหน่ง) · EDIT (แก้ชื่อ/ชื่อเล่น) · REMOVE (ลบออกจากทีม ข้อมูลยังเก็บในชีต) · RESTORE (กู้คืน)
+ function staffSave_(req, line) {
+   const me = me_(line), teams = managedTeams_(me), byCode = {};
+   teams.forEach(t => byCode[t.code] = t);
+@@ -407,6 +416,16 @@
+       roSh.getRange(row, 1, 1, 10).setValues([[emp, name, req.role, POS_[req.role], t.code, t.name, t.am, t.hub,
+         '=IFERROR(INDEX(Scope!$B:$B,MATCH(C' + row + ',Scope!$A:$A,0)),"?")', 'Y']]);
+       detail = `${name} · ${req.role} · ${t.code}`;
++    } else if (req.op === 'RESTORE') {
++      if (!st || rIdx >= 0) throw new Error('EMP_NOT_FOUND');
++      let gIdx = -1;
++      roles.forEach((r, i) => { if (i > 0 && String(r[R.EMP]) === emp && POS_[r[R.ROLE]] && r[R.ACTIVE] === 'N') gIdx = i; });   // แถวล่าสุด
++      if (gIdx < 0) throw new Error('EMP_NOT_FOUND');
++      if (!byCode[String(roles[gIdx][R.TEAM])]) throw new Error('FORBIDDEN');
++      roSh.getRange(gIdx + 1, R.ACTIVE + 1).setValue('Y');
++      const linked = !!stSh.getRange(st.row, S.LINE + 1).getValue();
++      stSh.getRange(st.row, S.STATUS + 1, 1, 3).setValues([[linked ? 'APPROVED' : 'PENDING', 'กู้คืนโดย ' + me.name, new Date()]]);
++      detail = `กู้คืน (${roles[gIdx][R.ROLE]} ${roles[gIdx][R.TEAM]})`;
+     } else {
+       if (!st || rIdx < 0) throw new Error('EMP_NOT_FOUND');
+       if (!byCode[String(roles[rIdx][R.TEAM])]) throw new Error('FORBIDDEN');     // ต้องเป็นคนในทีมที่ตัวเองดูแล
+@@ -415,6 +434,13 @@
+         roSh.getRange(rIdx + 1, R.ROLE + 1, 1, 6).setValues([[req.role, POS_[req.role], t.code, t.name, t.am, t.hub]]);
+         stSh.getRange(st.row, S.POS + 1, 1, 3).setValues([[POS_[req.role], t.am, t.hub]]);
+         detail = `${roles[rIdx][R.ROLE]} ${roles[rIdx][R.TEAM]} → ${req.role} ${t.code}`;
++      } else if (req.op === 'EDIT') {
++        const name = String(req.name || '').trim().replace(/\s+/g, ' '), nick = String(req.nick || '').trim().slice(0, 30);
++        if (name.length < 3) throw new Error('BAD_NAME');
++        const old = stSh.getRange(st.row, S.NAME + 1, 1, 2).getValues()[0];
++        stSh.getRange(st.row, S.NAME + 1, 1, 2).setValues([[name, nick]]);
++        roles.forEach((r, i) => { if (i > 0 && String(r[R.EMP]) === emp && String(r[1]) !== name) roSh.getRange(i + 1, 2).setValue(name); });
++        detail = `${old[0]} (${old[1] || '-'}) → ${name} (${nick || '-'})`;
+       } else if (req.op === 'REMOVE') {
+         roSh.getRange(rIdx + 1, R.ACTIVE + 1).setValue('N');
+         if (!roles.some((r, i) => i !== rIdx && i > 0 && String(r[R.EMP]) === emp && r[R.ACTIVE] === 'Y'))
