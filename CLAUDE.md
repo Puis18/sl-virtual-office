@@ -1,6 +1,6 @@
-# ออฟฟิศ — S Leasing (sl-virtual-office)
+# ออฟฟิศ — SCAP (sl-virtual-office)
 
-เว็บพอร์ทัล "ออฟฟิศ" ของ S Leasing รวมเครื่องมือทำงานแยกตามแผนก ล็อกอินผ่าน LINE (LIFF) และเห็นข้อมูลตามสิทธิ์ของแต่ละตำแหน่ง
+เว็บพอร์ทัล "ออฟฟิศ" ของ SCAP (Srisawad Capital เดิมชื่อ S Leasing) รวมเครื่องมือทำงานแยกตามแผนก ล็อกอินผ่าน LINE (LIFF) และเห็นข้อมูลตามสิทธิ์ของแต่ละตำแหน่ง
 เจ้าของงาน: คุณปุ้ย (อภิสิทธิ์ พละศักดิ์) ผู้อำนวยการฝ่ายขายสินเชื่อโทรศัพท์มือถือ ดูแล AM2
 
 ## กฎการทำงาน (สำคัญ)
@@ -17,7 +17,8 @@
 
 ## โครงสร้าง
 - `index.html` ไฟล์เดียว รวม HTML, CSS และ JS ทั้งหมด
-- โลโก้: `logo.png`, `logo-s.png`, `logo-round.png` (สี navy #1E3365 / red #9F1C33 / green #126C3D)
+- โลโก้ SCAP: `logo.png`, `logo-s.png`, `logo-round.png` (สี navy #1E3763 / red #A01C34 / green #0B6B3A) — เปลี่ยนจาก S Leasing เมื่อ 16 พ.ย. 2569 (ทำบน `dev` รอสั่งขึ้น main)
+  - ชื่อในหน้าใช้ "SCAP ออฟฟิศ" · `@sleasing` (LINE OA) และชื่อ repo/URL เป็นของจริง ห้ามเปลี่ยน
 - หลังบ้าน: Apps Script Web App (`API_URL`) ผูกกับชีต Staff_Master_AM1_AM2 ทำหน้าที่ตรวจสิทธิ์และคัดข้อมูลยอดขายตามสิทธิ์ที่เซิร์ฟเวอร์
   - โปรเจกต์ Apps Script (ผูกกับชีต): scriptId `1iePjcAx6gLJawlsumO8oWMNtCO2EL-meyHiLb7ZOn7T1oFBFNBE4QXC5` · deployment ใช้งานจริง `AKfycbyXqPr50…` (ชี้เวอร์ชันใหม่ด้วย `clasp deploy -i <id> -V <เวอร์ชัน>` ห้ามสร้าง deployment ใหม่)
   - แก้หลังบ้านผ่าน clasp บน Mac ของคุณปุ้ย (Remote Control) · เวอร์ชัน 15 = ขอย้าย LINE + ผู้อนุมัติ Hub RM ขึ้นไป · **เวอร์ชัน 16 (15 พ.ย. 2569) = แก้ชื่อ/ชื่อเล่น (op EDIT) · กู้คืน (op RESTORE) · staffList ส่ง removed** (ย้อนกลับ: ชี้กลับเวอร์ชัน 15)
@@ -86,4 +87,4 @@
 - ห้องลงพื้นที่ (ขึ้น main แล้ว 14 พ.ย.): (1) ทำรายงานประจำวัน TM ให้เข้าด้วย LINE แบบเดียวกับปฏิทิน (ต้องแก้ Apps Script TMDailyReport) (2) ย้ายข้อมูล Daily_Report / Staff_List / Ref_Team ออกจาก TMFieldVisit_DATA แล้วปิด TM Field Visit
 - ทำห้องฝ่ายติดตามหนี้แบบคุมสิทธิ์ ให้แต่ละคนเห็นเฉพาะลูกค้าในทีม/Hub ของตัวเอง
 - แก้ TARGET_TEAM ใน Apps Script เป็น 1,000 (ต้องทำผ่านคอมของคุณปุ้ย)
-- ยังไม่ได้ตัดสินใจว่าจะเปลี่ยนโลโก้เป็น SCAP หรือไม่ ตอนนี้ยังใช้โลโก้ S Leasing
+- ปฏิทินลงพื้นที่ / รายงานประจำวัน TM (repo sleasing-tools) ยังใช้โลโก้และชื่อ S Leasing — ต้องแก้แยกที่ repo นั้น
