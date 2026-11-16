@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>S Leasing ออฟฟิศ</title>
+<title>SCAP ออฟฟิศ</title>
 <!-- เพิ่มลงหน้าจอโฮมของมือถือ: ไอคอนและชื่อแอป -->
 <link rel="apple-touch-icon" href="logo-round.png">
 <link rel="icon" type="image/png" href="logo-round.png">
 <meta name="apple-mobile-web-app-title" content="ออฟฟิศ">
-<meta name="theme-color" content="#1E3365">
+<meta name="theme-color" content="#1E3763">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--navy:#1E3365;--navy2:#14244A;--red:#9F1C33;--green:#126C3D;--ink:#121B2E;--sub:#3D4760;--muted:#5A6478;--line:#DCE1EA;--bg:#F3F5F9}
+  :root{--navy:#1E3763;--navy2:#152746;--red:#A01C34;--green:#0B6B3A;--ink:#121B2E;--sub:#3D4760;--muted:#5A6478;--line:#DCE1EA;--bg:#F3F5F9}
   *{box-sizing:border-box} body{margin:0;font-family:'Noto Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
   button{font-family:inherit;cursor:pointer}
   .wrap{max-width:min(96vw,2000px);margin:0 auto;padding:0 16px}
@@ -237,9 +237,9 @@
 </head>
 <body>
 <div class="shell"><aside id="side" hidden></aside><div class="col">
-<header><div class="wrap"><img src="logo.png" alt="S Leasing"><div class="who" id="who"></div></div></header>
+<header><div class="wrap"><img src="logo.png" alt="SCAP Srisawad Capital"><div class="who" id="who"></div></div></header>
 <div id="app"><main class="wrap"><div class="skel"></div><div class="skel"></div></main></div>
-<footer><div class="wrap"><span>S Leasing ออฟฟิศ · เครื่องมือภายในทีม AM1 / AM2</span><span>ข้อมูลลูกค้าเป็นความลับ ห้ามเผยแพร่ภายนอก (PDPA)</span></div></footer>
+<footer><div class="wrap"><span>SCAP ออฟฟิศ · เครื่องมือภายในทีม AM1 / AM2</span><span>ข้อมูลลูกค้าเป็นความลับ ห้ามเผยแพร่ภายนอก (PDPA)</span></div></footer>
 </div></div><nav id="mnav" hidden></nav>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -424,7 +424,7 @@ const ROOMS = {
     { ic: 'product', color: 'var(--green)', g: 'hub', name: 'สิทธิประโยชน์ร้านในเครือข่าย ADP', desc: 'ใช้เฉพาะ Hub ADP และสาขา AIS / Telewiz · เปิดแล้วดาวน์โหลดหรือแชร์ให้ TM ได้', url: 'https://puis18.github.io/sl-virtual-office/docs/adp-dealer-benefits.pdf' },
     { ic: 'product', color: 'var(--red)', g: 'hub', name: 'คู่มือร้าน Hub ฉบับง่าย', desc: 'ขั้นตอนลงทะเบียนร้านในเครือ (Sub Dealer)', url: 'https://claude.ai/artifact/FvfbG2LvXgZb5bD3YDgftb' },
     { ic: 'product', color: 'var(--green)', g: 'shop', name: 'คู่มือสินเชื่อสำหรับร้านค้า', desc: 'ติดตั้ง SPhone · วิธีใช้ SPhone · LINE OA · ส่งลิงก์ให้ร้านได้', url: 'https://puis18.github.io/sl-virtual-office/docs/guide/' },
-    { ic: 'product', color: 'var(--navy)', g: 'shop', name: 'Company Profile', desc: 'สไลด์แนะนำบริษัท S Leasing', url: 'https://drive.google.com/file/d/1qkLvIYJgBlzrra46yOyfB03py_97Scc3/view' }
+    { ic: 'product', color: 'var(--navy)', g: 'shop', name: 'Company Profile', desc: 'สไลด์แนะนำบริษัท SCAP', url: 'https://drive.google.com/file/d/1qkLvIYJgBlzrra46yOyfB03py_97Scc3/view' }
   ].filter(hubOk) },
   mkt: { title: 'ฝ่ายการตลาด', sub: 'ราคาและโปรโมชันสินค้า สำหรับใช้คุยกับร้านและลูกค้า', tools: () => [
     { ic: 'mkt', color: 'var(--red)', g: 'shop', name: 'Pricelist', desc: 'ตารางราคาสินค้า · อัปเดตจากฝ่ายการตลาด', url: 'https://sleasingmarketing.github.io/Pricelist/' },
@@ -493,7 +493,7 @@ OM.CX = (OM.CY1 + OM.CY2) / 2;
 const OMP = { W: 400, H: 860, CXL: 170, CXR: 230, RH: 196, GAP: 14, Y0: 16 };
 OMP.CX = (OMP.CXL + OMP.CXR) / 2;
 const omW = () => OM.P ? OMP.W : OM.W, omH = () => OM.P ? OMP.H : OM.H;
-const OM_TINT = { navy: ['#E5ECF5', '#1E3365'], red: ['#F8E8EB', '#9F1C33'], green: ['#E6F1EA', '#126C3D'] };
+const OM_TINT = { navy: ['#E5ECF5', '#1E3763'], red: ['#F8E8EB', '#A01C34'], green: ['#E6F1EA', '#0B6B3A'] };
 const OM_LAYOUT = [   // ห้องแผนก 8 ห้อง + ห้องลงพื้นที่ + ล็อบบี้ (ใช้สิทธิ์จาก DEPTS ชุดเดียวกับเมนู)
   ['sales', 'green'], ['od', 'red'], ['product', 'navy'], ['mkt', 'red'], ['hr', 'green'],
   ['admin', 'red'], ['mis', 'navy'], ['dir', 'navy'], ['visit', 'green'], ['lobby', 'navy']
@@ -536,7 +536,7 @@ const omDesk = (x, y) => `<g transform="translate(${x},${y})"><rect x="-30" y="-
   <rect x="-12" y="-11" width="24" height="15" rx="3" fill="#2B3A63"/><rect x="-9" y="-8" width="18" height="9" rx="1.5" fill="#8EC5FF"/><circle cx="0" cy="30" r="9" fill="#6B7AA3"/></g>`;
 const omPlant = (x, y, s = 1) => `<g transform="translate(${x},${y}) scale(${s})"><rect x="-8" y="2" width="16" height="12" rx="3" fill="#E7A86B"/>
   <circle cx="-6" cy="-4" r="9" fill="#3FA96B"/><circle cx="6" cy="-6" r="9" fill="#2F9459"/><circle cx="0" cy="-12" r="9" fill="#46B877"/></g>`;
-const OM_SHIRT = ['#1E3365', '#9F1C33', '#126C3D', '#3D5F8F', '#C04A60', '#2E7D52'], OM_HAIR = ['#2A2238', '#5B3A29', '#1E1E1E', '#7A4A2A'];
+const OM_SHIRT = ['#1E3763', '#A01C34', '#0B6B3A', '#3D5F8F', '#C04A60', '#2E7D52'], OM_HAIR = ['#2A2238', '#5B3A29', '#1E1E1E', '#7A4A2A'];
 
 function omDraw() {
   if (OM.P) return omDrawP();
@@ -550,9 +550,9 @@ function omDraw() {
       <rect x="${r.x + 40}" y="${r.y + 40}" width="${r.w - 80}" height="${r.h - 80}" rx="20" fill="${ok ? r.acc : '#A9AEBC'}" opacity=".08"/>`;
     if (r.lobby) {
       const cx = r.x + r.w / 2, by = r.y + r.h - 22;
-      s += `<rect x="${cx - 62}" y="${by - 46}" width="124" height="40" rx="20" fill="#fff" stroke="#1E3365" stroke-width="2"/><image href="logo.png" x="${cx - 52}" y="${by - 41}" width="104" height="30" preserveAspectRatio="xMidYMid meet"/>`;
-      s += omPerson(cx, by - 88, '#9F1C33', '#2A2238');
-      s += `<rect x="${cx - 70}" y="${by - 82}" width="140" height="28" rx="14" fill="#1E3365"/><rect x="${cx - 70}" y="${by - 82}" width="140" height="9" rx="4.5" fill="#3A5490"/>`;
+      s += `<rect x="${cx - 62}" y="${by - 46}" width="124" height="40" rx="20" fill="#fff" stroke="#1E3763" stroke-width="2"/><image href="logo.png" x="${cx - 52}" y="${by - 41}" width="104" height="30" preserveAspectRatio="xMidYMid meet"/>`;
+      s += omPerson(cx, by - 88, '#A01C34', '#2A2238');
+      s += `<rect x="${cx - 70}" y="${by - 82}" width="140" height="28" rx="14" fill="#1E3763"/><rect x="${cx - 70}" y="${by - 82}" width="140" height="9" rx="4.5" fill="#3A5490"/>`;
       s += omPlant(r.x + 30, r.y + r.h - 40, 1.1) + omPlant(r.x + r.w - 30, r.y + r.h - 40, 1.1);
     } else if (r.meet) {
       s += `<rect x="${r.x + 55}" y="${r.y + 75}" width="${r.w - 110}" height="70" rx="30" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`;
@@ -565,7 +565,7 @@ function omDraw() {
       if (ok) s += omPerson(r.x + 70, top + 40, OM_SHIRT[i % 6], OM_HAIR[i % 4]) + omPerson(r.x + r.w - 70, top + 135, OM_SHIRT[(i + 2) % 6], OM_HAIR[(i + 1) % 4], '#E9B48A', -1);
     }
     const wt = 10, d0 = r.dx - 34, d1 = r.dx + 34, wy = r.row === 0 ? r.y + r.h - wt / 2 : r.y + wt / 2;
-    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="${wt}"/>
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3763' : '#9AA1B5'}" stroke-width="${wt}"/>
       <rect x="${d0}" y="${wy - wt}" width="${d1 - d0}" height="${wt * 2}" fill="${fl}"/>`;
     if (!ok) s += `<rect x="${d0}" y="${wy - 5}" width="${d1 - d0}" height="10" rx="5" fill="#9AA1B5"/>`;
     const ly = r.row === 0 ? CY1 + 26 : CY2 - 26, tw = r.name.length * 13 + 46 + (r.st === 'soon' ? 44 : 0);
@@ -574,13 +574,13 @@ function omDraw() {
       <text x="${-tw / 2 + 30}" y="5" font-size="14" font-weight="600" fill="${ok ? '#121B2E' : '#9AA1B5'}">${esc(r.name)}${r.st === 'soon' ? ' · เฟส 2' : ''}</text></g>`;
   });
   const nm = String(ME.nick || ME.name || '').slice(0, 10);
-  s += `<g id="omMe">${omPerson(0, 0, '#1E3365', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#9F1C33"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g></svg>`;
+  s += `<g id="omMe">${omPerson(0, 0, '#1E3763', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#A01C34"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g></svg>`;
   return s;
 }
 
 function omMeTag() {
   const nm = String(ME.nick || ME.name || '').slice(0, 10);
-  return `<g id="omMe">${omPerson(0, 0, '#1E3365', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#9F1C33"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g>`;
+  return `<g id="omMe">${omPerson(0, 0, '#1E3763', '#2A2238')}<g transform="translate(0,-40)"><rect x="${-(nm.length * 7 + 16) / 2}" y="-11" width="${nm.length * 7 + 16}" height="20" rx="10" fill="#A01C34"/><text x="0" y="4" text-anchor="middle" font-size="12" fill="#fff">${esc(nm)}</text></g></g>`;
 }
 function omDrawP() {   // แนวตั้งสำหรับมือถือ
   const { W, H, CXL, CXR } = OMP;
@@ -592,8 +592,8 @@ function omDrawP() {   // แนวตั้งสำหรับมือถื
     s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="${fl}"/>`;
     const fy = r.y + 58;   // เฟอร์นิเจอร์ใต้ป้ายชื่อ
     if (r.lobby) {
-      s += `<rect x="${cx - 50}" y="${fy + 40}" width="100" height="22" rx="11" fill="#1E3365"/>` + omPerson(cx, fy + 30, '#9F1C33', '#2A2238');
-      s += `<rect x="${cx - 54}" y="${r.y + r.h - 46}" width="108" height="32" rx="16" fill="#fff" stroke="#1E3365" stroke-width="2"/><image href="logo.png" x="${cx - 46}" y="${r.y + r.h - 42}" width="92" height="24" preserveAspectRatio="xMidYMid meet"/>`;
+      s += `<rect x="${cx - 50}" y="${fy + 40}" width="100" height="22" rx="11" fill="#1E3763"/>` + omPerson(cx, fy + 30, '#A01C34', '#2A2238');
+      s += `<rect x="${cx - 54}" y="${r.y + r.h - 46}" width="108" height="32" rx="16" fill="#fff" stroke="#1E3763" stroke-width="2"/><image href="logo.png" x="${cx - 46}" y="${r.y + r.h - 42}" width="92" height="24" preserveAspectRatio="xMidYMid meet"/>`;
     } else if (r.meet) {
       s += `<rect x="${cx - 42}" y="${fy + 22}" width="84" height="50" rx="22" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`;
       for (let k = 0; k < 3; k++) s += `<circle cx="${cx - 26 + k * 26}" cy="${fy + 12}" r="7" fill="#6B7AA3"/><circle cx="${cx - 26 + k * 26}" cy="${fy + 82}" r="7" fill="#6B7AA3"/>`;
@@ -603,7 +603,7 @@ function omDrawP() {   // แนวตั้งสำหรับมือถื
       s += omPlant(left ? r.x + 22 : r.x + r.w - 22, r.y + r.h - 22, .8);
     }
     const wt = 8, wx = left ? r.x + r.w - wt / 2 : r.x + wt / 2;
-    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="${wt}"/>
+    s += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="14" fill="none" stroke="${ok ? '#1E3763' : '#9AA1B5'}" stroke-width="${wt}"/>
       <rect x="${wx - wt}" y="${r.dy - 28}" width="${wt * 2}" height="56" fill="${fl}"/>`;
     if (!ok) s += `<rect x="${wx - 4}" y="${r.dy - 28}" width="8" height="56" rx="4" fill="#9AA1B5"/>`;
     // ป้ายชื่อห้อง (ในห้อง ด้านบน · ตัวใหญ่อ่านง่าย)
@@ -627,12 +627,12 @@ function omWalkable(x, y) {
 /* ---------- มือถือ: การ์ดห้องแบบการ์ตูน (อ่านง่าย กดครั้งเดียวเข้างาน) ---------- */
 function omCardArt(r, i) {   // ภาพห้องขนาดย่อ 320×120 · ประตูซ้าย
   const ok = omIn(r), fl = ok ? r.floor : '#E2E4EA';
-  let s = `<svg viewBox="0 0 320 120" class="omart" aria-hidden="true"><rect x="4" y="4" width="312" height="112" rx="14" fill="${fl}" stroke="${ok ? '#1E3365' : '#9AA1B5'}" stroke-width="6"/>
+  let s = `<svg viewBox="0 0 320 120" class="omart" aria-hidden="true"><rect x="4" y="4" width="312" height="112" rx="14" fill="${fl}" stroke="${ok ? '#1E3763' : '#9AA1B5'}" stroke-width="6"/>
     <rect x="1" y="44" width="10" height="34" fill="${fl}"/>`;
-  if (r.lobby) s += `<rect x="150" y="62" width="110" height="22" rx="11" fill="#1E3365"/>` + omPerson(205, 50, '#9F1C33', '#2A2238') + `<image href="logo.png" x="160" y="90" width="90" height="20" preserveAspectRatio="xMidYMid meet"/>`;
+  if (r.lobby) s += `<rect x="150" y="62" width="110" height="22" rx="11" fill="#1E3763"/>` + omPerson(205, 50, '#A01C34', '#2A2238') + `<image href="logo.png" x="160" y="90" width="90" height="20" preserveAspectRatio="xMidYMid meet"/>`;
   else if (r.meet) { s += `<rect x="120" y="40" width="140" height="44" rx="22" fill="#B98A5E" stroke="#9C7048" stroke-width="2"/>`; for (let k = 0; k < 4; k++) s += `<circle cx="${140 + k * 33}" cy="30" r="7" fill="#6B7AA3"/><circle cx="${140 + k * 33}" cy="94" r="7" fill="#6B7AA3"/>`; }
   else { s += omDesk(118, 44) + omDesk(194, 44) + omDesk(270, 44); if (ok) s += omPerson(118, 80, OM_SHIRT[i % 6], OM_HAIR[i % 4]) + omPerson(270, 80, OM_SHIRT[(i + 3) % 6], OM_HAIR[(i + 1) % 4], '#E9B48A', -1); }
-  s += omPlant(40, 96, .8) + `<g class="omwalker" style="transform:translate(-30px,64px)">${omPerson(0, 0, '#1E3365', '#2A2238')}</g>`;
+  s += omPlant(40, 96, .8) + `<g class="omwalker" style="transform:translate(-30px,64px)">${omPerson(0, 0, '#1E3763', '#2A2238')}</g>`;
   if (!ok) s += `<rect x="1" y="44" width="10" height="34" rx="4" fill="#9AA1B5"/>`;
   return s + '</svg>';
 }
@@ -804,7 +804,7 @@ function renderNav(active) {
   const side = document.getElementById('side'), mn = document.getElementById('mnav');
   const tag = st => st === 'soon' ? '<span class="tg">เฟส 2</span>' : st === 'lock' ? `<span class="tg">${ico('lock', 12)}</span>` : '';
   const name = ME.nick ? 'คุณ' + ME.nick : ME.name;
-  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="S Leasing"><img class="sb-ic" src="logo-round.png" alt="S Leasing"></div><p class="sb-sub">ออฟฟิศ · AM1 / AM2</p>
+  side.innerHTML = `<div class="sb-logo"><img class="sb-full" src="logo.png" alt="SCAP Srisawad Capital"><img class="sb-ic" src="logo-round.png" alt="SCAP Srisawad Capital"></div><p class="sb-sub">ออฟฟิศ · AM1 / AM2</p>
     <button class="sb-tog" id="sbTog" title="ย่อ / ขยายเมนู"><span id="sbArr">«</span><span class="tx">ย่อเมนู</span></button>
     <button class="nv" data-k="home" title="หน้าแรก"><i>${ico('home')}</i><span class="tx">หน้าแรก</span><em>หน้าแรก</em></button>
     <button class="nv" data-k="map" title="แผนที่ออฟฟิศ"><i>${ico('map')}</i><span class="tx">แผนที่ออฟฟิศ</span><em>แผนที่</em></button>
