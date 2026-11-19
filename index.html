@@ -1118,6 +1118,18 @@ async function openField(btn) {
     toast(String((e && e.message) || e)); if (m) m.textContent = old; if (btn) btn.disabled = false;
   }
 }
+// ข้อมูลรายทีมแบบย่อ (f:'c1' จาก vo_dash_build.py 19 พ.ย. 2569) → แปลงกลับเป็นแถวเดิมทุกค่า · ไฟล์แบบเดิม (array) ใช้ได้ตามปกติ
+// ชื่อที่ซ้ำกันเก็บครั้งเดียว ทำให้ไฟล์เล็กลงและมือถือใช้หน่วยความจำน้อยลง (เดิม iPhone เปิดสิทธิ์ ผอ. แล้วเด้งกลับหน้าแรก)
+function unpackRecs(o) {
+  if (!o || o.f !== 'c1') return o;
+  const c = o.c, s = o.s, z = new Set(o.z || []), d = c.map(k => o.d[k] || null), n = c.length, R = o.r, out = new Array(R.length);
+  for (let i = 0; i < R.length; i++) {
+    const row = R[i], r = {};
+    for (let j = 0; j < n; j++) { let v = row[j]; if (v === null) { if (z.has(j)) continue; } else if (s[j]) v = d[j][v]; r[c[j]] = v; }
+    out[i] = r; R[i] = null;
+  }
+  return out;
+}
 async function openDash(btn, page = 'shell.html') {
   if (page === 'v2.html' && !canV2()) return toast('Dashboard V2 เปิดได้ตั้งแต่ระดับ Hub RM ขึ้นไป');
   const m = btn && btn.querySelector('small');
@@ -1133,7 +1145,7 @@ async function openDash(btn, page = 'shell.html') {
       const buf = new Uint8Array(await r.arrayBuffer());
       const ck = await crypto.subtle.importKey('raw', b64(key), 'AES-GCM', false, ['decrypt']);
       const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, ck, buf.slice(12));
-      return JSON.parse(await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+      return unpackRecs(JSON.parse(await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text()));
     };
     const codes = Object.keys(k.teams);   // __others = ทุกทีมนอก AM1/AM2 (เฉพาะผู้อำนวยการ)
     let done = 0;
