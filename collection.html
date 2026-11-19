@@ -723,6 +723,10 @@ function group(rows,g){
 
 /* ===== รายการติดตาม ===== */
 const PRIO={MISS:0,NONE:1,APPOINTMENT:2,PROMISE:2,POSTPONE:2,REFUSE:2,NOCONTACT:2,OTHER:2,RETURN:3,SEIZE:3,PAID:4};
+/* เวลาที่บันทึกผลการติดต่อครั้งล่าสุด (ts เก็บเป็นเวลาสากล แสดงเป็นเวลาเครื่อง) เช่น "19 พ.ย. 14:05 น." */
+function contactTs(ts){ const d=new Date(ts); if(isNaN(d)) return '';
+  const p=n=>String(n).padStart(2,'0');
+  return thDate(d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()))+' '+p(d.getHours())+':'+p(d.getMinutes())+' น.'; }
 function acctCard(r,miss){
   const st=r._st, e=r._last, a=miss?ackOf(r):null;
   const info=e&&(activeAppt(r)||st==='MISS'||st==='POSTPONE')&&e.date?'นัด '+thDate(e.date)+(e.amt?' · ฿'+baht(e.amt):''):'';
@@ -737,7 +741,7 @@ function acctCard(r,miss){
     <div class="a-top"><div class="a-who"><b>${esc(r.customer||'(ไม่มีชื่อ)')}</b><div class="a-sub">${esc(r.contractNo)}${tel}</div></div>
       <div class="a-amt"><small>ยอดค้าง</small><b>฿${baht(r._oa)}</b>${r.lateFee>0?`<span>ค่าปรับ ฿${baht(r.lateFee)}</span><em>(ถ้าเกินวันที่ 6)</em>`:''}</div></div>
     <div class="a-tags"><span class="bk ${esc(r.bucket)}">${esc(r.bucket)}</span>${r.newOD?'<span class="bk new">New</span>':''}${BUS.length>1?`<span class="bk st">${esc(r.bu)}</span>`:''}<span class="bk st">${esc(STL[r.staffType]||r.staffType)}</span><span>${esc(r.teamCode)} · ${esc(r.staff)}</span>${r._add>0?`<span>ครบดิวเพิ่ม +${r._add} งวด</span>`:''}</div>
-    <div class="a-foot"><div class="a-st"><span class="pill ${STCLS[st]||'n'}">${esc(STLAB[st]||st)}</span>${info?`<span>${esc(info)}</span>`:''}${late}${a?`<span>รับทราบโดย ${esc(a.by)}</span>`:''}<span>ชำระล่าสุด ${esc(thDate(r.lastPay))}</span></div>${act}</div></article>`;
+    <div class="a-foot"><div class="a-st"><span class="pill ${STCLS[st]||'n'}">${esc(STLAB[st]||st)}</span>${info?`<span>${esc(info)}</span>`:''}${late}${a?`<span>รับทราบโดย ${esc(a.by)}</span>`:''}${e&&e.ts?`<span>ติดต่อล่าสุด ${esc(contactTs(e.ts))}</span>`:''}<span>ชำระล่าสุด ${esc(thDate(r.lastPay))}</span></div>${act}</div></article>`;
 }
 function renderList(){
   const rows=filtered(), k=state.lsort;
