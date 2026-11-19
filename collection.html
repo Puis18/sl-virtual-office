@@ -96,6 +96,19 @@ button{cursor:pointer}
 .seg button{min-height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:500}
 .seg button[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-ink)}
 .seg button:disabled{opacity:.45;cursor:default}
+/* แผ่นตัวกรอง: ปุ่มแบบแถบเลื่อน (segmented) — แถวเดียว ช่องกว้างเท่ากัน ไม่ลายตา */
+#ovFilter .seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:3px;border-radius:12px;background:var(--track);overflow-x:auto;scrollbar-width:none}
+#ovFilter .seg::-webkit-scrollbar{display:none}
+#ovFilter .seg button{min-height:46px;padding:4px 6px;border:0;border-radius:9px;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.2;transition:background .15s,color .15s,box-shadow .15s}
+#ovFilter .seg .sl{font-size:14px;font-weight:600;white-space:nowrap}
+#ovFilter .seg .sc{font-size:11.5px;font-weight:500;opacity:.75;font-variant-numeric:tabular-nums}
+#ovFilter .seg button[aria-pressed="true"]{background:var(--card);color:var(--navy);box-shadow:0 1px 3px rgba(22,35,63,.16)}
+#ovFilter .seg button[aria-pressed="true"] .sc{opacity:1;color:var(--muted)}
+#ovFilter .seg button:focus-visible{outline:2px solid var(--chip-on);outline-offset:1px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) #ovFilter .seg button[aria-pressed="true"]{background:var(--chip-on);color:#fff}:root:not([data-theme="light"]) #ovFilter .seg button[aria-pressed="true"] .sc{color:#dfe6f7}}
+:root[data-theme="dark"] #ovFilter .seg button[aria-pressed="true"]{background:var(--chip-on);color:#fff}
+#ovFilter .fld>.lab{font-size:12.5px;letter-spacing:.2px}
+#ovFilter .sh-body{gap:16px}
 
 /* nav */
 .bnav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(var(--cols,4),1fr);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
@@ -393,7 +406,7 @@ textarea{padding:10px;min-height:76px;resize:vertical}
       <div class="fld" id="fldCyc"><span class="lab">รอบดิว</span><div class="seg" data-seg="cyc"></div></div>
       <div class="fld"><span class="lab">ผู้ขาย</span><div class="seg" data-seg="stype"></div></div>
       <div class="fld" id="fldOd"><span class="lab">ชนิด OD</span><div class="seg" data-seg="od"></div></div>
-      <div class="fld"><span class="lab">Bucket</span><div class="seg" data-seg="bucket"></div></div>
+      <div class="fld" id="fldBucket"><span class="lab">Bucket</span><div class="seg" data-seg="bucket"></div></div>
       <div class="fld" id="fldHub"><label for="sHub">HUB</label><select id="sHub" data-f="hub"></select></div>
       <div class="fld"><label for="sTeam">ทีม</label><select id="sTeam" data-f="team"></select></div>
       <div class="fld"><label for="sStaff">พนักงาน</label><select id="sStaff" data-f="staff"></select></div>
@@ -823,20 +836,23 @@ function fillOpts(sel,list,val,first){
 }
 function syncSheet(){
   const cnt=(k,v)=>filtered(k).filter(r=>r[k]===v).length;
+  /* ปุ่มแบบแถบเลื่อน (segmented): ชื่อบรรทัดบน · จำนวนรายตัวเล็กบรรทัดล่าง */
   const seg=(k,list)=>{ const box=$('[data-seg="'+k+'"]');
-    box.innerHTML=list.map(o=>`<button type="button" data-act="seg" data-k="${k}" data-v="${esc(o[0])}" aria-pressed="${(k==='stype'?state.stype:state[k])===o[0]}">${esc(o[1])}</button>`).join(''); };
+    box.innerHTML=list.map(o=>`<button type="button" data-act="seg" data-k="${k}" data-v="${esc(o[0])}" aria-pressed="${state[k]===o[0]}"><span class="sl">${esc(o[1])}</span>${o[2]!=null?`<span class="sc">${Number(o[2]).toLocaleString()}</span>`:''}</button>`).join(''); };
+  const tot=k=>filtered(k).length;
   $('#fldAm').classList.toggle('hidden-f',AMS.length<=1);
   $('#fldBu').classList.toggle('hidden-f',BUS.length<=1);
   $('#fldOd').classList.toggle('hidden-f',!HAS_NEW);
   $('#fldRemain').classList.toggle('hidden-f',!HAS_REMAIN);
-  seg('am',[['ALL','ทั้งหมด']].concat(AMS.map(a=>[a,a+' ('+cnt('am',a)+')'])));
-  seg('bu',[['ALL','ทั้งหมด']].concat(BUS.map(b=>[b,b+' ('+cnt('bu',b)+')'])));
+  seg('am',[['ALL','ทั้งหมด',tot('am')]].concat(AMS.map(a=>[a,a,cnt('am',a)])));
+  seg('bu',[['ALL','ทั้งหมด',tot('bu')]].concat(BUS.map(b=>[b,b,cnt('bu',b)])));
   $('#fldCyc').classList.toggle('hidden-f',CYCS.length<=1);
-  seg('cyc',[['ALL','ทั้งหมด']].concat(CYCS.map(c=>[c,'ดิว '+c+' ('+filtered('cyc').filter(r=>cycOf(r)===c).length+')'])));
-  seg('stype',[['ALL','ทั้งหมด'],['Staff','Staff'],['Dealer','Dealer']]);
+  seg('cyc',[['ALL','ทั้งหมด',tot('cyc')]].concat(CYCS.map(c=>[c,'ดิว '+c,filtered('cyc').filter(r=>cycOf(r)===c).length])));
+  seg('stype',[['ALL','ทั้งหมด',tot('stype')],['Staff','Staff',filtered('stype').filter(r=>r.staffType==='Staff').length],['Dealer','Dealer',filtered('stype').filter(r=>r.staffType==='Dealer').length]]);
   seg('od',[['ALL','ทั้งหมด'],['NEW','New OD']]);
   const bks=[...new Set(OD_DATA.map(r=>r.bucket))].sort();
-  seg('bucket',[['','ทั้งหมด']].concat(bks.map(b=>[b,b+' ('+filtered('bucket').filter(r=>r.bucket===b).length+')'])));
+  $('#fldBucket').classList.toggle('hidden-f',bks.length<=1);   // มี Bucket เดียว = ไม่ต้องให้เลือก
+  seg('bucket',[['','ทั้งหมด',tot('bucket')]].concat(bks.map(b=>[b,b,filtered('bucket').filter(r=>r.bucket===b).length])));
   const inAM=OD_DATA.filter(r=>(state.am==='ALL'||r.am===state.am)&&(state.bu==='ALL'||r.bu===state.bu));
   const hubs=new Map(); inAM.forEach(r=>{ hubs.set(hubKey(r),r.hub?r.hubName:''); });
   $('#fldHub').classList.toggle('hidden-f',!hubs.size);
