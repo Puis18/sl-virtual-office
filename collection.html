@@ -390,6 +390,7 @@ textarea{padding:10px;min-height:76px;resize:vertical}
     <div class="sh-body">
       <div class="fld" id="fldAm"><span class="lab">AM</span><div class="seg" data-seg="am"></div></div>
       <div class="fld" id="fldBu"><span class="lab">กลุ่มหนี้</span><div class="seg" data-seg="bu"></div></div>
+      <div class="fld" id="fldCyc"><span class="lab">รอบดิว</span><div class="seg" data-seg="cyc"></div></div>
       <div class="fld"><span class="lab">ผู้ขาย</span><div class="seg" data-seg="stype"></div></div>
       <div class="fld" id="fldOd"><span class="lab">ชนิด OD</span><div class="seg" data-seg="od"></div></div>
       <div class="fld"><span class="lab">Bucket</span><div class="seg" data-seg="bucket"></div></div>
@@ -496,9 +497,10 @@ const HUB_NONE='__NONE__', hubKey=r=>r.hub||HUB_NONE;   // บัญชีที
 
 let OD_DATA=[], LOGS={}, ACKS={}, META={}, EXTRA=0, CYCLE_START='', USERS=[], editUser=null, curId=null, EF={};
 const STL={Staff:'Staff',Dealer:'Dealer'};
-const state={tab:'overview',am:'ALL',hub:'',bu:'ALL',stype:'ALL',od:'ALL',team:'',staff:'',bucket:'',status:'',remain:'',search:'',grp:'team',gsort:'cnt',lsort:'prio',limit:PAGE,gexp:false};
+const state={tab:'overview',am:'ALL',hub:'',bu:'ALL',stype:'ALL',cyc:'ALL',od:'ALL',team:'',staff:'',bucket:'',status:'',remain:'',search:'',grp:'team',gsort:'cnt',lsort:'prio',limit:PAGE,gexp:false};
 const DEFAULT_STATE=JSON.parse(JSON.stringify(state));
-let AMS=[], BUS=[], HAS_REMAIN=false, HAS_NEW=false;
+let AMS=[], BUS=[], CYCS=[], HAS_REMAIN=false, HAS_NEW=false;
+const cycOf=r=>String(parseInt(r.dueDay,10)||0);   // รอบดิว = วันดิวของสัญญา (1, 10, …)
 
 let toastT;
 function toast(msg,err){ const t=$('#toast'); t.textContent=msg; t.className='toast show'+(err?' err':''); clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast',2400); }
@@ -548,6 +550,7 @@ function onData(res){
   OD_DATA.forEach(refreshStatus);
   AMS=[...new Set(OD_DATA.map(r=>r.am).filter(Boolean))].sort();
   BUS=[...new Set(OD_DATA.map(r=>r.bu).filter(Boolean))].sort();
+  CYCS=[...new Set(OD_DATA.map(cycOf).filter(c=>c!=='0'))].sort((a,b)=>a-b);
   HAS_REMAIN=OD_DATA.some(r=>r.remainTerm>0);
   HAS_NEW=OD_DATA.some(r=>r.newOD);
   $('#who').textContent=META.user||META.userId||'-';
@@ -617,6 +620,7 @@ function filtered(skip){
     if(skip!=='hub' && state.hub && hubKey(r)!==state.hub) return false;
     if(skip!=='bu' && state.bu!=='ALL' && r.bu!==state.bu) return false;
     if(skip!=='stype' && state.stype!=='ALL' && r.staffType!==state.stype) return false;
+    if(skip!=='cyc' && state.cyc!=='ALL' && cycOf(r)!==state.cyc) return false;
     if(skip!=='od' && state.od==='NEW' && !r.newOD) return false;
     if(skip!=='remain' && !matchRemain(r)) return false;
     if(skip!=='team' && state.team && r.teamCode!==state.team) return false;
@@ -628,7 +632,7 @@ function filtered(skip){
 }
 const sum=(rows,f)=>rows.reduce((s,r)=>s+f(r),0);
 
-function inScope(r){ return (state.am==='ALL'||r.am===state.am) && (!state.hub||hubKey(r)===state.hub) && (state.bu==='ALL'||r.bu===state.bu) && (state.stype==='ALL'||r.staffType===state.stype); }
+function inScope(r){ return (state.am==='ALL'||r.am===state.am) && (!state.hub||hubKey(r)===state.hub) && (state.bu==='ALL'||r.bu===state.bu) && (state.stype==='ALL'||r.staffType===state.stype) && (state.cyc==='ALL'||cycOf(r)===state.cyc); }
 function keepScope(){
   if(state.hub && !OD_DATA.some(r=>(state.am==='ALL'||r.am===state.am) && hubKey(r)===state.hub)){ state.hub=''; }
   if(state.team && !OD_DATA.some(r=>inScope(r) && r.teamCode===state.team)){
@@ -641,7 +645,7 @@ function keepScope(){
 }
 function clearFilters(){
   state.team=state.staff=state.bucket=state.status=state.remain=state.search='';
-  state.od='ALL'; state.bu='ALL'; state.am='ALL'; state.stype='ALL'; state.hub='';
+  state.od='ALL'; state.bu='ALL'; state.am='ALL'; state.stype='ALL'; state.cyc='ALL'; state.hub='';
   state.limit=PAGE; $('#q').value='';
   render();
 }
@@ -653,6 +657,7 @@ function activeFilters(){
   if(state.hub) c.push([state.hub===HUB_NONE?'ไม่ระบุ HUB':'HUB '+state.hub,()=>{state.hub='';state.team='';state.staff='';}]);
   if(state.bu!=='ALL') c.push(['กลุ่มหนี้ '+state.bu,()=>{state.bu='ALL';}]);
   if(state.stype!=='ALL') c.push([STL[state.stype]||state.stype,()=>{state.stype='ALL';}]);
+  if(state.cyc!=='ALL') c.push(['ดิว '+state.cyc,()=>{state.cyc='ALL';}]);
   if(state.od==='NEW') c.push(['New OD',()=>{state.od='ALL';}]);
   if(state.remain) c.push(['งวดคงเหลือ '+(REMAINLAB[state.remain]||state.remain),()=>{state.remain='';}]);
   if(state.team) c.push(['ทีม '+state.team,()=>{state.team='';state.staff='';}]);
@@ -826,6 +831,8 @@ function syncSheet(){
   $('#fldRemain').classList.toggle('hidden-f',!HAS_REMAIN);
   seg('am',[['ALL','ทั้งหมด']].concat(AMS.map(a=>[a,a+' ('+cnt('am',a)+')'])));
   seg('bu',[['ALL','ทั้งหมด']].concat(BUS.map(b=>[b,b+' ('+cnt('bu',b)+')'])));
+  $('#fldCyc').classList.toggle('hidden-f',CYCS.length<=1);
+  seg('cyc',[['ALL','ทั้งหมด']].concat(CYCS.map(c=>[c,'ดิว '+c+' ('+filtered('cyc').filter(r=>cycOf(r)===c).length+')'])));
   seg('stype',[['ALL','ทั้งหมด'],['Staff','Staff'],['Dealer','Dealer']]);
   seg('od',[['ALL','ทั้งหมด'],['NEW','New OD']]);
   const bks=[...new Set(OD_DATA.map(r=>r.bucket))].sort();
@@ -1041,7 +1048,7 @@ document.addEventListener('click',e=>{
     case 'clear': clearFilters(); break;
     case 'st': state.status=v; state.limit=PAGE; render(); break;
     case 'rm': { const c=ACTCH[+el.dataset.i]; if(c){ c[1](); keepScope(); state.limit=PAGE; render(); } break; }
-    case 'seg': { const k=el.dataset.k; state[k]=v; if(k==='am'||k==='bu'||k==='stype') keepScope(); state.limit=PAGE; render(); break; }
+    case 'seg': { const k=el.dataset.k; state[k]=v; if(k==='am'||k==='bu'||k==='stype'||k==='cyc') keepScope(); state.limit=PAGE; render(); break; }
     case 'grp': state.grp=v; state.gexp=false; render(); break;
     case 'gmore': state.gexp=!state.gexp; render(); break;
     case 'lmore': state.limit+=PAGE; render(); break;
