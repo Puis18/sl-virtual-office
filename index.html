@@ -61,6 +61,14 @@
   .row small{display:block;color:var(--muted);font-size:13px}
   .btn{min-height:42px;padding:0 16px;border:none;border-radius:8px;font-weight:600}
   .ok{background:var(--green);color:#fff} .no{background:#E8ECF2;color:var(--ink)}
+  .btn:active:not(:disabled){transform:scale(.96)}
+  .btn.busy{position:relative;opacity:1}.btn.busy::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+  .btn:disabled:not(.busy){opacity:.45}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .row.done{background:#E7F4EC;animation:popin .25s ease-out}@keyframes popin{from{transform:scale(.97);opacity:.4}}
+  .row.done.rej{background:#F1F3F7}
+  .donemsg{font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px;min-height:42px}.row.rej .donemsg{color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){.btn.busy::before{animation-duration:2s}.row.done{animation:none}}
   .primary{background:var(--red);color:#fff;width:100%;min-height:48px;margin-top:12px}
   .empty{padding:16px 20px;color:var(--muted);font-size:14px;margin:0}
   .single{max-width:480px;margin:24px auto;padding:22px}
@@ -1344,9 +1352,17 @@ async function loadPending(boxId) {
         <div><button class="btn ok" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="APPROVE">อนุมัติ</button>
         <button class="btn no" data-emp="${esc(x.emp)}" data-t="${x.type || ''}" data-d="REJECT">ปฏิเสธ</button></div></div>`).join('') || ''}</div>`;
     box.querySelectorAll('button[data-emp]').forEach(b => b.onclick = async () => {
-      b.disabled = true;
-      try { await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d, type: b.dataset.t }); loadPending(boxId); }
-      catch (e) { alert(say(e)); b.disabled = false; }
+      const row = b.closest('.row'), btns = row.querySelectorAll('button'), label = b.textContent, ok = b.dataset.d === 'APPROVE';
+      btns.forEach(x => x.disabled = true);
+      b.classList.add('busy'); b.textContent = ok ? 'กำลังอนุมัติ…' : 'กำลังปฏิเสธ…';   // กดแล้วเห็นผลทันที
+      try {
+        await api('decide', { empCode: b.dataset.emp, decision: b.dataset.d, type: b.dataset.t });
+        const nm = row.querySelector('b').textContent;
+        row.classList.add('done', 'show'); if (!ok) row.classList.add('rej');
+        row.innerHTML = `<div class="donemsg">${ok ? '✓ อนุมัติ ' : '✕ ปฏิเสธ '}${esc(nm)} แล้ว</div>`;
+        if (navigator.vibrate) navigator.vibrate(30);
+        setTimeout(() => loadPending(boxId), 1100);
+      } catch (e) { alert(say(e)); b.classList.remove('busy'); b.textContent = label; btns.forEach(x => x.disabled = false); }
     });
   } catch (e) { setPendBadge(0); box.innerHTML = e.message === 'FORBIDDEN' ? '' : `<p class="msg">${esc(say(e))}</p>`; }
 }
