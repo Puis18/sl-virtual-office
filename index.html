@@ -478,7 +478,7 @@ function viewLobby(me, profile) {
     <div id="hfilter"></div>
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
-      <div class="kpi"><span>เทียบเป้าตามวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
+      <div class="kpi"><span id="kl1">เติบโตจากเดือนก่อน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
     </section>
     <section class="card fcard"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
@@ -983,15 +983,20 @@ async function loadSales(top) {
     drawGauge(p, day / dim, pace);
     const days = s.daily.map(d => d[1] + d[2] + d[3]), avg = days.length > 1 ? days.slice(0, -1).reduce((x, y) => x + y, 0) / (days.length - 1) : 0;
     const diff = avg ? Math.round((s.today.apps - avg) / avg * 100) : 0;
-    set('kl0', 'เมื่อวาน (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
-    set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
-    set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
+    // กล่องซ้าย (27 พ.ย. 2569): ขาด/เกินจากเป้าตามวัน (สะสมถึงวันข้อมูลล่าสุด) + เมื่อวานเทียบเป้ารายวัน
+    const gap = s.mtd.apps - paceT, dayT = Math.round(s.target / dim);
+    set('kl0', gap < 0 ? 'ขาดจากเป้าตามวัน (เคส)' : 'เกินเป้าตามวัน (เคส)'); set('k0', (gap < 0 ? '−' : '+') + nf(Math.abs(gap)));
+    set('ks0', `เมื่อวาน ${nf(s.today.apps)} · เป้ารายวัน ${nf(dayT)} เคส`);
+    // กล่องขวา: เติบโตเทียบเดือนก่อน ช่วงวันเดียวกัน (หลังบ้านต้องส่ง prevMtd = ยอดเดือนก่อนวันที่ 1 ถึงวันเดียวกัน)
+    const pm = s.prevMtd && s.prevMtd.apps, gr = pm ? Math.round((s.mtd.apps - pm) / pm * 100) : null;
+    set('k1', gr == null ? '—' : (gr >= 0 ? '+' : '−') + Math.abs(gr) + '%');
+    set('ks1', gr == null ? 'รอข้อมูลยอดเดือนก่อน' : `เดือนก่อนวันที่ 1–${day} ได้ ${nf(pm)} เคส`);
     // สีตัวเลข 3 ช่องตามค่า (27 พ.ย. 2569): เขียว = ดี · ส้ม = ใกล้เกณฑ์ · แดง = ต่ำ
     const tone = (v, g, a) => v >= g ? 'var(--green)' : v >= a ? '#B86E00' : 'var(--red)';
     const col = (id, c) => { const e = document.getElementById(id); if (!e) return; e.style.color = c; if (/^k\d$/.test(id)) e.parentNode.style.setProperty('--kc', c); };
     const r0 = avg ? s.today.apps / avg * 100 : 100;
-    col('k0', avg ? tone(r0, 100, 80) : 'var(--ink)'); col('ks0', avg ? (diff >= 0 ? 'var(--green)' : 'var(--red)') : '');
-    col('k1', tone(pace, 100, 80));
+    col('k0', tone(pace, 100, 80)); col('ks0', s.today.apps >= dayT ? 'var(--green)' : 'var(--red)');
+    col('k1', gr == null ? 'var(--muted)' : gr >= 0 ? 'var(--green)' : gr >= -10 ? '#B86E00' : 'var(--red)');
     // ข้อมูลเป็น T-1 เสมอ: "วันล่าสุด" = ผลงานเมื่อวานที่ดึงตอนเช้า
     const items = [], isAll = topScope() === 'ALL', dt = s.latest;
     const ea = (s.teams || []).filter(t => t.target);
