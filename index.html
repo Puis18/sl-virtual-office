@@ -1025,18 +1025,22 @@ async function loadSales(top) {
   } catch (e) { set('gv', '—'); set('gpc', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
 }
 // กราฟครึ่งวงกลม: แถบ = ยอดสะสม % ของเป้าทั้งเดือน · ขีด = เป้าตามจำนวนวันที่ผ่านไป · สีตามความเร็ว (pace)
+// เกจครึ่งวงกลมแบบ A (27 พ.ย. 2569): เส้นบาง ตัวเลขวางบนฐานครึ่งวงกลม ขีดดำ = เป้าตามวัน
 function drawGauge(p, f, pace) {
-  const arc = document.getElementById('gArc'), mk = document.getElementById('gMark'); if (!arc) return;
-  const v = Math.max(0, Math.min(p, 100));
-  arc.setAttribute('stroke-dasharray', `${v} 100`);
-  arc.style.stroke = pace >= 100 ? 'url(#gG)' : pace >= 80 ? 'url(#gA)' : 'url(#gR)';
-  const a = Math.PI * (1 - Math.max(0, Math.min(f, 1))), c = (r, k) => (100 + r * Math.cos(a)).toFixed(1) + ',' + (100 - r * Math.sin(a)).toFixed(1);
-  const [x1, y1] = c(68).split(','), [x2, y2] = c(96).split(',');
-  Object.entries({ x1, y1, x2, y2 }).forEach(([k, x]) => mk.setAttribute(k, x));
-  set('gpc', p + '%');
+  const g = document.getElementById('gauge'); if (!g) return;
+  const [c1, c2] = pace >= 100 ? ['#0B6B3A', '#2FB86E'] : pace >= 80 ? ['#B86E00', '#F2B233'] : ['#7E1428', '#E0475F'];
+  const v = Math.max(0, Math.min(p, 100)), fr = Math.max(0, Math.min(f, 1)), a = Math.PI * (1 - fr);
+  const pt = r => [(100 + r * Math.cos(a)).toFixed(1), (100 - r * Math.sin(a)).toFixed(1)], [x1, y1] = pt(66), [x2, y2] = pt(94);
+  const arc = 'M20 100 A80 80 0 0 1 180 100';
+  g.innerHTML = `<svg viewBox="0 0 200 116" aria-hidden="true"><defs><linearGradient id="gGrad" x1="0" x2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+    <path d="${arc}" pathLength="100" style="fill:none;stroke:#E6EAF1;stroke-width:14;stroke-linecap:round"/>
+    <path d="${arc}" pathLength="100" stroke-dasharray="${v} 100" style="fill:none;stroke:url(#gGrad);stroke-width:14;stroke-linecap:round;filter:none"/>
+    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:#121B2E;stroke-width:3;stroke-linecap:round"/>
+    <text x="100" y="93" text-anchor="middle" style="font-family:Inter,sans-serif;font-weight:800;font-size:36px;fill:#1E3763">${p}<tspan dx="1" style="font-size:20px">%</tspan></text>
+    <text x="100" y="113" text-anchor="middle" style="font-size:11px;fill:#5A6478">ของเป้า</text></svg>`;
   const lg = document.getElementById('glg');
-  if (lg) lg.innerHTML = `<i class="tk" aria-hidden="true"></i>เป้าตามวัน <b>${Math.round(f * 100)}%</b> · ทำได้ <b>${pace}%</b><span class="gpm"> ของที่ควร</span>`;
-  const g = document.getElementById('gauge'); if (g) g.setAttribute('aria-label', `ยอดสะสม ${p}% ของเป้า · เป้าตามวัน ${Math.round(f * 100)}%`);
+  if (lg) lg.innerHTML = `<i class="tk" aria-hidden="true"></i>เป้าตามวัน <b>${Math.round(fr * 100)}%</b> · ทำได้ <b>${pace}%</b><span class="gpm"> ของที่ควร</span>`;
+  g.setAttribute('aria-label', `ยอดสะสม ${p}% ของเป้า · เป้าตามวัน ${Math.round(fr * 100)}%`);
 }
 
 let SALES_TAB = 'overview', SALES_TEAM = '';
