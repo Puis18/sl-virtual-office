@@ -27,12 +27,34 @@
   .hero .wrap{padding-top:28px;padding-bottom:32px;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center}
   .hero .l{flex:999 1 420px;min-width:0}
   .hero small{color:#AEBBD6;font-size:13px} .hero h1{margin:6px 0 8px;font-size:28px;line-height:1.3}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}.idl,.hero .cal,.hero .left{display:none}
   .chip{font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
-  .goal{flex:1 1 320px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
+  .goal{flex:1 1 420px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
   .goal .h{display:flex;justify-content:space-between;font-size:14px;color:var(--sub);font-weight:600}
   .goal .v{font-family:Inter,sans-serif;font-size:40px;font-weight:700;color:var(--navy);margin:8px 0}
   .bar{height:8px;border-radius:4px;background:#E3E8F0}
+  .gwrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:6px}
+  .gauge{position:relative;width:200px;flex-shrink:0}.gauge svg{display:block;width:100%;height:auto}
+  .gauge path{fill:none;stroke-width:18;stroke-linecap:round}.gauge .trk{stroke:#E6EAF1}.gauge .trk2{stroke:#C9D1DE;stroke-width:21;transform:translateY(1.5px)}
+  .gauge .arc{stroke:var(--green);filter:url(#gS);transition:stroke-dasharray .6s ease}
+  .gauge .mk{stroke:var(--ink);stroke-width:3.5;stroke-linecap:round;filter:url(#gS)}
+  .gauge .gc b{text-shadow:0 2px 0 rgba(30,55,99,.10)}
+  .gauge .gc{position:absolute;left:0;right:0;bottom:2px;text-align:center;line-height:1.1}
+  .gauge .gc b{display:block;font-family:Inter,sans-serif;font-size:34px;font-weight:700;color:var(--navy)}.gauge .gc small{font-size:12px;color:var(--muted)}
+  .gt{min-width:180px;flex:1}.gt .v{font-size:24px!important;margin:0 0 4px!important}.gt p{margin:0 0 4px!important}.glg{font-size:11.5px!important}
+  .fmore{display:none}
+  /* มิติ: เงาซ้อน ไล่สี (26 พ.ย. 2569) */
+  .hero.mh{background:radial-gradient(120% 90% at 85% 0%,#2D4F8A 0%,#1E3763 55%,#162A4D 100%)}
+  .hero.mh .goal{box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 24px -8px rgba(8,16,34,.55),0 2px 6px rgba(8,16,34,.25);background:linear-gradient(180deg,#fff 0%,#F6F8FC 100%)}
+  main.mh .kpi{background:linear-gradient(180deg,#fff 0%,#F7F9FC 100%);border-color:#E3E8F0;box-shadow:0 1px 0 #fff inset,0 6px 14px -8px rgba(18,27,46,.35),0 1px 2px rgba(18,27,46,.06);position:relative;overflow:hidden}
+  main.mh .kpi:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--kc,var(--line))}
+  main.mh .fcard{box-shadow:0 8px 18px -10px rgba(18,27,46,.35),0 1px 2px rgba(18,27,46,.06);border-color:#E3E8F0}
+  main.mh .fcard .hd{background:linear-gradient(180deg,#F9FAFD,#F1F4F9)}
+  main.mh .fi .dot{box-shadow:0 0 0 3px rgba(0,0,0,.05)}
+  main.mh .qk{background:linear-gradient(180deg,#fff 0%,#F5F7FB 100%);box-shadow:0 1px 0 #fff inset,0 6px 12px -8px rgba(18,27,46,.4),0 1px 2px rgba(18,27,46,.06);transition:transform .12s,box-shadow .12s}
+  main.mh .qk:active{transform:translateY(1px) scale(.98);box-shadow:0 2px 4px -2px rgba(18,27,46,.3)}
+  main.mh .qk i{background-image:linear-gradient(145deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 55%,rgba(0,0,0,.12) 100%)!important;box-shadow:0 4px 8px -3px rgba(18,27,46,.45),inset 0 1px 0 rgba(255,255,255,.3)}
+  main.mh .ftog{box-shadow:0 4px 10px -6px rgba(18,27,46,.3)}
   .goal p{margin:10px 0 0;font-size:12px;color:var(--muted)}
   main.wrap{padding-top:24px;padding-bottom:48px;display:flex;flex-direction:column;gap:28px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
@@ -120,6 +142,38 @@
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
+  /* มือถือ: หน้าแรกจบในจอเดียว ไม่ต้องเลื่อน (26 พ.ย. 2569) */
+  @media (max-width:699px){
+    .hero.mh .wrap{padding-top:8px;padding-bottom:10px;gap:8px}
+    .hero.mh .l{flex-basis:100%}.hero.mh .l small{font-size:12px}.hero.mh h1{font-size:18px;margin:0}.hero.mh .chips{display:none}
+    main.mh{gap:8px!important;padding-top:8px!important;padding-bottom:0!important}.hero.mh .wrap{gap:6px!important;padding-bottom:8px!important}.hero.mh .gauge{width:140px!important}.hero.mh .goal{padding:6px 12px 8px!important}
+    .hero.mh .l{display:flex;align-items:center;gap:12px}.hero.mh .gt2{min-width:0;flex:1}.hero.mh .dlong{display:none}
+    .hero.mh .cal{display:block;width:62px;flex-shrink:0;background:#fff;border-radius:12px;overflow:hidden;text-align:center;box-shadow:0 6px 14px -6px rgba(0,0,0,.55)}
+    .hero.mh .cal .m{display:block;font-size:12px;font-weight:700;padding:2px 0;background-image:linear-gradient(180deg,rgba(255,255,255,.18),rgba(0,0,0,.08))}
+    .hero.mh .cal b{display:block;color:var(--ink);font-size:28px;line-height:1.05;font-weight:800;padding-top:3px}.hero.mh .cal .w{display:block;color:var(--sub);font-size:11px;padding-bottom:4px}
+    .hero.mh .left{display:block;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hero.mh .left em{font-style:normal;color:#FFD27A;font-weight:600}
+    .hero.mh .idl{display:flex;flex-wrap:wrap;column-gap:8px;font-size:12.5px;line-height:1.35;margin-top:2px;opacity:.92}.hero.mh .idl b{font-weight:700}.hero.mh .idl span{opacity:.8}
+    .hero.mh .goal{padding:8px 12px 10px;flex-basis:100%}.hero.mh .goal .h{display:none}
+    .hero.mh .gwrap{gap:10px;margin-top:2px;flex-wrap:nowrap}.hero.mh .gt{min-width:0}.hero.mh .gauge{width:150px}.hero.mh .gauge .gc b{font-size:26px}.hero.mh .gauge .gc small{font-size:11px}
+    .hero.mh .gt .v{font-size:19px!important}.hero.mh .gt p{font-size:11.5px;line-height:1.4}.hero.mh .gt:before{content:'ยอดสะสมเทียบเป้า';display:block;font-size:12px;font-weight:600;color:var(--sub)}
+    main.mh{padding-top:10px;padding-bottom:6px;gap:10px!important}
+    main.mh .kpis{order:-2;grid-template-columns:repeat(2,1fr);gap:8px}
+    main.mh .kpi{padding:8px 10px;border-radius:10px}main.mh .kpi span{font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    main.mh .kpi b{font-size:19px;margin-top:0}main.mh .kpi .sub{font-size:10.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    main.mh #hfilter{order:-3}main.mh .ftog{min-height:38px;font-size:14px;border-radius:10px}main.mh #hfilter:not(:has(select,input,button)){display:none}
+    main.mh .fcard{order:-1}main.mh .fcard .hd{padding:8px 12px}main.mh .fcard .hd h2{font-size:14.5px}main.mh .fcard .hd small{display:none}
+    main.mh .fi{padding:8px 12px;gap:10px}main.mh .fi b{font-size:13px}main.mh .fi small{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}main.mh .fi span:nth-child(2){min-width:0}
+    main.mh #focus:not(.all) .fi:nth-child(n+3){display:none}main.mh #focus .empty{padding:10px 12px;margin:0;font-size:13px}
+    main.mh .fmore{display:block;width:100%;border:none;background:#F6F8FB;color:var(--navy);font:inherit;font-size:12.5px;font-weight:600;padding:7px}
+    main.mh .qsec{order:0}main.mh .qsec .sec-h{display:none}
+    main.mh .quick{grid-template-columns:repeat(4,1fr);gap:6px}
+    main.mh .qk{align-items:center;text-align:center;padding:7px 3px;gap:4px;border-radius:10px}main.mh .qk.more{justify-content:flex-start}
+    main.mh .qk i{width:30px;height:30px;border-radius:8px}main.mh .qk i svg{width:18px;height:18px}
+    main.mh .qk b{font-size:11px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}main.mh .qk small{display:none}
+    main.mh .mobile-only{display:none}
+    body:has(main.mh) footer{display:none}
+    body:has(main.mh) .shell,body:has(main.mh) .col{min-height:0}
+  }
 
   /* ---- แถบเมนูซ้าย (คอม) + แถบล่าง (มือถือ) ---- */
   .shell{min-height:100vh}.col{min-width:0;display:flex;flex-direction:column;min-height:100vh}.col #app{flex:1}
@@ -241,6 +295,25 @@
 
   .omgo{width:100%;margin-top:12px}.omnote{margin:12px 0 0;color:var(--muted);font-size:13px}
   @media (prefers-reduced-motion:reduce){#omMe.walk .bob{animation:none}.ompanel{transition:none}}
+  /* มือถือหน้าแรก: คำบรรยายเล็กลง ตัวเลข/ข้อความสำคัญใหญ่ขึ้น (27 พ.ย. 2569) */
+  @media (max-width:699px){
+    .hero.mh h1{font-size:20px!important}.hero.mh .idl{font-size:11.5px}.hero.mh .idl b{font-size:13px}.hero.mh .left{font-size:12px!important}
+    .hero.mh .gauge .gc b{font-size:30px!important}.hero.mh .gauge .gc small{font-size:10px!important}
+    .hero.mh .gt:before{font-size:11px!important}.hero.mh .gt .v{font-size:22px!important;line-height:1.25}.hero.mh .gt p{font-size:10.5px!important;line-height:1.35!important}
+    main.mh .kpi span{font-size:10.5px!important}main.mh .kpi b{font-size:30px!important;line-height:1.1}main.mh .kpi .sub{font-size:10px!important}
+    main.mh .fcard .hd h2{font-size:15.5px!important}main.mh .fi b{font-size:14px!important}main.mh .fi small{font-size:10.5px!important}
+  }
+  /* กรอบเป้า: จัดสมดุลซ้าย-ขวา ตัวเลขใหญ่ คำอธิบายสั้น (27 พ.ย. 2569) */
+  .glg .tk{display:inline-block;width:3px;height:11px;background:var(--ink);border-radius:2px;margin-right:5px;vertical-align:-1px}.glg b{color:var(--ink)}
+  @media (max-width:699px){
+    .hero.mh .gwrap{align-items:center;gap:6px}
+    .hero.mh .gauge{width:148px!important;flex-shrink:0}.hero.mh .gauge .gc b{font-size:32px!important;letter-spacing:-.5px}.hero.mh .gauge .gc small{font-size:10px!important}
+    .hero.mh .gt{display:flex;flex-direction:column;justify-content:center;gap:3px;padding-left:10px;border-left:1px solid #E3E8F0}
+    .hero.mh .gt:before{font-size:11px!important;color:var(--muted)!important;font-weight:500!important}
+    .hero.mh .gt .v{margin:0!important;line-height:1.05;white-space:nowrap}.hero.mh .gt .v .gvn{font-size:34px;font-weight:800;color:var(--navy);letter-spacing:-.5px}.hero.mh .gt .v .gvt{font-size:13px;font-weight:600;color:var(--muted)}
+    .hero.mh .gt p{margin:0!important;font-size:10.5px!important;line-height:1.35!important;color:var(--muted)}.hero.mh .gpm{display:none}
+    .hero.mh .glg b{font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -287,6 +360,24 @@ const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด:
 /* ---------- ระดับสิทธิ์: ใช้สิทธิ์ที่กว้างที่สุดที่คนนั้นมี ---------- */
 const RANK = { SELF:1, TEAM:2, HUB:3, AM:4, ALL:5 };
 const ROLE_TH = { CK:'CK', BK:'BK', AG:'AG', TM:'TM', HRM:'Hub RM', AM:'AM', DIR:'ผู้อำนวยการ' };
+// บรรทัดชื่อ-นามสกุล · ตำแหน่ง · สังกัด (หน้าแรกมือถือ)
+// ป้ายปฏิทินหน้าแรกมือถือ: หัวปฏิทินใช้สีประจำวันแบบไทย (26 พ.ย. 2569)
+const DAY_COLOR = [['#D7263D','#fff'],['#F5C518','#3A2E00'],['#E86FA8','#fff'],['#1E9E55','#fff'],['#F07F1A','#fff'],['#3BA3E0','#fff'],['#7B4BB7','#fff']]; // อา จ อ พ พฤ ศ ส
+function calTile() {
+  const d = new Date(), [bg, fg] = DAY_COLOR[d.getDay()];
+  return `<div class="cal" aria-hidden="true"><span class="m" style="background:${bg};color:${fg}">${d.toLocaleDateString('th-TH', { month:'short' })}</span><b>${d.getDate()}</b><span class="w">${d.toLocaleDateString('th-TH', { weekday:'short' })}</span></div>`;
+}
+function monthLeft() {
+  const d = new Date(), n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() - d.getDate();
+  return n ? `อีก ${n} วันปิดเดือน` : 'วันนี้ปิดเดือน';
+}
+function idLine(me) {
+  const rs = me.roles || [];
+  const pos = [...new Set(rs.map(r => ROLE_TH[r.role] || r.role))].join(' / ');
+  const r = rs.reduce((a, x) => !a || RANK[x.scope] > RANK[a.scope] ? x : a, null) || {};
+  const org = r.scope === 'ALL' ? '' : [r.team && 'ทีม ' + r.team, r.hub && 'Hub ' + r.hub, r.am].filter(Boolean).join(' · ');
+  return `<b>${esc(me.name || '')}</b><span>${esc([pos, org].filter(Boolean).join(' · '))}</span>`;
+}
 function roleLabel(r) {
   const where = r.scope==='ALL' ? 'ทั้งหมด' : r.scope==='AM' ? 'ทุกทีมใน '+r.am : r.scope==='HUB' ? 'ทุกทีมใน '+r.hub
               : r.scope==='TEAM' ? 'ทีม '+r.team : 'ข้อมูลของตัวเอง';
@@ -362,22 +453,34 @@ function viewLobby(me, profile) {
   }).join('');
 
   app.innerHTML = `
-  <section class="hero"><div class="wrap">
-    <div class="l"><small>${esc(thaiDate())}</small>
-      <h1>สวัสดี คุณ${esc(name)}</h1>
+  <section class="hero mh"><div class="wrap">
+    <div class="l"><small class="dlong">${esc(thaiDate())}</small>${calTile()}
+      <div class="gt2"><h1>สวัสดี คุณ${esc(name)}</h1>
+      <div class="idl">${idLine(me)}</div>
+      <small class="left"><em>${monthLeft()}</em></small></div>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
-      <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
+      <div class="gwrap"><div class="gauge" role="img" id="gauge" aria-label="ยอดสะสมเทียบเป้า">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><defs>
+          <linearGradient id="gG" x1="0" x2="1"><stop offset="0" stop-color="#0B6B3A"/><stop offset="1" stop-color="#2FB86E"/></linearGradient>
+          <linearGradient id="gA" x1="0" x2="1"><stop offset="0" stop-color="#B86E00"/><stop offset="1" stop-color="#F2B233"/></linearGradient>
+          <linearGradient id="gR" x1="0" x2="1"><stop offset="0" stop-color="#7E1428"/><stop offset="1" stop-color="#E0475F"/></linearGradient>
+          <filter id="gS" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#121B2E" flood-opacity=".28"/></filter>
+          <filter id="gI"><feOffset dy="2"/><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+          <path class="trk2" d="M18 100 A82 82 0 0 1 182 100"/><path class="trk" d="M18 100 A82 82 0 0 1 182 100" pathLength="100"/>
+          <path class="arc" id="gArc" d="M18 100 A82 82 0 0 1 182 100" pathLength="100" stroke-dasharray="0 100"/>
+          <line class="mk" id="gMark" x1="0" y1="0" x2="0" y2="0"/></svg>
+        <div class="gc"><b id="gpc">…</b><small>ของเป้า</small></div></div>
+      <div class="gt"><div class="v" id="gv">…</div><p id="gp">กำลังโหลดยอดขาย…</p><p class="glg" id="glg"></p></div></div></div>
   </div></section>
-  <main class="wrap">
+  <main class="wrap mh">
     <section id="admin"></section>
     <div id="hfilter"></div>
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
-      <div class="kpi"><span>เทียบเป้าตามจำนวนวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
-      <div class="kpi"><span>สัดส่วน iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
+      <div class="kpi"><span>เทียบเป้าตามวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
     </section>
-    <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
+    <section class="card fcard"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
       ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small>ตามสิทธิ์ของคุณ</small></span></button>
       ${canV2() ? `<button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}` : ''}
@@ -872,17 +975,23 @@ async function loadSales(top) {
       if (tg) tg.onclick = () => { HF_OPEN = !HF_OPEN; hf.classList.toggle('on', HF_OPEN); tg.setAttribute('aria-expanded', HF_OPEN); };
       bindSearch();
     }
-    set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
-    const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
-    set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
+    const hset = (id, h) => { const e = document.getElementById(id); if (e) e.innerHTML = h; };
+    hset('gv', `<b class="gvn">${nf(s.mtd.apps)}</b><span class="gvt"> / ${nf(s.target)} เคส</span>`);
+    hset('gp', `<span class="gpm">เป้าเดือน${esc(thMonth(s.month))} · </span>ข้อมูลถึง ${esc(thDay(s.latest))}`);
     const day = +String(s.latest || '').slice(8) || 1, dim = new Date(+s.month.slice(0, 4), +s.month.slice(5, 7), 0).getDate();
     const paceT = Math.round(s.target * day / dim), pace = pct(s.mtd.apps, paceT);
+    drawGauge(p, day / dim, pace);
     const days = s.daily.map(d => d[1] + d[2] + d[3]), avg = days.length > 1 ? days.slice(0, -1).reduce((x, y) => x + y, 0) / (days.length - 1) : 0;
     const diff = avg ? Math.round((s.today.apps - avg) / avg * 100) : 0;
-    set('kl0', 'ผลงานวันที่ ' + thDay(s.latest) + ' (เมื่อวาน)'); set('k0', nf(s.today.apps));
+    set('kl0', 'เมื่อวาน (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
     set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
     set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
-    set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
+    // สีตัวเลข 3 ช่องตามค่า (27 พ.ย. 2569): เขียว = ดี · ส้ม = ใกล้เกณฑ์ · แดง = ต่ำ
+    const tone = (v, g, a) => v >= g ? 'var(--green)' : v >= a ? '#B86E00' : 'var(--red)';
+    const col = (id, c) => { const e = document.getElementById(id); if (!e) return; e.style.color = c; if (/^k\d$/.test(id)) e.parentNode.style.setProperty('--kc', c); };
+    const r0 = avg ? s.today.apps / avg * 100 : 100;
+    col('k0', avg ? tone(r0, 100, 80) : 'var(--ink)'); col('ks0', avg ? (diff >= 0 ? 'var(--green)' : 'var(--red)') : '');
+    col('k1', tone(pace, 100, 80));
     // ข้อมูลเป็น T-1 เสมอ: "วันล่าสุด" = ผลงานเมื่อวานที่ดึงตอนเช้า
     const items = [], isAll = topScope() === 'ALL', dt = s.latest;
     const ea = (s.teams || []).filter(t => t.target);
@@ -915,8 +1024,28 @@ async function loadSales(top) {
     const f = document.getElementById('focus');
     if (f) { f.innerHTML = items.length ? items.map(([c, t, d, tab]) => `<button class="fi" data-tab="${tab}"><i class="dot ${c}"></i><span><b>${esc(t)}</b><small>${esc(d)}</small></span><span aria-hidden="true">→</span></button>`).join('')
         : '<p class="empty">ไม่มีเรื่องเร่งด่วน ทุกอย่างเป็นไปตามเป้า 👍</p>';
-      f.querySelectorAll('.fi').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.tab; viewSales(); }); }
-  } catch (e) { set('gv', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
+      f.querySelectorAll('.fi').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.tab; viewSales(); });
+      if (items.length > 2) { f.insertAdjacentHTML('beforeend', `<button class="fmore" id="fmore">ดูอีก ${items.length - 2} เรื่อง</button>`);
+        document.getElementById('fmore').onclick = e => { f.classList.add('all'); e.currentTarget.remove(); }; } }
+  } catch (e) { set('gv', '—'); set('gpc', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
+}
+// กราฟครึ่งวงกลม: แถบ = ยอดสะสม % ของเป้าทั้งเดือน · ขีด = เป้าตามจำนวนวันที่ผ่านไป · สีตามความเร็ว (pace)
+// เกจครึ่งวงกลมแบบ A (27 พ.ย. 2569): เส้นบาง ตัวเลขวางบนฐานครึ่งวงกลม ขีดดำ = เป้าตามวัน
+function drawGauge(p, f, pace) {
+  const g = document.getElementById('gauge'); if (!g) return;
+  const [c1, c2] = pace >= 100 ? ['#0B6B3A', '#2FB86E'] : pace >= 80 ? ['#B86E00', '#F2B233'] : ['#7E1428', '#E0475F'];
+  const v = Math.max(0, Math.min(p, 100)), fr = Math.max(0, Math.min(f, 1)), a = Math.PI * (1 - fr);
+  const pt = r => [(100 + r * Math.cos(a)).toFixed(1), (100 - r * Math.sin(a)).toFixed(1)], [x1, y1] = pt(66), [x2, y2] = pt(94);
+  const arc = 'M20 100 A80 80 0 0 1 180 100';
+  g.innerHTML = `<svg viewBox="0 0 200 116" aria-hidden="true"><defs><linearGradient id="gGrad" x1="0" x2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+    <path d="${arc}" pathLength="100" style="fill:none;stroke:#E6EAF1;stroke-width:14;stroke-linecap:round"/>
+    <path d="${arc}" pathLength="100" stroke-dasharray="${v} 100" style="fill:none;stroke:url(#gGrad);stroke-width:14;stroke-linecap:round;filter:none"/>
+    <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:#121B2E;stroke-width:3;stroke-linecap:round"/>
+    <text x="100" y="93" text-anchor="middle" style="font-family:Inter,sans-serif;font-weight:800;font-size:36px;fill:#1E3763">${p}<tspan dx="1" style="font-size:20px">%</tspan></text>
+    <text x="100" y="113" text-anchor="middle" style="font-size:11px;fill:#5A6478">ของเป้า</text></svg>`;
+  const lg = document.getElementById('glg');
+  if (lg) lg.innerHTML = `<i class="tk" aria-hidden="true"></i>เป้าตามวัน <b>${Math.round(fr * 100)}%</b> · ทำได้ <b>${pace}%</b><span class="gpm"> ของที่ควร</span>`;
+  g.setAttribute('aria-label', `ยอดสะสม ${p}% ของเป้า · เป้าตามวัน ${Math.round(fr * 100)}%`);
 }
 
 let SALES_TAB = 'overview', SALES_TEAM = '';
