@@ -296,8 +296,19 @@
     .hero.mh h1{font-size:20px!important}.hero.mh .idl{font-size:11.5px}.hero.mh .idl b{font-size:13px}.hero.mh .left{font-size:12px!important}
     .hero.mh .gauge .gc b{font-size:30px!important}.hero.mh .gauge .gc small{font-size:10px!important}
     .hero.mh .gt:before{font-size:11px!important}.hero.mh .gt .v{font-size:22px!important;line-height:1.25}.hero.mh .gt p{font-size:10.5px!important;line-height:1.35!important}
-    main.mh .kpi span{font-size:10.5px!important}main.mh .kpi b{font-size:26px!important;line-height:1.15}main.mh .kpi .sub{font-size:10px!important}
+    main.mh .kpi span{font-size:10.5px!important}main.mh .kpi b{font-size:30px!important;line-height:1.1}main.mh .kpi .sub{font-size:10px!important}
     main.mh .fcard .hd h2{font-size:15.5px!important}main.mh .fi b{font-size:14px!important}main.mh .fi small{font-size:10.5px!important}
+  }
+  /* กรอบเป้า: จัดสมดุลซ้าย-ขวา ตัวเลขใหญ่ คำอธิบายสั้น (27 พ.ย. 2569) */
+  .glg .tk{display:inline-block;width:3px;height:11px;background:var(--ink);border-radius:2px;margin-right:5px;vertical-align:-1px}.glg b{color:var(--ink)}
+  @media (max-width:699px){
+    .hero.mh .gwrap{align-items:center;gap:6px}
+    .hero.mh .gauge{width:148px!important;flex-shrink:0}.hero.mh .gauge .gc b{font-size:32px!important;letter-spacing:-.5px}.hero.mh .gauge .gc small{font-size:10px!important}
+    .hero.mh .gt{display:flex;flex-direction:column;justify-content:center;gap:3px;padding-left:10px;border-left:1px solid #E3E8F0}
+    .hero.mh .gt:before{font-size:11px!important;color:var(--muted)!important;font-weight:500!important}
+    .hero.mh .gt .v{margin:0!important;line-height:1.05;white-space:nowrap}.hero.mh .gt .v .gvn{font-size:34px;font-weight:800;color:var(--navy);letter-spacing:-.5px}.hero.mh .gt .v .gvt{font-size:13px;font-weight:600;color:var(--muted)}
+    .hero.mh .gt p{margin:0!important;font-size:10.5px!important;line-height:1.35!important;color:var(--muted)}.hero.mh .gpm{display:none}
+    .hero.mh .glg b{font-size:12px}
   }
 </style>
 </head>
@@ -959,8 +970,9 @@ async function loadSales(top) {
       if (tg) tg.onclick = () => { HF_OPEN = !HF_OPEN; hf.classList.toggle('on', HF_OPEN); tg.setAttribute('aria-expanded', HF_OPEN); };
       bindSearch();
     }
-    set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
-    set('gp', `เป้าเดือน${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
+    const hset = (id, h) => { const e = document.getElementById(id); if (e) e.innerHTML = h; };
+    hset('gv', `<b class="gvn">${nf(s.mtd.apps)}</b><span class="gvt"> / ${nf(s.target)} เคส</span>`);
+    hset('gp', `<span class="gpm">เป้าเดือน${esc(thMonth(s.month))} · </span>ข้อมูลถึง ${esc(thDay(s.latest))}`);
     const day = +String(s.latest || '').slice(8) || 1, dim = new Date(+s.month.slice(0, 4), +s.month.slice(5, 7), 0).getDate();
     const paceT = Math.round(s.target * day / dim), pace = pct(s.mtd.apps, paceT);
     drawGauge(p, day / dim, pace);
@@ -1022,7 +1034,8 @@ function drawGauge(p, f, pace) {
   const [x1, y1] = c(68).split(','), [x2, y2] = c(96).split(',');
   Object.entries({ x1, y1, x2, y2 }).forEach(([k, x]) => mk.setAttribute(k, x));
   set('gpc', p + '%');
-  set('glg', `▎ขีดดำ = เป้าตามวัน ${Math.round(f * 100)}% · ทำได้ ${pace}% ของที่ควร`);
+  const lg = document.getElementById('glg');
+  if (lg) lg.innerHTML = `<i class="tk" aria-hidden="true"></i>เป้าตามวัน <b>${Math.round(f * 100)}%</b> · ทำได้ <b>${pace}%</b><span class="gpm"> ของที่ควร</span>`;
   const g = document.getElementById('gauge'); if (g) g.setAttribute('aria-label', `ยอดสะสม ${p}% ของเป้า · เป้าตามวัน ${Math.round(f * 100)}%`);
 }
 
