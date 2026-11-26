@@ -440,7 +440,7 @@ const ROOMS = {
   ] },
   visit: { title: 'ห้องลงพื้นที่', sub: 'วางแผนเยี่ยมร้าน เช็คอินหน้างาน และรายงานประจำวันของทีม · TM ขึ้นไป', tools: () => [
     { ic: 'visit', color: 'var(--green)', name: 'ปฏิทินลงพื้นที่', desc: 'วางแผนเยี่ยมร้าน · เช็คอิน · เข้าด้วย LINE ไม่ต้องกรอกรหัส', run: b => openField(b) },
-    { ic: 'admin', color: 'var(--navy)', name: 'รายงานประจำวัน TM', desc: 'ส่งยอดประจำวันของทีม · ใช้ชื่อผู้ใช้และรหัสเดียวกับปฏิทิน', url: DAILY_URL }
+    { ic: 'admin', color: 'var(--navy)', name: 'รายงานประจำวัน TM', desc: 'ส่งยอดประจำวันของทีม · เข้าด้วย LINE ไม่ต้องกรอกรหัส', run: b => openField(b, DAILY_URL, { name: 'รายงานประจำวัน', fallback: true }) }
   ] }
 };
 function viewRoom(key) {
@@ -1109,7 +1109,8 @@ const DASH_BASE = 'https://puis18.github.io/sleasing-dashboard/vo/';
 // ปฏิทินลงพื้นที่ (S Leasing Field & Daily · Apps Script hub-rm-visit) — เข้าด้วย LINE ไม่ต้องกรอกรหัส
 // ส่ง LINE token ไปให้ปฏิทินยืนยันกับหลังบ้านออฟฟิศ → ได้ลิงก์พร้อมบัตรผ่านใช้ครั้งเดียว (2 นาที) แล้วเปิดในหน้าต่างนี้
 const FIELD_URL = 'https://script.google.com/macros/s/AKfycby6UG86BSLpr7ta1sTWpky79SyiYritKSaST7u5O5bZ_DgKuqxOHOn9-HV2skZefTgNQA/exec';
-async function openField(btn) {
+// เปิดเครื่องมือ Apps Script ด้วย LINE (บัตรผ่านใช้ครั้งเดียว) · url = เว็บแอปปลายทาง · fallback = ขอบัตรไม่ได้ให้เปิดหน้าล็อกอินเดิมแทน
+async function openField(btn, url = FIELD_URL, o = {}) {
   const m = btn && btn.querySelector('small'), old = m && m.textContent;
   const msg = t => { if (m) m.textContent = t; else toast(t); };
   if (btn) btn.disabled = true;
@@ -1117,13 +1118,16 @@ async function openField(btn) {
     const tok = liff.getDecodedIDToken && liff.getDecodedIDToken();
     if (tok && tok.exp * 1000 < Date.now() + 60000) return signedOut();
     msg('กำลังตรวจสิทธิ์…');
-    const r = await (await fetch(FIELD_URL, { method:'POST', body: JSON.stringify({ action:'officeTicket', idToken: liff.getIDToken() }) })).json();
+    const r = await (await fetch(url, { method:'POST', body: JSON.stringify({ action:'officeTicket', idToken: liff.getIDToken() }) })).json();
     if (!r.ok && r.error === 'INVALID_TOKEN') return signedOut();
-    if (!r.ok || !/^https:\/\/script\.google\.com\//.test(r.url || '')) throw new Error(r.message || 'เปิดปฏิทินไม่สำเร็จ ลองใหม่อีกครั้ง');
-    msg('กำลังเปิดปฏิทิน…');
+    if (!r.ok && r.message) { o = {}; throw new Error(r.message); }   // ปลายทางปฏิเสธพร้อมเหตุผล (เช่น ไม่มีสิทธิ์) — แจ้งเหตุผล ไม่เปิดหน้าล็อกอินแทน
+    if (!r.ok || !/^https:\/\/script\.google\.com\//.test(r.url || '')) throw new Error(r.message || `เปิด${o.name || 'ปฏิทิน'}ไม่สำเร็จ ลองใหม่อีกครั้ง`);
+    msg(`กำลังเปิด${o.name || 'ปฏิทิน'}…`);
     location.href = r.url;
   } catch (e) {
-    toast(String((e && e.message) || e)); if (m) m.textContent = old; if (btn) btn.disabled = false;
+    if (m) m.textContent = old; if (btn) btn.disabled = false;
+    if (o.fallback) { toast('เข้าด้วย LINE ไม่ได้ · เปิดหน้าล็อกอินแทน'); window.open(url, '_blank', 'noopener'); return; }
+    toast(String((e && e.message) || e));
   }
 }
 // ข้อมูลรายทีมแบบย่อ (f:'c1' จาก vo_dash_build.py 19 พ.ย. 2569) → แปลงกลับเป็นแถวเดิมทุกค่า · ไฟล์แบบเดิม (array) ใช้ได้ตามปกติ
