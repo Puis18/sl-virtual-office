@@ -348,7 +348,7 @@ function monthLeft() {
   const d = new Date(), n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() - d.getDate();
   return n ? `อีก ${n} วันปิดเดือน` : 'วันนี้ปิดเดือน';
 }
-const IOS_OK = 30, IOS_WARN = 20;   // เกณฑ์สัดส่วน iOS (%) สำหรับสีตัวเลขหน้าแรก
+const STAFF_OK = 70, STAFF_WARN = 50;   // เกณฑ์สัดส่วนเคสที่ Staff ทำ (%) สำหรับสีตัวเลขหน้าแรก
 function idLine(me) {
   const rs = me.roles || [];
   const pos = [...new Set(rs.map(r => ROLE_TH[r.role] || r.role))].join(' / ');
@@ -457,7 +457,7 @@ function viewLobby(me, profile) {
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
       <div class="kpi"><span>เทียบเป้าตามวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
-      <div class="kpi"><span>iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
+      <div class="kpi"><span>เคสที่ Staff ทำ</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
     </section>
     <section class="card fcard"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
@@ -966,10 +966,12 @@ async function loadSales(top) {
     // สีตัวเลข 3 ช่องตามค่า (27 พ.ย. 2569): เขียว = ดี · ส้ม = ใกล้เกณฑ์ · แดง = ต่ำ
     const tone = (v, g, a) => v >= g ? 'var(--green)' : v >= a ? '#B86E00' : 'var(--red)';
     const col = (id, c) => { const e = document.getElementById(id); if (!e) return; e.style.color = c; if (/^k\d$/.test(id)) e.parentNode.style.setProperty('--kc', c); };
-    const r0 = avg ? s.today.apps / avg * 100 : 100, iosP = s.mtd.apps ? s.mtd.ios / s.mtd.apps * 100 : 0;
+    const tsum = k => (s.teams || []).reduce((a, t) => a + (t[k] || 0), 0);
+    const empN = s.mtd.emp != null ? s.mtd.emp : tsum('emp'), dlrN = s.mtd.dlr != null ? s.mtd.dlr : tsum('dlr');   // เคสที่พนักงานทำ / ร้านทำเอง (เดือนนี้)
+    const r0 = avg ? s.today.apps / avg * 100 : 100, empP = s.mtd.apps ? empN / s.mtd.apps * 100 : 0;
     col('k0', avg ? tone(r0, 100, 80) : 'var(--ink)'); col('ks0', avg ? (diff >= 0 ? 'var(--green)' : 'var(--red)') : '');
-    col('k1', tone(pace, 100, 80)); col('k2', tone(iosP, IOS_OK, IOS_WARN));
-    set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
+    col('k1', tone(pace, 100, 80)); col('k2', tone(empP, STAFF_OK, STAFF_WARN));
+    set('k2', pctTxt(empN, s.mtd.apps)); set('ks2', `Staff ${nf(empN)} · ร้านทำเอง ${nf(dlrN)}`);
     // ข้อมูลเป็น T-1 เสมอ: "วันล่าสุด" = ผลงานเมื่อวานที่ดึงตอนเช้า
     const items = [], isAll = topScope() === 'ALL', dt = s.latest;
     const ea = (s.teams || []).filter(t => t.target);
