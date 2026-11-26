@@ -27,7 +27,7 @@
   .hero .wrap{padding-top:28px;padding-bottom:32px;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center}
   .hero .l{flex:999 1 420px;min-width:0}
   .hero small{color:#AEBBD6;font-size:13px} .hero h1{margin:6px 0 8px;font-size:28px;line-height:1.3}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}.idl{display:none}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}.idl,.hero .cal,.hero .left{display:none}
   .chip{font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
   .goal{flex:1 1 420px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
   .goal .h{display:flex;justify-content:space-between;font-size:14px;color:var(--sub);font-weight:600}
@@ -143,6 +143,12 @@
   @media (max-width:699px){
     .hero.mh .wrap{padding-top:8px;padding-bottom:10px;gap:8px}
     .hero.mh .l{flex-basis:100%}.hero.mh .l small{font-size:12px}.hero.mh h1{font-size:18px;margin:0}.hero.mh .chips{display:none}
+    main.mh{gap:8px!important;padding-top:8px!important;padding-bottom:0!important}.hero.mh .wrap{gap:6px!important;padding-bottom:8px!important}.hero.mh .gauge{width:140px!important}.hero.mh .goal{padding:6px 12px 8px!important}
+    .hero.mh .l{display:flex;align-items:center;gap:12px}.hero.mh .gt2{min-width:0;flex:1}.hero.mh .dlong{display:none}
+    .hero.mh .cal{display:block;width:62px;flex-shrink:0;background:#fff;border-radius:12px;overflow:hidden;text-align:center;box-shadow:0 6px 14px -6px rgba(0,0,0,.55)}
+    .hero.mh .cal .m{display:block;font-size:12px;font-weight:700;padding:2px 0;background-image:linear-gradient(180deg,rgba(255,255,255,.18),rgba(0,0,0,.08))}
+    .hero.mh .cal b{display:block;color:var(--ink);font-size:28px;line-height:1.05;font-weight:800;padding-top:3px}.hero.mh .cal .w{display:block;color:var(--sub);font-size:11px;padding-bottom:4px}
+    .hero.mh .left{display:block;font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hero.mh .left em{font-style:normal;color:#FFD27A;font-weight:600}
     .hero.mh .idl{display:flex;flex-wrap:wrap;column-gap:8px;font-size:12.5px;line-height:1.35;margin-top:2px;opacity:.92}.hero.mh .idl b{font-weight:700}.hero.mh .idl span{opacity:.8}
     .hero.mh .goal{padding:8px 12px 10px;flex-basis:100%}.hero.mh .goal .h{display:none}
     .hero.mh .gwrap{gap:10px;margin-top:2px;flex-wrap:nowrap}.hero.mh .gt{min-width:0}.hero.mh .gauge{width:150px}.hero.mh .gauge .gc b{font-size:26px}.hero.mh .gauge .gc small{font-size:11px}
@@ -333,6 +339,16 @@ const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด:
 const RANK = { SELF:1, TEAM:2, HUB:3, AM:4, ALL:5 };
 const ROLE_TH = { CK:'CK', BK:'BK', AG:'AG', TM:'TM', HRM:'Hub RM', AM:'AM', DIR:'ผู้อำนวยการ' };
 // บรรทัดชื่อ-นามสกุล · ตำแหน่ง · สังกัด (หน้าแรกมือถือ)
+// ป้ายปฏิทินหน้าแรกมือถือ: หัวปฏิทินใช้สีประจำวันแบบไทย (26 พ.ย. 2569)
+const DAY_COLOR = [['#D7263D','#fff'],['#F5C518','#3A2E00'],['#E86FA8','#fff'],['#1E9E55','#fff'],['#F07F1A','#fff'],['#3BA3E0','#fff'],['#7B4BB7','#fff']]; // อา จ อ พ พฤ ศ ส
+function calTile() {
+  const d = new Date(), [bg, fg] = DAY_COLOR[d.getDay()];
+  return `<div class="cal" aria-hidden="true"><span class="m" style="background:${bg};color:${fg}">${d.toLocaleDateString('th-TH', { month:'short' })}</span><b>${d.getDate()}</b><span class="w">${d.toLocaleDateString('th-TH', { weekday:'short' })}</span></div>`;
+}
+function monthLeft() {
+  const d = new Date(), n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() - d.getDate();
+  return n ? `อีก ${n} วันปิดเดือน` : 'วันนี้ปิดเดือน';
+}
 function idLine(me) {
   const rs = me.roles || [];
   const pos = [...new Set(rs.map(r => ROLE_TH[r.role] || r.role))].join(' / ');
@@ -416,9 +432,10 @@ function viewLobby(me, profile) {
 
   app.innerHTML = `
   <section class="hero mh"><div class="wrap">
-    <div class="l"><small>${esc(thaiDate())}</small>
-      <h1>สวัสดี คุณ${esc(name)}</h1>
+    <div class="l"><small class="dlong">${esc(thaiDate())}</small>${calTile()}
+      <div class="gt2"><h1>สวัสดี คุณ${esc(name)}</h1>
       <div class="idl">${idLine(me)}</div>
+      <small class="left">${new Date().toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long' })} · <em>${monthLeft()}</em></small></div>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
       <div class="gwrap"><div class="gauge" role="img" id="gauge" aria-label="ยอดสะสมเทียบเป้า">
