@@ -47,8 +47,7 @@
   .hero.mh{background:radial-gradient(120% 90% at 85% 0%,#2D4F8A 0%,#1E3763 55%,#162A4D 100%)}
   .hero.mh .goal{box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 24px -8px rgba(8,16,34,.55),0 2px 6px rgba(8,16,34,.25);background:linear-gradient(180deg,#fff 0%,#F6F8FC 100%)}
   main.mh .kpi{background:linear-gradient(180deg,#fff 0%,#F7F9FC 100%);border-color:#E3E8F0;box-shadow:0 1px 0 #fff inset,0 6px 14px -8px rgba(18,27,46,.35),0 1px 2px rgba(18,27,46,.06);position:relative;overflow:hidden}
-  main.mh .kpi:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--navy)}
-  main.mh .kpi:nth-child(2):before{background:var(--red)}main.mh .kpi:nth-child(3):before{background:var(--green)}
+  main.mh .kpi:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--kc,var(--line))}
   main.mh .fcard{box-shadow:0 8px 18px -10px rgba(18,27,46,.35),0 1px 2px rgba(18,27,46,.06);border-color:#E3E8F0}
   main.mh .fcard .hd{background:linear-gradient(180deg,#F9FAFD,#F1F4F9)}
   main.mh .fi .dot{box-shadow:0 0 0 3px rgba(0,0,0,.05)}
@@ -349,6 +348,7 @@ function monthLeft() {
   const d = new Date(), n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() - d.getDate();
   return n ? `อีก ${n} วันปิดเดือน` : 'วันนี้ปิดเดือน';
 }
+const IOS_OK = 30, IOS_WARN = 20;   // เกณฑ์สัดส่วน iOS (%) สำหรับสีตัวเลขหน้าแรก
 function idLine(me) {
   const rs = me.roles || [];
   const pos = [...new Set(rs.map(r => ROLE_TH[r.role] || r.role))].join(' / ');
@@ -963,6 +963,12 @@ async function loadSales(top) {
     set('kl0', 'เมื่อวาน (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
     set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
     set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
+    // สีตัวเลข 3 ช่องตามค่า (27 พ.ย. 2569): เขียว = ดี · ส้ม = ใกล้เกณฑ์ · แดง = ต่ำ
+    const tone = (v, g, a) => v >= g ? 'var(--green)' : v >= a ? '#B86E00' : 'var(--red)';
+    const col = (id, c) => { const e = document.getElementById(id); if (!e) return; e.style.color = c; if (/^k\d$/.test(id)) e.parentNode.style.setProperty('--kc', c); };
+    const r0 = avg ? s.today.apps / avg * 100 : 100, iosP = s.mtd.apps ? s.mtd.ios / s.mtd.apps * 100 : 0;
+    col('k0', avg ? tone(r0, 100, 80) : 'var(--ink)'); col('ks0', avg ? (diff >= 0 ? 'var(--green)' : 'var(--red)') : '');
+    col('k1', tone(pace, 100, 80)); col('k2', tone(iosP, IOS_OK, IOS_WARN));
     set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
     // ข้อมูลเป็น T-1 เสมอ: "วันล่าสุด" = ผลงานเมื่อวานที่ดึงตอนเช้า
     const items = [], isAll = topScope() === 'ALL', dt = s.latest;
