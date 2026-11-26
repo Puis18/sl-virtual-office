@@ -1066,6 +1066,7 @@ function scoped(S) {
     teams, target: teams.filter(t => t.apps > 0).length * teamT(S),
     mtd: { apps: sum('apps'), amt: sum('amt'), ios: sum('ios'), android: sum('android'), other: sum('other'), emp: sum('emp'), dlr: sum('dlr'), mo: sum('mo'), ins: sum('ins'), staffN: sum('staffN') },
     today: { apps: sum('today'), amt: sum('tamt') },
+    prevMtd: S.prevMtd ? { apps: sum('prev') } : undefined,
     daily: S.td ? Object.keys(byDay).sort().map(d => byDay[d]) : S.daily,
     scope: [SALES_AM, SALES_HUB, SALES_TEAM].filter(Boolean).join(' · ') + ` (${teams.length} ทีม)`
   });
