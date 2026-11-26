@@ -435,7 +435,7 @@ function viewLobby(me, profile) {
     <div class="l"><small class="dlong">${esc(thaiDate())}</small>${calTile()}
       <div class="gt2"><h1>สวัสดี คุณ${esc(name)}</h1>
       <div class="idl">${idLine(me)}</div>
-      <small class="left">${new Date().toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long' })} · <em>${monthLeft()}</em></small></div>
+      <small class="left"><em>${monthLeft()}</em></small></div>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
       <div class="gwrap"><div class="gauge" role="img" id="gauge" aria-label="ยอดสะสมเทียบเป้า">
