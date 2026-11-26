@@ -29,10 +29,18 @@
   .hero small{color:#AEBBD6;font-size:13px} .hero h1{margin:6px 0 8px;font-size:28px;line-height:1.3}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
-  .goal{flex:1 1 320px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
+  .goal{flex:1 1 420px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
   .goal .h{display:flex;justify-content:space-between;font-size:14px;color:var(--sub);font-weight:600}
   .goal .v{font-family:Inter,sans-serif;font-size:40px;font-weight:700;color:var(--navy);margin:8px 0}
   .bar{height:8px;border-radius:4px;background:#E3E8F0}
+  .gwrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:6px}
+  .gauge{position:relative;width:200px;flex-shrink:0}.gauge svg{display:block;width:100%;height:auto}
+  .gauge path{fill:none;stroke-width:18;stroke-linecap:round}.gauge .trk{stroke:#E3E8F0}.gauge .arc{stroke:var(--green);transition:stroke-dasharray .6s ease}
+  .gauge .mk{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+  .gauge .gc{position:absolute;left:0;right:0;bottom:2px;text-align:center;line-height:1.1}
+  .gauge .gc b{display:block;font-family:Inter,sans-serif;font-size:34px;font-weight:700;color:var(--navy)}.gauge .gc small{font-size:12px;color:var(--muted)}
+  .gt{min-width:180px;flex:1}.gt .v{font-size:24px!important;margin:0 0 4px!important}.gt p{margin:0 0 4px!important}.glg{font-size:11.5px!important}
+  .fmore{display:none}
   .goal p{margin:10px 0 0;font-size:12px;color:var(--muted)}
   main.wrap{padding-top:24px;padding-bottom:48px;display:flex;flex-direction:column;gap:28px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
@@ -116,6 +124,31 @@
   footer{border-top:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
   footer .wrap{padding:14px 16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
+  /* มือถือ: หน้าแรกจบในจอเดียว ไม่ต้องเลื่อน (26 พ.ย. 2569) */
+  @media (max-width:699px){
+    .hero.mh .wrap{padding-top:10px;padding-bottom:12px;gap:8px}
+    .hero.mh .l{flex-basis:100%}.hero.mh .l small{font-size:12px}.hero.mh h1{font-size:18px;margin:0}.hero.mh .chips{display:none}
+    .hero.mh .goal{padding:8px 12px 10px;flex-basis:100%}.hero.mh .goal .h{display:none}
+    .hero.mh .gwrap{gap:10px;margin-top:2px;flex-wrap:nowrap}.hero.mh .gt{min-width:0}.hero.mh .gauge{width:150px}.hero.mh .gauge .gc b{font-size:26px}.hero.mh .gauge .gc small{font-size:11px}
+    .hero.mh .gt .v{font-size:19px!important}.hero.mh .gt p{font-size:11.5px;line-height:1.4}.hero.mh .gt:before{content:'ยอดสะสมเทียบเป้า';display:block;font-size:12px;font-weight:600;color:var(--sub)}
+    main.mh{padding-top:10px;padding-bottom:6px;gap:10px!important}
+    main.mh .kpis{order:-2;grid-template-columns:repeat(3,1fr);gap:8px}
+    main.mh .kpi{padding:8px 10px;border-radius:10px}main.mh .kpi span{font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    main.mh .kpi b{font-size:19px;margin-top:0}main.mh .kpi .sub{font-size:10.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    main.mh #hfilter{order:-3}main.mh .ftog{min-height:38px;font-size:14px;border-radius:10px}main.mh #hfilter:not(:has(select,input,button)){display:none}
+    main.mh .fcard{order:-1}main.mh .fcard .hd{padding:8px 12px}main.mh .fcard .hd h2{font-size:14.5px}main.mh .fcard .hd small{display:none}
+    main.mh .fi{padding:8px 12px;gap:10px}main.mh .fi b{font-size:13px}main.mh .fi small{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}main.mh .fi span:nth-child(2){min-width:0}
+    main.mh #focus:not(.all) .fi:nth-child(n+3){display:none}main.mh #focus .empty{padding:10px 12px;margin:0;font-size:13px}
+    main.mh .fmore{display:block;width:100%;border:none;background:#F6F8FB;color:var(--navy);font:inherit;font-size:12.5px;font-weight:600;padding:7px}
+    main.mh .qsec{order:0}main.mh .qsec .sec-h{display:none}
+    main.mh .quick{grid-template-columns:repeat(4,1fr);gap:6px}
+    main.mh .qk{align-items:center;text-align:center;padding:7px 3px;gap:4px;border-radius:10px}main.mh .qk.more{justify-content:flex-start}
+    main.mh .qk i{width:30px;height:30px;border-radius:8px}main.mh .qk i svg{width:18px;height:18px}
+    main.mh .qk b{font-size:11px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}main.mh .qk small{display:none}
+    main.mh .mobile-only{display:none}
+    body:has(main.mh) footer{display:none}
+    body:has(main.mh) .shell,body:has(main.mh) .col{min-height:0}
+  }
 
   /* ---- แถบเมนูซ้าย (คอม) + แถบล่าง (มือถือ) ---- */
   .shell{min-height:100vh}.col{min-width:0;display:flex;flex-direction:column;min-height:100vh}.col #app{flex:1}
@@ -358,22 +391,27 @@ function viewLobby(me, profile) {
   }).join('');
 
   app.innerHTML = `
-  <section class="hero"><div class="wrap">
+  <section class="hero mh"><div class="wrap">
     <div class="l"><small>${esc(thaiDate())}</small>
       <h1>สวัสดี คุณ${esc(name)}</h1>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
-      <div class="v" id="gv">…</div><div class="bar"><div id="gb" style="height:8px;border-radius:4px;background:var(--green);width:0"></div></div><p id="gp">กำลังโหลดยอดขาย…</p></div>
+      <div class="gwrap"><div class="gauge" role="img" id="gauge" aria-label="ยอดสะสมเทียบเป้า">
+        <svg viewBox="0 0 200 110" aria-hidden="true"><path class="trk" d="M18 100 A82 82 0 0 1 182 100" pathLength="100"/>
+          <path class="arc" id="gArc" d="M18 100 A82 82 0 0 1 182 100" pathLength="100" stroke-dasharray="0 100"/>
+          <line class="mk" id="gMark" x1="0" y1="0" x2="0" y2="0"/></svg>
+        <div class="gc"><b id="gpc">…</b><small>ของเป้า</small></div></div>
+      <div class="gt"><div class="v" id="gv">…</div><p id="gp">กำลังโหลดยอดขาย…</p><p class="glg" id="glg"></p></div></div></div>
   </div></section>
-  <main class="wrap">
+  <main class="wrap mh">
     <section id="admin"></section>
     <div id="hfilter"></div>
     <section class="kpis" aria-label="ตัวเลขสำคัญ">
       <div class="kpi"><span id="kl0">เคสวันล่าสุด</span><b id="k0" style="color:var(--ink)">—</b><small class="sub" id="ks0"></small></div>
-      <div class="kpi"><span>เทียบเป้าตามจำนวนวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
-      <div class="kpi"><span>สัดส่วน iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
+      <div class="kpi"><span>เทียบเป้าตามวัน</span><b id="k1" style="color:var(--ink)">—</b><small class="sub" id="ks1"></small></div>
+      <div class="kpi"><span>iOS เดือนนี้</span><b id="k2" style="color:var(--ink)">—</b><small class="sub" id="ks2"></small></div>
     </section>
-    <section class="card"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
+    <section class="card fcard"><div class="hd"><h2>เรื่องที่ต้องดูวันนี้</h2><small style="color:var(--muted)">จากผลงานถึงเมื่อวาน · อัปเดตทุกเช้า</small></div><div id="focus"><p class="empty">กำลังตรวจข้อมูล…</p></div></section>
     <section class="qsec"><div class="sec-h"><h2>ทางลัด</h2></div><div class="quick">
       ${top !== 'SELF' ? `<button class="qk" id="qDash"><i style="background:var(--navy)">${ico('dash', 20)}</i><span><b>Dashboard Daily</b><small>ตามสิทธิ์ของคุณ</small></span></button>
       ${canV2() ? `<button class="qk" id="qDash2"><i style="background:var(--red)">${ico('dash', 20)}</i><span><b>Dashboard V2</b><small>ภาพรวม · ทีม · พนักงาน · Incentive</small></span></button>` : ''}` : ''}
@@ -868,13 +906,13 @@ async function loadSales(top) {
       bindSearch();
     }
     set('gv', nf(s.mtd.apps) + ' / ' + nf(s.target) + ' เคส');
-    const gb = document.getElementById('gb'); if (gb) gb.style.width = Math.min(p, 100) + '%';
-    set('gp', `${p}% ของเป้า ${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
+    set('gp', `เป้าเดือน${thMonth(s.month)} · ข้อมูลถึง ${thDay(s.latest)}`);
     const day = +String(s.latest || '').slice(8) || 1, dim = new Date(+s.month.slice(0, 4), +s.month.slice(5, 7), 0).getDate();
     const paceT = Math.round(s.target * day / dim), pace = pct(s.mtd.apps, paceT);
+    drawGauge(p, day / dim, pace);
     const days = s.daily.map(d => d[1] + d[2] + d[3]), avg = days.length > 1 ? days.slice(0, -1).reduce((x, y) => x + y, 0) / (days.length - 1) : 0;
     const diff = avg ? Math.round((s.today.apps - avg) / avg * 100) : 0;
-    set('kl0', 'ผลงานวันที่ ' + thDay(s.latest) + ' (เมื่อวาน)'); set('k0', nf(s.today.apps));
+    set('kl0', 'เมื่อวาน (' + thDay(s.latest) + ')'); set('k0', nf(s.today.apps));
     set('ks0', avg ? (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff) + '% เทียบค่าเฉลี่ยเดือนนี้' : '');
     set('k1', pace + '%'); set('ks1', `ควรได้ ${nf(paceT)} ณ วันที่ ${day} · ได้ ${nf(s.mtd.apps)}`);
     set('k2', pctTxt(s.mtd.ios, s.mtd.apps)); set('ks2', `iOS ${nf(s.mtd.ios)} · Android ${nf(s.mtd.and || s.mtd.android || 0)}`);
@@ -910,8 +948,23 @@ async function loadSales(top) {
     const f = document.getElementById('focus');
     if (f) { f.innerHTML = items.length ? items.map(([c, t, d, tab]) => `<button class="fi" data-tab="${tab}"><i class="dot ${c}"></i><span><b>${esc(t)}</b><small>${esc(d)}</small></span><span aria-hidden="true">→</span></button>`).join('')
         : '<p class="empty">ไม่มีเรื่องเร่งด่วน ทุกอย่างเป็นไปตามเป้า 👍</p>';
-      f.querySelectorAll('.fi').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.tab; viewSales(); }); }
-  } catch (e) { set('gv', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
+      f.querySelectorAll('.fi').forEach(b => b.onclick = () => { SALES_TAB = b.dataset.tab; viewSales(); });
+      if (items.length > 2) { f.insertAdjacentHTML('beforeend', `<button class="fmore" id="fmore">ดูอีก ${items.length - 2} เรื่อง</button>`);
+        document.getElementById('fmore').onclick = e => { f.classList.add('all'); e.currentTarget.remove(); }; } }
+  } catch (e) { set('gv', '—'); set('gpc', '—'); set('gp', 'ยังไม่มีข้อมูลยอดขาย'); }
+}
+// กราฟครึ่งวงกลม: แถบ = ยอดสะสม % ของเป้าทั้งเดือน · ขีด = เป้าตามจำนวนวันที่ผ่านไป · สีตามความเร็ว (pace)
+function drawGauge(p, f, pace) {
+  const arc = document.getElementById('gArc'), mk = document.getElementById('gMark'); if (!arc) return;
+  const v = Math.max(0, Math.min(p, 100));
+  arc.setAttribute('stroke-dasharray', `${v} 100`);
+  arc.style.stroke = pace >= 100 ? 'var(--green)' : pace >= 80 ? '#D98A00' : 'var(--red)';
+  const a = Math.PI * (1 - Math.max(0, Math.min(f, 1))), c = (r, k) => (100 + r * Math.cos(a)).toFixed(1) + ',' + (100 - r * Math.sin(a)).toFixed(1);
+  const [x1, y1] = c(68).split(','), [x2, y2] = c(96).split(',');
+  Object.entries({ x1, y1, x2, y2 }).forEach(([k, x]) => mk.setAttribute(k, x));
+  set('gpc', p + '%');
+  set('glg', `▎ขีดดำ = เป้าตามวัน ${Math.round(f * 100)}% · ทำได้ ${pace}% ของที่ควร`);
+  const g = document.getElementById('gauge'); if (g) g.setAttribute('aria-label', `ยอดสะสม ${p}% ของเป้า · เป้าตามวัน ${Math.round(f * 100)}%`);
 }
 
 let SALES_TAB = 'overview', SALES_TEAM = '';
