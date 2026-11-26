@@ -27,7 +27,7 @@
   .hero .wrap{padding-top:28px;padding-bottom:32px;display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center}
   .hero .l{flex:999 1 420px;min-width:0}
   .hero small{color:#AEBBD6;font-size:13px} .hero h1{margin:6px 0 8px;font-size:28px;line-height:1.3}
-  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}.idl{display:none}
   .chip{font-size:13px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
   .goal{flex:1 1 420px;min-width:0;background:#fff;color:var(--ink);border-radius:12px;padding:20px 22px}
   .goal .h{display:flex;justify-content:space-between;font-size:14px;color:var(--sub);font-weight:600}
@@ -141,8 +141,9 @@
   @media (max-width:560px){.hero h1{font-size:23px}.who .t{display:none}}
   /* มือถือ: หน้าแรกจบในจอเดียว ไม่ต้องเลื่อน (26 พ.ย. 2569) */
   @media (max-width:699px){
-    .hero.mh .wrap{padding-top:10px;padding-bottom:12px;gap:8px}
+    .hero.mh .wrap{padding-top:8px;padding-bottom:10px;gap:8px}
     .hero.mh .l{flex-basis:100%}.hero.mh .l small{font-size:12px}.hero.mh h1{font-size:18px;margin:0}.hero.mh .chips{display:none}
+    .hero.mh .idl{display:flex;flex-wrap:wrap;column-gap:8px;font-size:12.5px;line-height:1.35;margin-top:2px;opacity:.92}.hero.mh .idl b{font-weight:700}.hero.mh .idl span{opacity:.8}
     .hero.mh .goal{padding:8px 12px 10px;flex-basis:100%}.hero.mh .goal .h{display:none}
     .hero.mh .gwrap{gap:10px;margin-top:2px;flex-wrap:nowrap}.hero.mh .gt{min-width:0}.hero.mh .gauge{width:150px}.hero.mh .gauge .gc b{font-size:26px}.hero.mh .gauge .gc small{font-size:11px}
     .hero.mh .gt .v{font-size:19px!important}.hero.mh .gt p{font-size:11.5px;line-height:1.4}.hero.mh .gt:before{content:'ยอดสะสมเทียบเป้า';display:block;font-size:12px;font-weight:600;color:var(--sub)}
@@ -331,6 +332,14 @@ const say = e => MSG[e.message] || ('เกิดข้อผิดพลาด:
 /* ---------- ระดับสิทธิ์: ใช้สิทธิ์ที่กว้างที่สุดที่คนนั้นมี ---------- */
 const RANK = { SELF:1, TEAM:2, HUB:3, AM:4, ALL:5 };
 const ROLE_TH = { CK:'CK', BK:'BK', AG:'AG', TM:'TM', HRM:'Hub RM', AM:'AM', DIR:'ผู้อำนวยการ' };
+// บรรทัดชื่อ-นามสกุล · ตำแหน่ง · สังกัด (หน้าแรกมือถือ)
+function idLine(me) {
+  const rs = me.roles || [];
+  const pos = [...new Set(rs.map(r => ROLE_TH[r.role] || r.role))].join(' / ');
+  const r = rs.reduce((a, x) => !a || RANK[x.scope] > RANK[a.scope] ? x : a, null) || {};
+  const org = r.scope === 'ALL' ? '' : [r.team && 'ทีม ' + r.team, r.hub && 'Hub ' + r.hub, r.am].filter(Boolean).join(' · ');
+  return `<b>${esc(me.name || '')}</b><span>${esc([pos, org].filter(Boolean).join(' · '))}</span>`;
+}
 function roleLabel(r) {
   const where = r.scope==='ALL' ? 'ทั้งหมด' : r.scope==='AM' ? 'ทุกทีมใน '+r.am : r.scope==='HUB' ? 'ทุกทีมใน '+r.hub
               : r.scope==='TEAM' ? 'ทีม '+r.team : 'ข้อมูลของตัวเอง';
@@ -409,6 +418,7 @@ function viewLobby(me, profile) {
   <section class="hero mh"><div class="wrap">
     <div class="l"><small>${esc(thaiDate())}</small>
       <h1>สวัสดี คุณ${esc(name)}</h1>
+      <div class="idl">${idLine(me)}</div>
       <div class="chips">${me.roles.map(r => `<span class="chip">${esc(roleLabel(r))}</span>`).join('')}</div></div>
     <div class="goal"><div class="h"><span>ยอดสะสมเทียบเป้า</span><span>เดือนนี้</span></div>
       <div class="gwrap"><div class="gauge" role="img" id="gauge" aria-label="ยอดสะสมเทียบเป้า">
