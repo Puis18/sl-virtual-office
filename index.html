@@ -981,7 +981,7 @@ async function loadSales(top) {
     // กล่องซ้าย (27 พ.ย. 2569): ขาด/เกินจากเป้าตามวัน (สะสมถึงวันข้อมูลล่าสุด) + เมื่อวานเทียบเป้ารายวัน
     const gap = s.mtd.apps - paceT, dayT = Math.round(s.target / dim);
     set('kl0', gap < 0 ? 'ขาดจากเป้าตามวัน (เคส)' : 'เกินเป้าตามวัน (เคส)'); set('k0', (gap < 0 ? '−' : '+') + nf(Math.abs(gap)));
-    set('ks0', `เมื่อวาน ${nf(s.today.apps)} · เป้ารายวัน ${nf(dayT)} เคส`);
+    set('ks0', `${s.latest ? thDay(s.latest).replace(/ \d{4}$/, '') : 'ล่าสุด'} ได้ ${nf(s.today.apps)} · เป้า ${nf(dayT)}/วัน`);
     // กล่องขวา: เติบโตเทียบเดือนก่อน ช่วงวันเดียวกัน (หลังบ้านต้องส่ง prevMtd = ยอดเดือนก่อนวันที่ 1 ถึงวันเดียวกัน)
     const pm = s.prevMtd && s.prevMtd.apps, gr = pm ? Math.round((s.mtd.apps - pm) / pm * 100) : null;
     set('k1', gr == null ? '—' : (gr >= 0 ? '+' : '−') + Math.abs(gr) + '%');
