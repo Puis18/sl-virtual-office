@@ -65,6 +65,12 @@
 - ปุ่มปฏิทินถูกย้ายออกจากห้องฝ่ายขายแล้ว · `?go=field` ยังเปิดปฏิทินตรงได้เหมือนเดิม
 - TM Field Visit เลิกใช้แล้ว (26 พ.ย. 2569) · ข้อมูลรายงานประจำวัน (Daily_Report / Staff_List / Ref_Team) ย้ายไปไฟล์ HubRMVisit_DATA แล้ว (TMDailyReport @9 · ถอยกลับ -V 8) · TMFieldVisit_DATA เดิมเก็บไว้ถึง 10 ธ.ค. 2569 เผื่อถอยกลับ
 
+## ห้อง HR (`hr`) — เพิ่ม 27 พ.ย. 2569 (อยู่บน `dev` รอสั่งขึ้น main)
+- Hub RM ขึ้นไป (`min:'HUB'`, phase 1) · ลิงก์ตรง `?go=hr`
+- ปุ่ม "รายงานเหตุการณ์" (Hub RM ขึ้นไป) และ "ออกหนังสือลงโทษ" (เฉพาะ ผอ. `topScope()==='ALL'`) → `openField(b, DISC_URL + '?tool=report|letter')`
+- ปลายทาง: Apps Script "หนังสือลงโทษทางวินัย SLS" (`doPost` officeTicket → ยืนยัน action `me` กับออฟฟิศ → บัตรผ่าน 2 นาที) · แบบรายงานเติมชื่อ/ตำแหน่งผู้รายงานจาก LINE และไม่ต้องใส่รหัส
+- ฝั่ง Apps Script บันทึกโค้ดแล้ว แต่ยังไม่ Deploy (รอคุณปุ้ยสั่งพร้อมกับขึ้น main)
+
 ## ปฏิทินลงพื้นที่ (`openField`)
 - เปิดระบบ S Leasing Field & Daily (Apps Script `hub-rm-visit` ใน repo sleasing-tools) ด้วย LINE ไม่ต้องกรอกรหัส · TM ขึ้นไป
 - ส่ง LINE token ไปที่ `FIELD_URL` (action `officeTicket`) → ปฏิทินยืนยันกับหลังบ้านออฟฟิศ (action `me`) แล้วคืนลิงก์ที่มีบัตรผ่านใช้ครั้งเดียว 2 นาที

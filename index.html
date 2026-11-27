@@ -410,7 +410,7 @@ const DEPTS = [
   { mk:'ห', name:'ฝ่ายติดตามหนี้', desc:'Dashboard ติดตามหนี้ & นัดชำระ', phase:1, min:'SELF' },
   { mk:'P', name:'ฝ่ายโปรดักต์', desc:'เงินดาวน์ EA · คู่มือแคมเปญ · Hub Master', phase:1, min:'SELF' },
   { mk:'M', name:'ฝ่ายการตลาด', desc:'Pricelist · โบรชัวร์สินค้า', phase:1, min:'SELF' },
-  { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'ผังทีม · คู่มือพนักงานใหม่ · แบบทดสอบ', phase:2, min:'SELF' },
+  { mk:'H', name:'ฝ่ายทรัพยากรบุคคล', desc:'รายงานเหตุการณ์ · ออกหนังสือลงโทษ', phase:1, min:'HUB' },
   { mk:'ธ', name:'ฝ่ายธุรการ', desc:'File Merger · คลังอีเมล · แบบฟอร์ม', phase:2, min:'TEAM' },
   { mk:'M', name:'ฝ่าย MIS', desc:'ผู้ใช้และสิทธิ์ · สถานะข้อมูล · แจ้งปัญหา', phase:2, min:'ALL' },
   { mk:'ผ', name:'สำนักผู้อำนวยการ', desc:'ภาพรวม AM1 / AM2 · เป้าหมาย · นโยบาย', phase:2, min:'ALL' },
@@ -517,7 +517,13 @@ function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove())
 /* ---------- ห้องแผนก: ปุ่มเปิดเครื่องมือเดิม (เฟสแรก) ---------- */
 const DAILY_URL = 'https://script.google.com/macros/s/AKfycbyM_FY8Xe4QH4I3R8I_pVXZk65W3LewdHg3cTH6O7KLeCQw6ErggCcD5B2leYLOn4Nf/exec';   // รายงานประจำวัน TM (TMDailyReport)
 const BROCHURE_URL = 'https://script.google.com/macros/s/AKfycbw9MQYA4jxKHSEP_pDRTJYjBhbGz00X4_oYpi8L8zr2XEvR_l1MR1QI9poRoO6Rcrh62g/exec';
+// หนังสือลงโทษทางวินัย (Apps Script) · เข้าด้วย LINE ผ่าน officeTicket: ?tool=report = Hub RM ขึ้นไป · ?tool=letter = ผู้อำนวยการ
+const DISC_URL = 'https://script.google.com/macros/s/AKfycbxf2rnl6s616HuhTfCwABdjwhIfJC95gTHU-y3Ca4auLBbSQlwFZNyDcchI1Sno-UVAnQ/exec';
 const ROOMS = {
+  hr: { title: 'ฝ่ายทรัพยากรบุคคล', sub: 'รายงานเหตุการณ์และพฤติกรรมพนักงาน · Hub RM ขึ้นไป', tools: () => [
+    { ic: 'hr', color: 'var(--red)', name: 'รายงานเหตุการณ์', desc: 'ส่งเรื่องพนักงานทำผิดระเบียบให้ผู้อำนวยการ · เข้าด้วย LINE ไม่ต้องกรอกรหัส', run: b => openField(b, DISC_URL + '?tool=report', { name: 'แบบรายงาน' }) },
+    ...(topScope() === 'ALL' ? [{ ic: 'admin', color: 'var(--navy)', name: 'ออกหนังสือลงโทษ', desc: 'ดึงรายงานจาก Hub RM / น้อง · AI วิเคราะห์ข้อระเบียบ · สร้าง PDF', run: b => openField(b, DISC_URL + '?tool=letter', { name: 'หนังสือลงโทษ' }) }] : [])
+  ] },
   od: { direct: 'collection.html', title: 'ฝ่ายติดตามหนี้', sub: 'ติดตามลูกค้าค้างชำระ (OD) และนัดชำระ · เห็นเฉพาะตามสิทธิ์ของแต่ละคน', tools: () => [
     { ic: 'dash', color: 'var(--navy)', name: 'ติดตามหนี้ · Collection', desc: 'รายชื่อลูกค้าค้างชำระ · บันทึกผลติดตามและนัดชำระ · เห็นเฉพาะตามสิทธิ์ของคุณ (ตัวเอง / ทีม / HUB / AM)', url: 'collection.html' }
   ] },
